@@ -22,7 +22,7 @@
 // @include     http*://spqrchan.org/*/*
 // @include     http*://spqrchan.org/*/res/*
 //
-// @version     1.82
+// @version     1.84
 // @grant       none
 // ==/UserScript==
 
@@ -32,14 +32,20 @@
  *  This software is released under the MIT License.
  *  http://opensource.org/licenses/mit-license.php
  **************************************************
- *  CSSを利用しました : http://endchan.xyz/librejp/res/5273.html#q8133
+ *  CSSを利用しました : http://endchan.xyz/librejp/res/5273.html#8133
  */
     
 
 /*
  yamanu-chang(山ぬちゃん)です。
 
-・(v1.82)
+・(v1.84 2016.11.23 03:37 JST)
+  ・[Refresh]読み込み分の[Embed]ボタンが効くようにする補助機能を追加
+  ・既存の Embed 機能を上書きして、closeできるように
+    (endchan既存機能を抑えつけているから、上書き漏れが発生するかも)
+  ・v1.84現在、ニコニコ動画とYoutubeに対応してます。
+    山ぬちゃん書き換え分は[embeD]と[closE]と表示します。
+・(v1.82 2016.11.19 04:25 JST)
   ・スレ[Refresh]分で読み込んだ文のレス日時が、ローカライズされないのを修正。
 ・(v1.81)
   ・通し番号に対応
@@ -90,8 +96,6 @@
  */
 
 /*
- version 1.7(2016.11.19 03:22)
- version 1.8(2016.11.19 04:25)
   ・1行100文字
   ・セミコロンは全ての場所につける。
 
@@ -133,6 +137,22 @@
 	    };
 	    return char.repeat( n - str.length ) + str;
 	};
+
+	uthis.log01 =
+	    function()
+	{
+	    var elt = document.getElementById("toshakiii_log01");
+	    if( null == elt )
+	    {
+		elt = document.createElement('SPAN');
+		elt.id = "toshakiii_log01";
+		document.body.appendChild(elt);
+	    };
+	    for( var arg in arguments )
+	    {
+		elt.appendChild( document.createTextNode( ""+arg+" ") );
+	    };
+	};
 	
 	uthis.differenceSet =
 	    function( lhs, rhs )
@@ -173,7 +193,6 @@
 			var n = idx + 1 < tFuncs.length ?
 				tFuncs[ idx + 1 ] :
 				ilthis.nop;
-			/*console.log("itf",idx+1,tFuncs.length);*/
 			function me()
 			{
 			    if( f() )
@@ -244,7 +263,6 @@
 	return uthis;
     };
 
-    
     /**********************************
      * filePreview                    *
      **********************************/
@@ -784,20 +802,6 @@
 		bumpOrderOfId[ id ] = idx;
 	    };
 	    sthis.bumpOrderOfId = bumpOrderOfId;
-	};
-
-	sthis.differenceSet =
-	    function( lhs, rhs )
-	{
-	    var r = {};
-	    for( var key in lhs )
-	    {
-		if( ! key in rhs )
-		{
-		    r[ key ] = lhs[ key ];
-		};
-	    };
-	    return r;
 	};
 
 	sthis.circulateOrderType =
@@ -1411,7 +1415,7 @@
 	    iloops.push
 	    (function()
 	     {
-		 var threadsToDelete = sthis.differenceSet( sthis.bumpOrderOfId, json );
+		 var threadsToDelete = utils.differenceSet( sthis.bumpOrderOfId, json );
 		 for( var threadId in threadsToDelete )
 		 {
 		     var catalogCell = document.getElementById( threadId );
@@ -1792,10 +1796,192 @@
 	    };
 	    var divPosts = divPostsList[0];
 	    efpthis.divPostsMutationObserver =
-		new MutationObserver( efpthis.localizeDateTimeLabelAll );
+		new MutationObserver( efpthis.onRefresh );
 	    efpthis.divPostsMutationObserver.observe( divPosts, { childList: true } );
 	};
 
+	
+	/*efpthis.enableEmbedYoutubeButton =*/
+	efpthis.overloadEmbedYoutubeButton =
+	    function( youtube_wrapper )
+	{
+	    var embedButtons = youtube_wrapper.getElementsByTagName('A');
+	    if( 0 >= embedButtons.length )
+	    {
+		return;
+	    };
+	    var embedButton = embedButtons[0];
+	    embedButton.onclick = null;
+	    embedButton.addEventListener("click", efpthis.onYoutubeEmbedButtonClick );
+	    embedButton.replaceChild( document.createTextNode("embeD") , embedButton.firstChild );
+	};
+	
+	efpthis.overloadEmbedNiconicoButton =
+	    function( niconico_wrapper )
+	{
+	    var embedButtons = niconico_wrapper.getElementsByTagName('A');
+	    if( 0 >= embedButtons.length )
+	    {
+		return;
+	    };
+	    var embedButton = embedButtons[0];
+	    embedButton.onclick = null;
+	    embedButton.addEventListener("click", efpthis.onNiconicoEmbedButtonClick );
+	    embedButton.replaceChild( document.createTextNode("embeD") , embedButton.firstChild );
+	};
+
+	efpthis.onYoutubeEmbedButtonClick =
+		function( ev )
+	{
+	    var iframes = this.parentElement.getElementsByTagName('IFRAME');
+	    if( 0 < iframes.length )
+	    {
+		var brs = this.parentElement.getElementsByTagName('BR');
+		for( var ifIdx = 0, ifLen = iframes.length; ifIdx < ifLen ; ++ifIdx )
+		{
+		    iframes[ifIdx].parentElement.removeChild( iframes[ifIdx] );
+		};
+		for( var brIdx = 0, brLen = brs.length; brIdx < brLen ; ++brIdx )
+		{
+		    brs[brIdx].parentElement.removeChild( brs[brIdx] );
+		};
+		this.replaceChild( document.createTextNode("embeD"), this.firstChild );
+		ev.preventDefault();
+		return false;
+	    };
+	    var youtubeUri = this.href.replace(/youtu.be\//,"www.youtube.com/watch?v=")
+		    .replace(/watch\?v=/, 'embed/');
+	    if( "https:" == location.protocol )
+	    {
+		youtubeUri = youtubeUri.replace(/^http:/,"https:");
+	    };
+	    var iframe = document.createElement('IFRAME');
+	    iframe.width = 560;
+	    iframe.height = 315;
+	    iframe.frameBorder = 0;
+	    iframe.allowFullScreen = true;
+	    iframe.src = youtubeUri;
+	    this.parentElement.appendChild( document.createElement('BR') );
+	    this.parentElement.appendChild(iframe);
+	    this.replaceChild( document.createTextNode("closE"), this.firstChild );
+	    ev.preventDefault();
+	    return false;
+	};
+
+	efpthis.getAncestorPostCellId =
+	    function( elt )
+	{
+	    for(;; elt = elt.parentElement )
+	    {
+		if( elt.parentElement.tagName == 'BODY' )
+		{
+		    return null;
+		};
+		if( 0 <= elt.className.indexOf("postCell") )
+		{
+		    return elt.id;
+		};
+		
+	    };
+	    return null;
+	};
+
+	efpthis.onNiconicoEmbedButtonClick =
+	    function( ev )
+	{
+	    var iframes = this.parentElement.getElementsByTagName('IFRAME');
+	    var divs = this.parentElement.getElementsByTagName('DIV');
+	    if( 0 < iframes.length || 0 < divs.length )
+	    {
+		for( var ifIdx = 0, ifLen = iframes.length; ifIdx < ifLen ; ++ifIdx )
+		{
+		    iframes[ifIdx].parentElement.removeChild( iframes[ifIdx] );
+		};
+		for( var dvIdx = 0, dvLen = divs.length; dvIdx < dvLen ; ++dvIdx )
+		{
+		    divs[dvIdx].parentElement.removeChild( divs[dvIdx] );
+		};
+		var brs = this.parentElement.getElementsByTagName('BR');
+		for( var brIdx = 0, brLen = brs.length; brIdx < brLen ; ++brIdx )
+		{
+		    brs[brIdx].parentElement.removeChild( brs[brIdx] );
+		};
+
+		this.replaceChild( document.createTextNode("embeD"), this.firstChild );
+		ev.preventDefault();
+		return false;
+	    };
+
+	    if( "https:" == location.protocol )
+	    {
+		var div = document.createElement('DIV');
+		div.appendChild( document.createTextNode("https から http へはつなげられないから、") );
+		div.appendChild( document.createElement('BR') );
+		div.appendChild( document.createTextNode("ニコニコ動画の埋め込みはできません。") );
+		div.appendChild( document.createElement('BR') );
+		div.appendChild( document.createTextNode("http から http へはつなげられるから") );
+		div.appendChild( document.createElement('BR') );
+		div.appendChild( document.createTextNode("埋め込みで見たければ http のここへ") );
+		div.appendChild( document.createElement('BR') );
+		div.style.border = "1px solid red";
+		var httpthreUri = location.href.replace(/^https/,"http");
+		var httpthreLink = document.createElement('A');
+		httpthreLink.href = httpthreUri + "#" + efpthis.getAncestorPostCellId( this );
+		httpthreLink.appendChild( document.createTextNode( httpthreLink.href ) );
+		div.appendChild( httpthreLink );
+		this.parentElement.appendChild( document.createElement('BR') );
+		this.parentElement.appendChild( div );
+
+		this.replaceChild( document.createTextNode("closE"), this.firstChild );
+		ev.preventDefault();
+		return false;
+	    };
+	    var videoUri = this.href.replace(/nico.ms/,"embed.nicovideo.jp/watch")
+		    .replace(/www\.nicovideo/,"embed.nicovideo");
+	    var iframe = document.createElement('IFRAME');
+
+	    iframe.width = 560;
+	    iframe.height = 315;
+	    iframe.frameBorder = 0;
+	    iframe.allowFullScreen = true;
+	    iframe.src = videoUri;
+	    iframe.alt = "https で見てる人はニコニコの埋め込みはできません。\n" +
+		"Google Chrome の人の場合は、アドレスバー右に出て来る「盾を破った」アイコンをクリックすると、\n" +
+		"埋め込めます。";
+	    this.parentElement.appendChild( document.createElement('BR') );
+	    this.parentElement.appendChild( iframe );
+	    this.replaceChild( document.createTextNode("closE"), this.firstChild );
+	    ev.preventDefault();
+	    return false;
+	};
+	
+	efpthis.onRefresh = function( mutationRecords, mutationObserver)
+	{
+	    var mrs = mutationRecords;
+	    for( var mrIdx = 0, mrLen = mrs.length; mrIdx < mrLen ; ++mrIdx )
+	    {
+		var mr = mrs[ mrIdx ];
+		for( var anIdx = 0, anLen = mr.addedNodes.length; anIdx < anLen ; ++anIdx )
+		{
+		    var addedNode = mr.addedNodes[ anIdx ];
+		    var youtube_wrappers = addedNode.getElementsByClassName("youtube_wrapper");
+		    for( var ywIdx = 0, ywLen = youtube_wrappers.length; ywIdx < ywLen ; ++ywIdx )
+		    {
+			efpthis.overloadEmbedYoutubeButton( youtube_wrappers[ ywIdx ] );
+		    };
+		    var niconico_wrappers = addedNode.getElementsByClassName("niconico_wrapper");
+		    for( var nwIdx = 0, nwLen = niconico_wrappers.length; nwIdx < nwLen ; ++nwIdx )
+		    {
+			efpthis.overloadEmbedNiconicoButton( niconico_wrappers[ nwIdx ] );
+		    };
+		};
+	    };
+	    
+
+	    efpthis.localizeDateTimeLabelAll();
+	};
+	
+	
 	efpthis.timezoneOffset = 0;
 
 	efpthis.localDaysList =
@@ -1904,15 +2090,14 @@
 	efpthis.localizeDateTimeLabelAll =
 	    function()
 	{
-	    var iloops = utils.IntermittentLoops();
+	    var IntermittentLoops = utils.IntermittentLoops;
+	    var iloops = IntermittentLoops();
 	    var labelCreatedList;
 	    var idx = 0;
 	    var offset = efpthis.timezoneOffset;
-	    var IntermittentLoops = utils.IntermittentLoops;
 
 	    iloops.push( function(){
 		labelCreatedList = document.getElementsByClassName('labelCreated');
-	    } ).push( function(){
 		idx = labelCreatedList.length - 1;
 	    } ).push( function(){
 		if( -1 >= idx )
@@ -1923,6 +2108,104 @@
 		--idx;
 		return continue_;
 	    } ).exec();
+	};
+
+	/*efpthis.iframeLazyLoad =
+	    function()
+	{
+	    var elts = Array.prototype.slice.call(document.getElementsByTagName('IFRAME'));
+
+	    elts.forEach(function(elt) {  
+		var src = elts.getAttribute('src');
+		elt.removeAttribute('src');
+		elt.alt = src;
+
+		function onclickf()
+		{
+		    elt.setAttribute('src', src );
+		    elt.removeEventListener('click', onclickf);
+		};
+		elt.addEventListener('click', onclickf );
+	    });
+	};*/
+	
+	efpthis.overloadWrapperAll =
+	    function()
+	{
+	    var IntermittentLoops = utils.IntermittentLoops;
+	    var iloops = IntermittentLoops();
+	    var idx = 0;
+	    var youtubeWrappers;
+	    var niconicoWrappers;
+
+	    /*
+	     意味なかった。
+	    var iframes;
+	    iloops.push( function(){
+		iframes = document.getElementsByTagName('IFRAME');
+		idx = iframes.length - 1;
+	    } ).push( function(){
+		if( -1 >= idx )
+		{
+		    return false;
+		};
+		var iframe = iframes[ idx ];
+		if( 0 != iframe.src.indexOf("https://www.youtube.com/")  )
+		{
+		    return true;
+		};
+		var span = document.createElement('SPAN');
+		var anchor = document.createElement('A');
+		span.className = 'youtube_wrapper';
+		anchor.href = iframe.src;
+		anchor.appendChild( document.createTextNode( "embeD" ) );
+		span.appendChild( document.createTextNode( iframe.src + " [" ) );
+		span.appendChild( anchor );
+		span.appendChild( document.createTextNode( " ]" ) );
+		iframe.parentElement.replaceChild( span, iframe );
+		--idx;
+		return true;
+	    } );
+	     */
+	    iloops.push( function(){
+		youtubeWrappers = document.getElementsByClassName('youtube_wrapper');
+		idx = youtubeWrappers.length - 1;
+	    } ).push( function(){
+		if( -1 >= idx )
+		{
+		    return false;
+		};
+		efpthis.overloadEmbedYoutubeButton( youtubeWrappers[ idx ] );
+		--idx;
+		return true;
+	    } ).push( function(){
+		niconicoWrappers = document.getElementsByClassName('niconico_wrapper');
+		idx = niconicoWrappers.length - 1;
+	    } ).push( function(){
+		if( -1 >= idx )
+		{
+		    return false;
+		};
+		efpthis.overloadEmbedNiconicoButton( niconicoWrappers[ idx ] );
+		--idx;
+		return true;
+	    } ).exec();
+	};
+
+	efpthis.insertFakeRefreshButton =
+	    function()
+	{
+	    var refreshButton = document.getElementById("refreshButton");
+	    if( null == refreshButton )
+	    {
+		return;
+	    };
+	    var fakeRefresh = document.createElement('A');
+	    fakeRefresh.addEventListener("click",function()
+					 {
+					     window.lastReplyId = 0;
+					     window.refreshPosts(true);
+					 } );
 	};
 	
 	efpthis.presetImageGeometry =
@@ -1989,8 +2272,10 @@
 	efpthis.enable =
 	    function()
 	{
+	    /*意味ない:efpthis.iframeLazyLoad();*/
 	    efpthis.startObserveDivPosts();
 	    setTimeout( efpthis.localizeDateTimeLabelAll, 0 );
+	    setTimeout( efpthis.overloadWrapperAll, 0 );
 	    setTimeout( efpthis.addConsecutiveNumberStyle, 0 );
 	};
 	efpthis.trigger = function()
@@ -2000,6 +2285,42 @@
 	};
 	return efpthis;
     };
+
+    /**********************************
+     * MultiPopup                    *
+     **********************************/
+    function modMultiPopup()
+    {
+	if( undefined === window.toshakiii )
+	{   window.toshakiii = {}; };
+	if( undefined === window.toshakiii.settings )
+	{   window.toshakiii.settings = {}; };
+
+	var mthis = {};
+	var settings = window.toshakiii.settings;
+	var utils = window.toshakiii.utils;
+
+	window.toshakiii.multiPopup = mthis;
+
+	mthis.removeOriginalPopupFeature
+	    = function( quoteLink )
+	{
+	    
+	};
+	
+	mthis.trigger = function()
+	{
+	    mthis.enable();
+	};
+	mthis.enable = function()
+	{
+	};
+	mthis.disable = function()
+	{
+	};
+    };
+    
+
     /**********************************
      * main                           *
      **********************************/
@@ -2023,3 +2344,20 @@
     };
     main();
 })();
+
+/*
+演技用
+(function(){
+    if( location.protocol == "https:" )
+    {
+	var elts = document.getElementsByClassName("postCell");
+	for( var i = elts.length - 1 ; -1 < i ; --i )
+	{
+	    var elt = elts[ i ];
+	    elt.parentElement.removeChild( elt );
+	};
+	setTimeout( function(){ location.href = "javascript: window.lastReplyId=0;"; }, 100 );
+    };
+})();
+*/
+/*window.refreshPosts(true);*/
