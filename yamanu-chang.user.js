@@ -22,7 +22,7 @@
 // @include     http*://spqrchan.org/*/*
 // @include     http*://spqrchan.org/*/res/*
 //
-// @version     1.85
+// @version     1.86
 // @grant       none
 // ==/UserScript==
 
@@ -37,7 +37,9 @@
 
 /*
  yamanu-chang(山ぬちゃん)です。
-
+・(v1.86 2016.11.26 00:12 JST)
+  ・再帰的ポップアップで、OP引用時にレス全部が出てくる不具合を修正。
+  ・スレ内通し番号が出て来る場所を修正。引用ブロック内で出ないように。
 ・(v1.85 2016.11.25 14:22 JST)
   ・再帰的ポップアップをとりあえず実装。
     ポップアップ内の色々をクリックした時の動作が甘い。
@@ -2373,8 +2375,8 @@
              http://endchan.xyz/librejp/res/5273.html#q8166
              */
             style.innerHTML =
-                "div.postCell{counter-increment:number;}" +
-                "div.postCell div.innerPost:before{content:counter(number);}";
+                "div.divPosts div.postCell{counter-increment:consecutiveNumber;}" +
+                "div.divPosts div.postCell div.innerPost:before{content:counter(consecutiveNumber);}";
             document.head.appendChild( style );
         };
 
@@ -2777,7 +2779,15 @@
             {
                 return callback( popupInfo, null, "no such post:No." + localNo );
             };
-            return callback( popupInfo, utils.removeIdAll( postCell.cloneNode(true) ) );
+	    postCell = postCell.cloneNode(true);
+
+	    var divPostsList = postCell.getElementsByClassName("divPosts");
+	    for( var dpIdx = divPostsList.length - 1; -1 < dpIdx ; --dpIdx )
+	    {
+		divPostsList[ dpIdx ].parentElement.removeChild( divPostsList[ dpIdx ] );
+	    };
+	    postCell = utils.removeIdAll( postCell );
+            return callback( popupInfo, postCell );
 	};
 
         mthis.lookForPostCell =
