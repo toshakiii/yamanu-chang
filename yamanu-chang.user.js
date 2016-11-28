@@ -2732,7 +2732,7 @@
 	    {
 		switch( this.readyState )
 		{
-		case 0: /* TODO: show messages */
+		case 0:
 		case 1:
 		case 3:
 		    return;
