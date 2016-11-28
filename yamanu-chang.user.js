@@ -1,13 +1,9 @@
 // ==UserScript==
 // @name        yamanu-chang
 // @namespace   to_sha_ki_ii
-// @description endchan: catalog sorter, preview upload files
-// @include     http*://endchan.xyz/*/*
-// @include     http*://endchan.xyz/*/res/*
-// @include     http*://endchan.net/*/*
-// @include     http*://endchan.net/*/res/*
-// @include     http*://infinow.net/*/*
-// @include     http*://infinow.net/*/res/*
+// @description endchan: catalog sorter, preview upload files, recursive quote popup
+// @include     /https?://endchan\.xyz/.*$/
+// @include     /https?://infinow\.net/.*$/
 //
 // @include     http*://bunkerchan.xyz/*/*
 // @include     http*://bunkerchan.xyz/*/res/*
@@ -37,9 +33,11 @@
 
 /*
  yamanu-chang(山ぬちゃん)です。
-・(v1.86 2016.11.26 00:12 JST)
+・(v1.86 2016.11.28 21:43 JST)
   ・再帰的ポップアップで、OP引用時にレス全部が出てくる不具合を修正。
   ・スレ内通し番号が出て来る場所を修正。引用ブロック内で出ないように。
+  ・freech.net で再帰的ポップアップが動かないのを修正
+  ・ポップアップ待機中の「now loading」表示を追加
 ・(v1.85 2016.11.25 14:22 JST)
   ・再帰的ポップアップをとりあえず実装。
     ポップアップ内の色々をクリックした時の動作が甘い。
@@ -98,6 +96,11 @@
  )
   ----------------------------------------
  */
+
+/* var yamanuchangDebug = true;
+   var yamanuchangVersion = "1.86"; */
+
+
 
 /*
   ・1行100文字
@@ -2392,7 +2395,7 @@
         efpthis.enable =
             function()
         {
-            /*意味ない:efpthis.iframeLazyLoad();*/
+            /*意味ない : efpthis.iframeLazyLoad();*/
             efpthis.startObserveDivPosts();
             setTimeout( efpthis.localizeDateTimeLabelAll, 0 );
             setTimeout( efpthis.overrideWrapperAll, 0 );
@@ -2444,7 +2447,7 @@
 		NOW_SHOWING              : 2,
 		COUNTDOWN_FOR_CLOSE_POPUP: 3 };
         mthis.cache = {};
-	/* { <URI> : { element: <HTMLElement> } } */
+	/* { <URI> : { element: <HTMLElement>, message: <string> } } */
         mthis.defaultSettings = { 'timeToPopup': 250/*ms*/,
 				  'timeToClosePopup': 350/*ms*/ };
         mthis.panelBacklinksObservers = {};
@@ -2469,10 +2472,17 @@
 	    {
 		return popups[ uid ];
 	    };
-	    popups[ uid ] = {'uid': uid,
-			     'quoteAnchor': quoteAnchor,
-			     'phase': mthis.POPUP_PHASE.DO_NOTHING,
-			     'children': [] };
+	    popups[ uid ] =
+		{ 'brothers'      : [],
+		  'children'      : [],
+		  'closeTimer'    : undefined,
+		  'element'       : undefined,
+		  'parent'        : undefined,
+		  'phase'         : mthis.POPUP_PHASE.DO_NOTHING,
+		  'quoteAnchor'   : quoteAnchor,
+		  'showTimer'     : undefined,
+		  'targetPosition': undefined,
+		  'uid'           : uid };
 	    return popups[ uid ];
 	};
 
@@ -2672,9 +2682,10 @@
 	    function( popupInfo, callback )
 	{
 	    var quoteAnchor = popupInfo['quoteAnchor'];
+	    var msg;
 	    if( quoteAnchor.host != location.host )
 	    {
-		callback( popupInfo, null, "over host is not implemented:" + quoteAnchor );
+		callback( popupInfo, null, msg );
 		return;
 	    };
 
@@ -2704,11 +2715,19 @@
 
 	    if( undefined != mthis.cache[ uri ] )
 	    {
-		callback( popupInfo, mthis.cache[ uri ]['element'] );
+		var postCell = mthis.cache[ uri ]['element'];
+		if( null != postCell )
+		{
+		    postCell = postCell.cloneNode( true );
+		};
+		callback( popupInfo, postCell, mthis.cache[ uri ]['message'] );
 		return;
 	    };
-	    
+
+	    callback( popupInfo, null, "now loading" );
+
 	    var xhr = new XMLHttpRequest();
+	    var fullUri = location.protocol + uri; /* for message */
 	    xhr.onreadystatechange = function()
 	    {
 		switch( this.readyState )
@@ -2723,24 +2742,35 @@
 		    {
 			if( 'document' != this.responseType )
 			{
-			    callback( popupInfo, null, "unknown response content(1): + " + this.responseType );
+			    msg = "unknown response contents(1): + " + this.responseType;
+			    mthis.cache[ uri ] = { 'message': msg };
+			    callback( popupInfo, null, msg );
+			    return;
 			};
-			var panelContent = this.response.getElementById('panelContent');
-			if( undefined == panelContent )
+
+			/*
+			 freech: #panelContent は空。body 直下に .postCell がある
+			 */
+
+			var postCellList = this.response.getElementsByClassName('postCell');
+			if( 0 >= postCellList.length )
 			{
-			    callback( popupInfo, null, "unknown response content: panelContent not found" );
+			    msg = "unknown response contents: postCell not found: " + fullUri;
+			    mthis.cache[ uri ] = { 'message': msg };
+			    window.lastPanelContent = this.response;
+			    callback( popupInfo, null, msg );
+			    /*callback( popupInfo, null, msg );*/
+			    return;
 			};
-			var postCell = panelContent.firstChild;
-			if( undefined == postCell )
-			{
-			    callback( popupInfo, null, "unknown response content: postCell not found" );
-			};
+			var postCell = postCellList[0];
 			postCell = utils.removeIdAll( document.importNode( postCell, true ) );
 			mthis.cache[ uri ] = { 'element': postCell };
 			callback( popupInfo, postCell );
 			return;
 		    };
-		    callback( popupInfo, "error(HTTP "+this.status+")" );
+		    msg = 'not found(HTTP ' + this.status + '): ' + fullUri;
+		    mthis.cache[ uri ] = { 'message': msg };
+		    callback( popupInfo, null, msg );
 		    return;
 		};
 	    };
@@ -2826,14 +2856,32 @@
 	    {
 		originElement = quoteLink;
 	    };
-            var quoteblock = document.createElement('DIV');
+
+	    var quoteblock;
+	    if( undefined != popupInfo['element'] )
+	    {
+		if( null == popupInfo['element'].firstChild )
+		{
+		    popupInfo['element'].appendChild( postCell );
+		}
+		else
+		{
+		    popupInfo['element'].replaceChild( postCell, popupInfo['element'].firstChild );
+		};
+		quoteblock = popupInfo['element'];
+	    }
+	    else
+	    {
+		quoteblock = document.createElement('DIV');
+		quoteblock.appendChild( postCell );
+	    };
+
             quoteblock.className = "tskQuoteblock";
 	    var uid = popupInfo['uid'];
             mthis.overridePostCellQuotePopups( postCell,
 					       function( e ){
 						   mthis.setUidOfPopupParent( e, uid );
 					       } );
-            quoteblock.appendChild( postCell );
 
 	    quoteblock.addEventListener("mouseout" , function(){
 		mthis.startCountdownForClosePopup( popupInfo ); } );
@@ -3243,7 +3291,7 @@
 		"try{("+modFilePreview  .toString() +")().trigger();}catch(e){};" +
 		"try{("+modMultiPopup   .toString() +")().trigger();}catch(e){};" +
 		"";
-	    document.body.appendChild( script );
+	    document.head.appendChild( script );
 	}
 	else if( 0 <= window.navigator.userAgent.toLowerCase().indexOf("chrome") )
 	{
