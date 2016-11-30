@@ -19,7 +19,7 @@
 // @include     http*://spqrchan.org/*/*
 // @include     http*://spqrchan.org/*/res/*
 //
-// @version     1.88
+// @version     1.89
 // @grant       none
 // ==/UserScript==
 
@@ -44,6 +44,8 @@
 
 /*
  yamanu-chang(山ぬちゃん)です。
+・(v1.88 2016.11.30 15:08 JST)
+  ・バグ修正
 ・(v1.88 2016.11.30 14:44 JST)
   ・Google Chrome でも mp3 が貼れるようにハックを追加。
 ・(v1.87 2016.11.28 21:43 JST)
@@ -393,25 +395,6 @@
 
         return uthis;
     };
-
-    /**********************************
-     * LynxChan Wrapper               *
-     **********************************/
-    function modLynxChanWrapper()
-    {
-	if( undefined === window.toshakiii )
-	{   window.toshakiii = {};};
-
-	var lthis = {};
-	window.toshakiii.lynxChanWrapper = lthis;
-
-	lthis.selectedDivOnChangeHandlers = [];
-
-	lthis.disable = function(){};
-	lthis.trigger = function(){};
-	lthis.enable = function(){};
-    };
-
     
     /**********************************
      * filePreview                    *
@@ -3338,6 +3321,27 @@
 
 	return mthis;
     };
+
+    /**********************************
+     * LynxChan Wrapper               *
+     **********************************/
+    function modLynxChanWrapper()
+    {
+	if( undefined === window.toshakiii )
+	{   window.toshakiii = {};};
+	
+	var lthis = {};
+	window.toshakiii.lynxChanWrapper = lthis;
+	
+	lthis.selectedDivOnChangeHandlers = [];
+	
+	lthis.disable = function(){};
+	lthis.trigger = function(){};
+	lthis.enable = function(){};
+
+	return lthis;
+    };
+
 
 
     /**********************************
