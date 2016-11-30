@@ -2,6 +2,7 @@
 // @name        yamanu-chang
 // @namespace   to_sha_ki_ii
 // @description endchan: catalog sorter, preview upload files, recursive quote popup
+//
 // @include     /https?://endchan\.xyz/.*$/
 // @include     /https?://infinow\.net/.*$/
 //
@@ -18,7 +19,7 @@
 // @include     http*://spqrchan.org/*/*
 // @include     http*://spqrchan.org/*/res/*
 //
-// @version     1.87
+// @version     1.88
 // @grant       none
 // ==/UserScript==
 
@@ -31,8 +32,20 @@
  *  CSSを利用しました : http://endchan.xyz/librejp/res/5273.html#8133
  */
 
+/*var yamanuchangDebug = true;var yamanuchangVersion = "1.87";*/
+/*
+ TODO:
+ ・sendReplyData の hack をオフにできるオプションを追加すること。
+ ・日時表記に dd/MM/YYYY 追加を
+ ・2回もダウンロードしないように
+ ・ボードトップでページ内引用をするように
+ ・動作ページを一本化したい
+*/
+
 /*
  yamanu-chang(山ぬちゃん)です。
+・(v1.88 2016.11.30 14:44 JST)
+  ・Google Chrome でも mp3 が貼れるようにハックを追加。
 ・(v1.87 2016.11.28 21:43 JST)
   ・freech.net で再帰的ポップアップが動かないのを修正
   ・ポップアップ待機中の「now loading」表示を追加
@@ -98,9 +111,6 @@
   ----------------------------------------
  */
 
-/* var yamanuchangDebug = true;
-   var yamanuchangVersion = "1.86"; */
-
 
 
 /*
@@ -116,8 +126,9 @@
     // pthis: modFilePreview
     // sthis: modCatalogSorter
     // mthis: modMultiPopup
-    // efpthis: modEtcForPosts
+    // etcthis: modEtCetera
     // ethis: DOM Elementを指すthis
+    // lthis: modLynxChanWrapper
     // cthis: 一時使用用
 
     /*********
@@ -384,6 +395,25 @@
     };
 
     /**********************************
+     * LynxChan Wrapper               *
+     **********************************/
+    function modLynxChanWrapper()
+    {
+	if( undefined === window.toshakiii )
+	{   window.toshakiii = {};};
+
+	var lthis = {};
+	window.toshakiii.lynxChanWrapper = lthis;
+
+	lthis.selectedDivOnChangeHandlers = [];
+
+	lthis.disable = function(){};
+	lthis.trigger = function(){};
+	lthis.enable = function(){};
+    };
+
+    
+    /**********************************
      * filePreview                    *
      **********************************/
     function modFilePreview()
@@ -394,6 +424,7 @@
         {   window.toshakiii.settings = {}; };
 
         var pthis = {};
+	var lthis = window.toshakiii.lynxChanWrapper;
 
         window.toshakiii.filePreview = pthis;
 
@@ -610,6 +641,11 @@
                                                 pointers[ fIdx ] );
                 };
             };
+
+	    for( var shIdx in lthis.selectedDivOnChangeHandlers )
+	    {
+		lthis.selectedDivOnChangeHandlers[ shIdx ]();
+	    };
         };
 
         pthis.quickReplyOnLoad =
@@ -640,7 +676,6 @@
                     };
                 };
             };
-
         };
 
         pthis.insertPreviewsArea =
@@ -1694,7 +1729,6 @@
             eltASo.appendChild( document.createTextNode("So") );
             var eltAr = document.createElement('A');
             eltAr.appendChild( document.createTextNode("r") );
-            eltAr.href = '#';
             var eltAtby = document.createElement('A');
             eltAtby.appendChild( document.createTextNode("t by:") );
 
@@ -1719,7 +1753,8 @@
 
             var eltLSB = document.createTextNode("[");
             var eltARefresh = document.createElement('A');
-            eltARefresh.href = '#';
+	    /*eltARefresh.id = 'tskCatalogRefresh';
+            eltARefresh.href = '#tskCatalogRefresh';*/
             eltARefresh.appendChild( document.createTextNode('Refresh') );
             eltARefresh.addEventListener('click', sthis.refreshCatalogCells);
             var eltRSB = document.createTextNode("]");
@@ -1890,24 +1925,25 @@
     };
 
     /**********************************
-     * EtcForPosts                    *
+     * etCetera                       *
      **********************************/
-    function modEtcForPosts()
+    function modEtCetera()
     {
         if( undefined === window.toshakiii )
         {   window.toshakiii = {}; };
         if( undefined === window.toshakiii.settings )
         {   window.toshakiii.settings = {}; };
 
-        var efpthis = {};
+	var lthis = window.toshakiii.lynxChanWrapper;
         var utils = window.toshakiii.utils;
+        var etcthis = {};
 
-        window.toshakiii.etcForPosts = efpthis;
+        window.toshakiii.etCetera = etcthis;
 
-	efpthis.postCellOnLoadHooks = [];
-        efpthis.divPostsMutationObserver = undefined;
+	etcthis.postCellOnLoadHooks = [];
+        etcthis.divPostsMutationObserver = undefined;
 
-        efpthis.startObserveDivPosts =
+        etcthis.startObserveDivPosts =
             function()
         {
             var divPostsList = document.getElementsByClassName('divPosts');
@@ -1916,14 +1952,14 @@
                 return;
             };
             var divPosts = divPostsList[0];
-            efpthis.divPostsMutationObserver =
-                new MutationObserver( efpthis.onRefresh );
-            efpthis.divPostsMutationObserver.observe( divPosts, { childList: true } );
+            etcthis.divPostsMutationObserver =
+                new MutationObserver( etcthis.onRefresh );
+            etcthis.divPostsMutationObserver.observe( divPosts, { childList: true } );
         };
 
 
-        /*efpthis.enableEmbedYoutubeButton =*/
-        efpthis.overrideEmbedYoutubeButton =
+        /*etcthis.enableEmbedYoutubeButton =*/
+        etcthis.overrideEmbedYoutubeButton =
             function( youtube_wrapper )
         {
             var embedButtons = youtube_wrapper.getElementsByTagName('A');
@@ -1933,11 +1969,11 @@
             };
             var embedButton = embedButtons[0];
             embedButton.onclick = null;
-            embedButton.addEventListener("click", efpthis.onYoutubeEmbedButtonClick );
+            embedButton.addEventListener("click", etcthis.onYoutubeEmbedButtonClick );
             embedButton.replaceChild( document.createTextNode("embeD") , embedButton.firstChild );
         };
 
-        efpthis.overrideEmbedNiconicoButton =
+        etcthis.overrideEmbedNiconicoButton =
             function( niconico_wrapper )
         {
             var embedButtons = niconico_wrapper.getElementsByTagName('A');
@@ -1947,11 +1983,11 @@
             };
             var embedButton = embedButtons[0];
             embedButton.onclick = null;
-            embedButton.addEventListener("click", efpthis.onNiconicoEmbedButtonClick );
+            embedButton.addEventListener("click", etcthis.onNiconicoEmbedButtonClick );
             embedButton.replaceChild( document.createTextNode("embeD") , embedButton.firstChild );
         };
 
-        efpthis.onYoutubeEmbedButtonClick =
+        etcthis.onYoutubeEmbedButtonClick =
                 function( ev )
         {
             var iframes = this.parentElement.getElementsByTagName('IFRAME');
@@ -1989,7 +2025,7 @@
             return false;
         };
 
-        efpthis.getAncestorPostCellId =
+        etcthis.getAncestorPostCellId =
             function( elt )
         {
             for(;; elt = elt.parentElement )
@@ -2007,7 +2043,7 @@
             return null;
         };
 
-        efpthis.onNiconicoEmbedButtonClick =
+        etcthis.onNiconicoEmbedButtonClick =
             function( ev )
         {
             var iframes = this.parentElement.getElementsByTagName('IFRAME');
@@ -2047,7 +2083,7 @@
                 div.style.border = "1px solid red";
                 var httpthreUri = location.href.replace(/^https/,"http");
                 var httpthreLink = document.createElement('A');
-                httpthreLink.href = httpthreUri + "#" + efpthis.getAncestorPostCellId( this );
+                httpthreLink.href = httpthreUri + "#" + etcthis.getAncestorPostCellId( this );
                 httpthreLink.appendChild( document.createTextNode( httpthreLink.href ) );
                 div.appendChild( httpthreLink );
                 this.parentElement.appendChild( document.createElement('BR') );
@@ -2076,7 +2112,7 @@
             return false;
         };
 
-        efpthis.onRefresh = function( mutationRecords, mutationObserver)
+        etcthis.onRefresh = function( mutationRecords, mutationObserver)
         {
             var mrs = mutationRecords;
             for( var mrIdx = 0, mrLen = mrs.length; mrIdx < mrLen ; ++mrIdx )
@@ -2088,14 +2124,14 @@
                     var youtube_wrappers = addedNode.getElementsByClassName("youtube_wrapper");
                     for( var ywIdx = 0, ywLen = youtube_wrappers.length; ywIdx < ywLen ; ++ywIdx )
                     {
-                        efpthis.overrideEmbedYoutubeButton( youtube_wrappers[ ywIdx ] );
+                        etcthis.overrideEmbedYoutubeButton( youtube_wrappers[ ywIdx ] );
                     };
                     var niconico_wrappers = addedNode.getElementsByClassName("niconico_wrapper");
                     for( var nwIdx = 0, nwLen = niconico_wrappers.length; nwIdx < nwLen ; ++nwIdx )
                     {
-                        efpthis.overrideEmbedNiconicoButton( niconico_wrappers[ nwIdx ] );
+                        etcthis.overrideEmbedNiconicoButton( niconico_wrappers[ nwIdx ] );
                     };
-		    var hooks = efpthis.postCellOnLoadHooks;
+		    var hooks = etcthis.postCellOnLoadHooks;
 		    for( var hkIdx = 0, hkLen = hooks.length; hkIdx < hkLen ; ++hkIdx )
 		    {
 			if( 0 <= addedNode.className.indexOf('postCell') )
@@ -2107,23 +2143,23 @@
             };
 
 
-            efpthis.localizeDateTimeLabelAll();
+            etcthis.localizeDateTimeLabelAll();
         };
 
 
-        efpthis.timezoneOffset = 0;
+        etcthis.timezoneOffset = 0;
 
-        efpthis.localDaysList =
+        etcthis.localDaysList =
             { 'undefined': ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]
               ,'-540' : ["日","月","火","水","木","金","土"] };
 
-        efpthis.getDayText =
+        etcthis.getDayText =
             function( day, dayTextList )
         {
             return dayTextList[ day ];
         };
 
-        efpthis.dateFormatA =
+        etcthis.dateFormatA =
             function( d, dayTextList, useUTC )
         {
             /* 2016/12/31(Sat)13:59:59 形式 */
@@ -2139,7 +2175,7 @@
                       d.getUTCHours().toString(),
                       d.getUTCMinutes().toString(),
                       d.getUTCSeconds().toString() ];
-                day = efpthis.getDayText( d.getUTCDay(), dayTextList );;
+                day = etcthis.getDayText( d.getUTCDay(), dayTextList );;
             }
             else
             {
@@ -2150,7 +2186,7 @@
                       d.getHours().toString(),
                       d.getMinutes().toString(),
                       d.getSeconds().toString() ];
-                day = efpthis.getDayText( d.getDay(), dayTextList );;
+                day = etcthis.getDayText( d.getDay(), dayTextList );;
             };
 
 
@@ -2165,7 +2201,7 @@
             return text;
         };
 
-        efpthis.localizeDateTimeLabel =
+        etcthis.localizeDateTimeLabel =
             function( labelCreated )
         {
             if( labelCreated.hasAttribute("data-original-date-text") )
@@ -2196,29 +2232,29 @@
                 return true;
             };
             var d = new Date( Date.UTC( year, parseInt(month) - 1, date, hours, minutes, seconds) );
-            var local = efpthis.dateFormatA( d, efpthis.localDaysList[ efpthis.timezoneOffset ] );
+            var local = etcthis.dateFormatA( d, etcthis.localDaysList[ etcthis.timezoneOffset ] );
             labelCreated.replaceChild( document.createTextNode( local ),
                                        labelCreated.firstChild );
             var title_text = "original: " + originalText;
-            if( efpthis.timezoneOffset != -540 )
+            if( etcthis.timezoneOffset != -540 )
             {
                 var jaD = new Date( Date.UTC( year, parseInt(month) - 1, date, hours,
                                               540 + parseInt(minutes), seconds) );
-                var jaT = efpthis.dateFormatA( jaD, efpthis.localDaysList[ -540 ], true );
+                var jaT = etcthis.dateFormatA( jaD, etcthis.localDaysList[ -540 ], true );
                 title_text += "\n日本:" + jaT;
             };
             labelCreated.title = title_text;
             return true;
         };
 
-        efpthis.localizeDateTimeLabelAll =
+        etcthis.localizeDateTimeLabelAll =
             function()
         {
             var IntermittentLoops = utils.IntermittentLoops;
             var iloops = IntermittentLoops();
             var labelCreatedList;
             var idx = 0;
-            var offset = efpthis.timezoneOffset;
+            var offset = etcthis.timezoneOffset;
 
             iloops.push( function(){
                 labelCreatedList = document.getElementsByClassName('labelCreated');
@@ -2228,32 +2264,13 @@
                 {
                     return false;
                 };
-                var continue_ = efpthis.localizeDateTimeLabel( labelCreatedList[ idx ] );
+                var continue_ = etcthis.localizeDateTimeLabel( labelCreatedList[ idx ] );
                 --idx;
                 return continue_;
             } ).exec();
         };
 
-        /*efpthis.iframeLazyLoad =
-            function()
-        {
-            var elts = Array.prototype.slice.call(document.getElementsByTagName('IFRAME'));
-
-            elts.forEach(function(elt) {
-                var src = elts.getAttribute('src');
-                elt.removeAttribute('src');
-                elt.alt = src;
-
-                function onclickf()
-                {
-                    elt.setAttribute('src', src );
-                    elt.removeEventListener('click', onclickf);
-                };
-                elt.addEventListener('click', onclickf );
-            });
-        };*/
-
-        efpthis.overrideWrapperAll =
+        etcthis.overrideWrapperAll =
             function()
         {
             var IntermittentLoops = utils.IntermittentLoops;
@@ -2262,35 +2279,6 @@
             var youtubeWrappers;
             var niconicoWrappers;
 
-            /*
-             意味なかった。
-            var iframes;
-            iloops.push( function(){
-                iframes = document.getElementsByTagName('IFRAME');
-                idx = iframes.length - 1;
-            } ).push( function(){
-                if( -1 >= idx )
-                {
-                    return false;
-                };
-                var iframe = iframes[ idx ];
-                if( 0 != iframe.src.indexOf("https://www.youtube.com/")  )
-                {
-                    return true;
-                };
-                var span = document.createElement('SPAN');
-                var anchor = document.createElement('A');
-                span.className = 'youtube_wrapper';
-                anchor.href = iframe.src;
-                anchor.appendChild( document.createTextNode( "embeD" ) );
-                span.appendChild( document.createTextNode( iframe.src + " [" ) );
-                span.appendChild( anchor );
-                span.appendChild( document.createTextNode( " ]" ) );
-                iframe.parentElement.replaceChild( span, iframe );
-                --idx;
-                return true;
-            } );
-             */
             iloops.push( function(){
                 youtubeWrappers = document.getElementsByClassName('youtube_wrapper');
                 idx = youtubeWrappers.length - 1;
@@ -2299,7 +2287,7 @@
                 {
                     return false;
                 };
-                efpthis.overrideEmbedYoutubeButton( youtubeWrappers[ idx ] );
+                etcthis.overrideEmbedYoutubeButton( youtubeWrappers[ idx ] );
                 --idx;
                 return true;
             } ).push( function(){
@@ -2310,13 +2298,13 @@
                 {
                     return false;
                 };
-                efpthis.overrideEmbedNiconicoButton( niconicoWrappers[ idx ] );
+                etcthis.overrideEmbedNiconicoButton( niconicoWrappers[ idx ] );
                 --idx;
                 return true;
             } ).exec();
         };
 
-        efpthis.insertFakeRefreshButton =
+        etcthis.insertFakeRefreshButton =
             function()
         {
             var refreshButton = document.getElementById("refreshButton");
@@ -2332,7 +2320,7 @@
                                          } );
         };
 
-        efpthis.presetImageGeometry =
+        etcthis.presetImageGeometry =
             function()
         {
             var iloops = utils.IntermittentLoops();
@@ -2363,7 +2351,80 @@
 
         };
 
-        efpthis.addConsecutiveNumberStyle =
+	etcthis.hackSendReplyDataToSupportChromeMp3 =
+	    function hackSendReplyDataToSupportChromeMp3()
+	{
+	    if( undefined == window.sendReplyData )
+	    {
+		if( 'complete' == document.readyState )
+		{
+		    return;
+		};
+		setTimeout( hackSendReplyDataToSupportChromeMp3, 10 );
+		return;
+	    };
+	    if( 'function' != typeof( window.sendReplyData ) )
+	    {
+		return;
+	    };
+	    var originalSendReplyData = window.sendReplyData;
+
+	    window.sendReplyData
+		= function ymncSendReplyData( files )
+	    {
+		try
+		{
+		    var data_audio_mpeg = 'data:audio/mpeg;';
+		    var data_audio_mp3 = 'data:audio/mp3;';
+		    var IANA_mp3_mime = 'audio/mpeg';
+		    var Chrome_mp3_mime = 'audio/mp3';
+		    for( var i in files )
+		    {
+			var file = files[ i ];
+			if( 0 == file.content.indexOf( data_audio_mp3 ) )
+			{
+			    file.mime = IANA_mp3_mime;
+			    file.content = data_audio_mpeg
+				+ file.content.substring( data_audio_mp3.length );
+			};
+		    };
+		    i = undefined;
+		    file = undefined;
+		    data_audio_mpeg = undefined;
+		    data_audio_mp3 = undefined;
+		    IANA_mp3_mime = undefined;
+		}
+		catch(e)
+		{};
+
+		return originalSendReplyData.apply( window, Array.prototype.slice.call( arguments ) );
+	    };
+	    lthis.selectedDivOnChangeHandlers.push( etcthis.replaceAudioMp3WithAudioMpeg );
+	    etcthis.replaceAudioMp3WithAudioMpeg();
+	};
+
+	etcthis.replaceAudioMp3WithAudioMpeg =
+	    function()
+	{
+	    if( null == window.selectedFiles )
+	    {
+		return;
+	    };
+	    for( var i in window.selectedFiles )
+	    {
+		var selectedFile = window.selectedFiles[ i ];
+		if( 'audio/mp3' == selectedFile.type )
+		{
+		    Object.defineProperty( selectedFile, "type",
+					   { enumerable: false,
+					     configurable: false,
+					     writable: true,
+					     value: "audio/mpeg" } );
+		};
+	    };
+	};
+	
+        etcthis.addConsecutiveNumberStyle =
             function()
         {
             var style = document.createElement('style');
@@ -2384,7 +2445,7 @@
             document.head.appendChild( style );
         };
 
-        efpthis.disable =
+        etcthis.disable =
             function()
         {
             var style = document.getElementsById("postsConsecutiveNumberStyle");
@@ -2393,21 +2454,23 @@
                 style.parentElement.removeChild( style );
             }
         };
-        efpthis.enable =
+
+        etcthis.enable =
             function()
         {
-            /*意味ない : efpthis.iframeLazyLoad();*/
-            efpthis.startObserveDivPosts();
-            setTimeout( efpthis.localizeDateTimeLabelAll, 0 );
-            setTimeout( efpthis.overrideWrapperAll, 0 );
-            setTimeout( efpthis.addConsecutiveNumberStyle, 0 );
+            etcthis.startObserveDivPosts();
+            setTimeout( etcthis.localizeDateTimeLabelAll, 0 );
+            setTimeout( etcthis.overrideWrapperAll, 0 );
+            setTimeout( etcthis.addConsecutiveNumberStyle, 0 );
+	    setTimeout( etcthis.hackSendReplyDataToSupportChromeMp3, 0 );
         };
-        efpthis.trigger = function()
+
+        etcthis.trigger = function()
         {
-            efpthis.timezoneOffset = new Date().getTimezoneOffset();
-            efpthis.enable();
+            etcthis.timezoneOffset = new Date().getTimezoneOffset();
+            etcthis.enable();
         };
-        return efpthis;
+        return etcthis;
     };
 
     /**********************************
@@ -2425,7 +2488,7 @@
         var utils = window.toshakiii.utils;
 
         window.toshakiii.multiPopup = mthis;
-	var etcForPosts = window.toshakiii.etcForPosts;
+	var etCetera = window.toshakiii.etCetera;
 
         mthis.Popup =
             function(){};
@@ -3225,9 +3288,9 @@
 	mthis.enable = function()
 	{
 	    mthis.addBodyEvents();
-	    /* etcForPostsの監視対象は .divPosts 、Popup の挿入場所は .divPosts の親の親の中。
+	    /* etCetera の監視対象は .divPosts。Popup の挿入場所は .divPosts の親の親の中。
 	     * だから Popup 挿入時に冗長呼び出しにはならない */
-	    etcForPosts.postCellOnLoadHooks.push( mthis.overridePostCellQuotePopups );
+	    etCetera.postCellOnLoadHooks.push( mthis.overridePostCellQuotePopups );
 	    
 	    var iloops = utils.IntermittentLoops();
 	    var links;
@@ -3286,28 +3349,31 @@
 	{
 	    var script = document.createElement('SCRIPT');
 	    script.innerText =
-		"try{("+modUtils        .toString() +")().trigger();}catch(e){};" +
-		"try{("+modEtcForPosts  .toString() +")().trigger();}catch(e){};" +
-		"try{("+modCatalogSorter.toString() +")().trigger();}catch(e){};" +
-		"try{("+modFilePreview  .toString() +")().trigger();}catch(e){};" +
-		"try{("+modMultiPopup   .toString() +")().trigger();}catch(e){};" +
+		"try{("+modUtils          .toString() +")().trigger();}catch(e){};" +
+		"try{("+modLynxChanWrapper.toString() +")().trigger();}catch(e){};" +
+		"try{("+modEtCetera       .toString() +")().trigger();}catch(e){};" +
+		"try{("+modCatalogSorter  .toString() +")().trigger();}catch(e){};" +
+		"try{("+modFilePreview    .toString() +")().trigger();}catch(e){};" +
+		"try{("+modMultiPopup     .toString() +")().trigger();}catch(e){};" +
 		"";
 	    document.head.appendChild( script );
 	}
 	else if( 0 <= window.navigator.userAgent.toLowerCase().indexOf("chrome") )
 	{
 	    location.href = "javascript:" +
-		"try{("+modUtils        .toString() +")().trigger();}catch(e){};" +
-		"try{("+modEtcForPosts  .toString() +")().trigger();}catch(e){};" +
-		"try{("+modCatalogSorter.toString() +")().trigger();}catch(e){};" +
-		"try{("+modFilePreview  .toString() +")().trigger();}catch(e){};" +
-		"try{("+modMultiPopup   .toString() +")().trigger();}catch(e){};" +
+		"try{("+modUtils          .toString() +")().trigger();}catch(e){};" +
+		"try{("+modLynxChanWrapper.toString() +")().trigger();}catch(e){};" +
+		"try{("+modEtCetera       .toString() +")().trigger();}catch(e){};" +
+		"try{("+modCatalogSorter  .toString() +")().trigger();}catch(e){};" +
+		"try{("+modFilePreview    .toString() +")().trigger();}catch(e){};" +
+		"try{("+modMultiPopup     .toString() +")().trigger();}catch(e){};" +
 		"";
 	}
 	else
 	{
 	    modUtils().trigger();
-	    modEtcForPosts().trigger();
+	    modLynxChanWrapper().trigger();
+	    modEtCetera().trigger();
 	    modFilePreview().trigger();
 	    modCatalogSorter().trigger();
 	    modMultiPopup().trigger();
