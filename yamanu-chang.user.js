@@ -3,23 +3,21 @@
 // @namespace   to_sha_ki_ii
 // @description endchan: catalog sorter, preview upload files, recursive quote popup
 //
-// @include     /https?://endchan\.xyz/.*$/
-// @include     /https?://infinow\.net/.*$/
+// @include    /https?://32ch\.org/.*$/
+// @include    /https?://32ch\.org/.*$/
+// @include    /https?://bunkerchan\.xyz/.*$/
+// @include    /https?://endchan\.xyz/.*$/
+// @include    /https?://freech\.net/.*$/
+// @include    /https?://infinow\.net/.*$/
+// @include    /https?://keksec\.com/.*$/
+// @include    /https?://lynxhub\.com/.*$/
+// @include    /https?://spacechan\.xyz/.*$/
+// @include    /https?://spqrchan\.org/.*$/
+// @include    /https?://spqrchan\.org/.*$/
+// @include    /https?://waifuchan\.moe/.*$/
+// @include    /https?://waifuchan\.moe/.*$/
 //
-// @include     http*://bunkerchan.xyz/*/*
-// @include     http*://bunkerchan.xyz/*/res/*
-// @include     http*://freech.net/*/*
-// @include     http*://freech.net/*/res/*
-// @include     http*://spacechan.xyz/*/*
-// @include     http*://spacechan.xyz/*/res/*
-// @include     http*://32ch.org/*/*
-// @include     http*://32ch.org/*/res/*
-// @include     http*://waifuchan.moe/*/*
-// @include     http*://waifuchan.moe/*/res/*
-// @include     http*://spqrchan.org/*/*
-// @include     http*://spqrchan.org/*/res/*
-//
-// @version     1.89
+// @version     1.90
 // @grant       none
 // ==/UserScript==
 
@@ -32,19 +30,22 @@
  *  CSSを利用しました : http://endchan.xyz/librejp/res/5273.html#8133
  */
 
-/*var yamanuchangDebug = true;var yamanuchangVersion = "1.87";*/
 /*
  TODO:
  ・sendReplyData の hack をオフにできるオプションを追加すること。
  ・日時表記に dd/MM/YYYY 追加を
  ・2回もダウンロードしないように
- ・ボードトップでページ内引用をするように
- ・動作ページを一本化したい
+ ・ボードトップでページ内引用をするように。サウロンの目にも対応したい。
+ ・selectedDivOnChange を lynxChanWrapper に移動すること。今時点、ファイルプレビューに依存している。
 */
 
 /*
  yamanu-chang(山ぬちゃん)です。
-・(v1.88 2016.11.30 15:08 JST)
+・(v1.90)
+  ・div.markedPost にも通し番号が出るように
+  ・endchan のカタログ hide の新仕様に対応。hide したスレが下に溜まるように。
+  ・再帰的ポップアップのクイック引用に対応。レス番部分を押すと Quick Reply が開きます。
+・(v1.89 2016.11.30 15:08 JST)
   ・バグ修正
 ・(v1.88 2016.11.30 14:44 JST)
   ・Google Chrome でも mp3 が貼れるようにハックを追加。
@@ -87,38 +88,14 @@
     ・厳密なレス新着順は、カタログにある情報だけでは構築できないため実装していません。
       (全スレの取得すればできるけど負荷がかかっちゃう)
     ・同順位についての扱いがブラウザによってマチマチかも
-
-  ┌────┐
-  │導入方法│
-  └────┘
-      前の
-        ・"endchan: catalog sort"
-        ・"endchan: preview upload files"
-      は無効にしてください。(あるいは、削除)
-
-  ・このファイルを "yamanu-chang.user.js" という名前にします
-  ※Windowsの場合は、拡張子の表示をしてから名前をつけてください
-
-  ・Firefox: addon の Greasemonkey を入れてから、
-  このファイルをブラウザウィンドウに Drag & Drop で放り込む
-
-  ・Google Chrome : 設定→拡張機能を開いて、このファイルを Drag & Drop で放り込む
-
-  ・IE, Opera, Safari  : 確認していません。
-
-(※ Firefox の場合、
-    ツール → アドオン → (猿マークの)ユーザースクリプト
-    で、インストールされている ユーザースクリプト一覧が出るよ。
- )
   ----------------------------------------
  */
-
 
 
 /*
   ・1行100文字
   ・セミコロンは全ての場所につける。
-  ・"human readable"
+  ・"message"
   ・'system_constant_value'
 
   ・trigger, enable, disable
@@ -138,82 +115,80 @@
      *********/
     function modUtils()
     {
-	if( undefined === window.toshakiii )
-	{   window.toshakiii = {};};
+	    window.toshakiii = window.toshakiii || {};
 
-	var uthis = {};
+	    var uthis = window.toshakiii.utils = {};
 
-	window.toshakiii.utils = uthis;
+	    uthis.contains =
+	        function( array, item )
+	    {
+	        for( var arIdx in array )
+	        {
+		        if( item != array[ arIdx ] )
+		        {
+		            return true;
+		        };
+	        };
+	        return false;
+	    };
 
-	uthis.contains =
-	    function( array, item )
-	{
-	    for( var arIdx in array )
+	    uthis.getBodyBackgroundColor =
+	        function()
 	    {
-		if( item != array[ arIdx ] )
-		{
-		    return true;
-		};
+	        var cssProperties = window.getComputedStyle(document.body);
+	        var backgroundColor = cssProperties["background-color"];
+	        if( backgroundColor == null )
+	        {
+		        return "rgb(255,255,255)";
+	        };
+	        return backgroundColor;
 	    };
-	    return false;
-	};
-	
-	uthis.getBodyBackgroundColor =
-	    function()
-	{
-	    var cssProperties = window.getComputedStyle(document.body);
-	    var backgroundColor = cssProperties["background-color"];
-	    if( backgroundColor == null )
+	    uthis.getBodyForegroundColor =
+	        function()
 	    {
-		return "rgb(255,255,255)";
+	        var cssProperties = window.getComputedStyle(document.body);
+	        var foregroundColor = cssProperties["color"];
+	        if( foregroundColor == null )
+	        {
+		        return "rgb(0,0,0)";
+	        };
+	        return foregroundColor;
 	    };
-	    return backgroundColor;
-	};
-	uthis.getBodyForegroundColor =
-	    function()
-	{
-	    var cssProperties = window.getComputedStyle(document.body);
-	    var foregroundColor = cssProperties["color"];
-	    if( foregroundColor == null )
-	    {
-		return "rgb(0,0,0)";
-	    };
-	    return foregroundColor;
-	};
 
-	uthis.getScrollTop = function()
-	{
-	    var v = document.documentElement.scrollTop;
-	    if( 0 == v )
+	    uthis.getScrollTop = function()
 	    {
-		return document.body.scrollTop;
+	        var v = document.documentElement.scrollTop;
+	        if( 0 == v )
+	        {
+		        return document.body.scrollTop;
+	        };
+	        return v;
 	    };
-	    return v;
-	};
-	uthis.getScrollLeft = function()
-	{
-	    var v = document.documentElement.scrollLeft;
-	    if( 0 == v )
+	    uthis.getScrollLeft = function()
 	    {
-		return document.body.scrollLeft;
+	        var v = document.documentElement.scrollLeft;
+	        if( 0 == v )
+	        {
+		        return document.body.scrollLeft;
+	        };
+	        return v;
 	    };
-	    return v;
-	};
 
-	uthis.replaceItem = function( array, fromItem, toItem )
-	{
-	    for( var idx = 0, len = array.length ; idx < len ; ++idx )
+	    uthis.replaceItem = function( array, fromItem, toItem )
 	    {
-		if( array[ idx ] === fromItem )
-		{
-		    array[ idx ] = toItem;
-		};
+	        for( var idx = 0, len = array.length ; idx < len ; ++idx )
+	        {
+		        if( array[ idx ] === fromItem )
+		        {
+		            array[ idx ] = toItem;
+		        };
+	        };
+	        return array;
 	    };
-	    return array;
-	};
         uthis.leftpad =
             function( str, n, char )
         {
+	        str = str.toString();
             if( n <= str.length )
             {
                 return str;
@@ -228,14 +203,14 @@
         uthis.removeIdAll =
             function removeIdAll( element )
         {
-	    element.id = "";
-	    for( var i in element.children )
-	    {
-		if( undefined != element.children )
-		{
-		    removeIdAll( element.children[ i ] );
-		};
-	    };
+	        element.id = "";
+	        for( var i in element.children )
+	        {
+		        if( undefined != element.children )
+		        {
+		            removeIdAll( element.children[ i ] );
+		        };
+	        };
             return element;
         };
 
@@ -250,12 +225,12 @@
                 elt.id = "toshakiii_log01";
                 document.body.appendChild(elt);
             };
-	    var str = "";
+	        var str = "";
             for( var idx = 0, len = arguments.length; idx < len ; ++idx )
             {
-		str = str + arguments[idx]+" ";
+		        str = str + arguments[idx]+" ";
             };
-	    
+
             elt.appendChild( document.createTextNode(str) );
             elt.appendChild( document.createElement('BR') );
         };
@@ -273,6 +248,31 @@
             };
             return r;
         };
+
+	    uthis.getYearMonthDateDayHoursMinutesSeconds =
+	        function( dateObj , useUTC )
+	    {
+	        /* return type: int array */
+	        /* return value: [ year, month, date, day, hours, minutes, seconds] */
+	        /*   month: 0 origin */
+	        if( useUTC )
+	        {
+		        return [ dateObj.getUTCFullYear(),
+			             dateObj.getUTCMonth(),
+			             dateObj.getUTCDate(),
+			             dateObj.getUTCDay(),
+			             dateObj.getUTCHours(),
+			             dateObj.getUTCMinutes(),
+			             dateObj.getUTCSeconds() ];
+	        };
+	        return [ dateObj.getFullYear(),
+		             dateObj.getMonth(),
+		             dateObj.getDate(),
+		             dateObj.getDay(),
+		             dateObj.getHours(),
+		             dateObj.getMinutes(),
+		             dateObj.getSeconds() ];
+	    };
 
         uthis.IntermittentLoops =
             function()
@@ -381,11 +381,11 @@
             uthis.elementOfUid[ uid ] = element;
             return uid;
         };
-	uthis.toMarkElementDiscarded =
-	    function( element )
-	{
-	    element.setAttribute( "data-tsk-discarded", "1" );
-	};
+	    uthis.toMarkElementDiscarded =
+	        function( element )
+	    {
+	        element.setAttribute( "data-tsk-discarded", "1" );
+	    };
 
         uthis.trigger =
             function()
@@ -395,7 +395,8 @@
 
         return uthis;
     };
-    
+
+
     /**********************************
      * filePreview                    *
      **********************************/
@@ -407,7 +408,7 @@
         {   window.toshakiii.settings = {}; };
 
         var pthis = {};
-	var lthis = window.toshakiii.lynxChanWrapper;
+	    var lthis = window.toshakiii.lynxChanWrapper;
 
         window.toshakiii.filePreview = pthis;
 
@@ -520,10 +521,10 @@
         {
             return selectedCell.hasAttribute( pthis.POINTER_CDA_NAME );
             /*
-              function( selectedCell, pointer){
-              var previewsArea = pthis.getPreviewsAreaElement( selectedCell );
-              return 0 < previewsArea.getElementsByClassName( pointer ).length;}
-            */
+             function( selectedCell, pointer){
+             var previewsArea = pthis.getPreviewsAreaElement( selectedCell );
+             return 0 < previewsArea.getElementsByClassName( pointer ).length;}
+             */
         };
 
         pthis.removeOldPreviews =
@@ -588,7 +589,7 @@
             function( mutationRecords, mutationObserver )
         {
             /* 本フォームへの ".selectedCell" 追加の前に、クイックリプライへの追加が行なわれる
-               ことを前提としたコード*/
+             ことを前提としたコード*/
             var selectedCells = document.getElementsByClassName("selectedCell");
             var selectedCell;
             var scIdx = 0;
@@ -625,10 +626,10 @@
                 };
             };
 
-	    for( var shIdx in lthis.selectedDivOnChangeHandlers )
-	    {
-		lthis.selectedDivOnChangeHandlers[ shIdx ]();
-	    };
+	        for( var shIdx in lthis.selectedDivOnChangeHandlers )
+	        {
+		        lthis.selectedDivOnChangeHandlers[ shIdx ]();
+	        };
         };
 
         pthis.quickReplyOnLoad =
@@ -647,7 +648,7 @@
                     if( "quick-reply" == mutationRecords[ mrIdx ].addedNodes[ anIdx ].id )
                     {
                         var selectedCells = mutationRecords[ mrIdx ].addedNodes[ anIdx ]
-                            .getElementsByClassName("selectedCell");
+                                .getElementsByClassName("selectedCell");
                         for( var scIdx = 0, scLen = selectedCells.length;
                              scIdx < scLen ; ++scIdx )
                         {
@@ -1265,16 +1266,19 @@
             var parentElt = document.getElementById("divThreads");
             var children = parentElt.children;
             var catalogCells = [];
-            var spanElts = {};
+            var showButtonElts = {};
             var idx = 0;
             var len = 0;
             var n = "";
             for( idx = 0, len = children.length ; idx < len ; ++idx )
             {
-                if( "SPAN" == children[idx].tagName )
+		        var child = children[idx];
+		        if( null != child.firstChild &&
+		            'A' === child.firstChild.tagName &&
+		            0 === child.firstChild.innerHTML.indexOf("[Show hidden thread ") )
                 {
-                    n = children[idx].id.replace( /[^0-9]/g, "");
-                    spanElts[ n ] = children[idx];
+                    n = child.id.replace( /[^0-9]/g, "");
+                    showButtonElts[ n ] = child;
                 }
                 else
                 {
@@ -1313,17 +1317,17 @@
             for( var ccIdx = 0, ccLen = catalogCells.length; ccIdx < ccLen ; ++ccIdx )
             {
                 var catalogCell = catalogCells[ ccIdx ];
-                if( catalogCell.id in spanElts )
+                if( catalogCell.id in showButtonElts )
                 {
-                    var spanElt = spanElts[ catalogCell.id ];
+                    var spanElt = showButtonElts[ catalogCell.id ];
                     if( settings.sageHidedThreads && spanElt.style.display != 'none' )
                     {
                         sageElts.push( spanElt );
                         sageElts.push( catalogCell );
                         continue;
                     }
-                    fragment.appendChild( spanElts[ catalogCell.id ] );
-                    /*parentElt.appendChild( spanElts[ catalogCells[idx].id ] );*/
+                    fragment.appendChild( showButtonElts[ catalogCell.id ] );
+                    /*parentElt.appendChild( showButtonElts[ catalogCells[idx].id ] );*/
                 }
                 else if( settings.sageHidedThreads &&
                          0 <= cookie.indexOf( '; hide' + sthis.boardUri + 'Thread' + catalogCell.id + "=true;" ) )
@@ -1370,93 +1374,6 @@
             };
         };
 
-        /*
-         {"message":"音楽の話がしたい",
-         "threadId":628,
-         "postCount":186,
-         "fileCount":21,
-         "page":2,
-         "subject":null,
-         "locked":false,
-         "pinned":false,
-         "cyclic":false,
-         "autoSage":false,
-         "creation":"2016-10-06T16:20:39.382Z",
-         "lastBump":"2016-11-08T14:09:45.207Z",
-         "thumb":"/.media/t_bcee5a0d124c22893ef4ee5fac33ebc4-imagepng"}
-
-         {"message":"とちゃきはPC内にいろんな画像を持ってるでしょう。前ダウンロードしたとか。ここで投稿して、何でも良い。",
-         "threadId":17232,
-         "page":1,
-         "subject":"ランダム画像スレ",
-         "locked":false,
-         "pinned":false,
-         "cyclic":false,
-         "autoSage":false,
-         "creation":"2016-11-08T13:42:49.833Z",
-         "lastBump":"2016-11-08T13:42:49.833Z",
-         "thumb":"/.media/t_4eb26ffa7d0fc369d76df38bc241ec54-imagejpeg"}
-
-         {"message":"We have our own Japanese internet radio station. Please drop by and listen to music with us.\n\nhttps://chiru.no/\n\n\n我々は独自の日本のインターネットラジオ局を持っています。立ち寄り、私たちと音楽を聴いてみてください。",
-         "threadId":17121,
-         "postCount":9,
-         "page":1,
-         "subject":null,
-         "locked":false,
-         "pinned":false,
-         "cyclic":false,
-         "autoSage":false,
-         "creation":"2016-11-07T19:09:21.601Z",
-         "lastBump":"2016-11-08T05:18:19.688Z",
-         "thumb":"/.media/f10bd7a5ef9be449d14bc095d2dcbbfc-imagejpeg"},
-
-         <div id="17232" class="catalogCell">
-         <a class="linkThumb" href="/librejp/res/17232.html">
-         <img src="/.media/t_4eb26ffa7d0fc369d76df38bc241ec54-imagejpeg"></a>
-         <p class="threadStats">R:
-         <span class="labelReplies">12</span>
-         / I:
-         <span class="labelImages">60</span>
-         / P:
-         <span class="labelPage">3</span>
-         </p>
-         <p>
-         <span class="labelSubject">ランダム画像スレ</span></p>
-         <div class="divMessage">とちゃきはPC内にいろんな画像を持ってるでしょう。前ダウンロードしたとか。ここで投稿して、何でも良い。</div>
-         <span> </span>
-         <a style="text-decoration: underline;" id="hidelibrejpThread17232">[X]</a>
-         </div>
-         */
-
-        /*
-         <div id="00" class="catalogCell">
-         <a class="linkThumb" href="/">
-         <img src="/"></a>
-         <p class="threadStats">R:
-         <span class="labelReplies">00</span>
-         / I:
-         <span class="labelImages">00</span>
-         / P:
-         <span class="labelPage">00</span>
-
-         <span class="lockIndicator" title="Locked"></span>
-         <span class="pinIndicator" title="Sticky"></span>
-         <span class="cyclicIndicator" title="Cyclical Thread"></span>
-         <span class="bumpLockIndicator" title="Bumplocked"></span>
-         </p>
-         <p>
-         <span class="labelSubject">00</span></p>
-         <div class="divMessage">00</div>
-         <a style="text-decoration: underline;" id="hidelibrejpThread00">[X]</a>
-         </div>
-         */
-        sthis.catalogCellTemplateHTML = '<div id="00" class="catalogCell"><a class="linkThumb" href="/"><img src="/"></a><p class="threadStats">R:<span class="labelReplies">00</span>/ I:<span class="labelImages">00</span>/ P:<span class="labelPage">00</span></p><p><span class="labelSubject">00</span></p><div class="divMessage">00</div></div>';
-        sthis.catalogCellTemplateElement = undefined;
-
-        /*
-         ・hide ボタン実装
-         ・消滅スレを消す
-         */
         sthis.refreshCatalogCells =
             function()
         {
@@ -1563,7 +1480,7 @@
             (function()
              {
                  sthis.recordBumpOrderFromJson( json );
-            } );
+             } );
             var catalogCellInfoOfId = {};
             iloops.push( function(){
                 for( var cellInfo in json )
@@ -1665,6 +1582,9 @@
             sthis.CatalogCell.changeBumpLock  ( catalogCell, info.autoSage );
         };
 
+
+        sthis.catalogCellTemplateHTML = '<div id="00" class="catalogCell"><a class="linkThumb" href="/"><img src="/"></a><p class="threadStats">R:<span class="labelReplies">00</span>/ I:<span class="labelImages">00</span>/ P:<span class="labelPage">00</span></p><p><span class="labelSubject">00</span></p><div class="divMessage">00</div></div>';
+	    sthis.catalogCellTemplateElement = undefined;
         sthis.makeCatalogCell =
             function( catalogCellInfo )
         {
@@ -1736,8 +1656,8 @@
 
             var eltLSB = document.createTextNode("[");
             var eltARefresh = document.createElement('A');
-	    /*eltARefresh.id = 'tskCatalogRefresh';
-            eltARefresh.href = '#tskCatalogRefresh';*/
+	        /*eltARefresh.id = 'tskCatalogRefresh';
+             eltARefresh.href = '#tskCatalogRefresh';*/
             eltARefresh.appendChild( document.createTextNode('Refresh') );
             eltARefresh.addEventListener('click', sthis.refreshCatalogCells);
             var eltRSB = document.createTextNode("]");
@@ -1917,13 +1837,13 @@
         if( undefined === window.toshakiii.settings )
         {   window.toshakiii.settings = {}; };
 
-	var lthis = window.toshakiii.lynxChanWrapper;
+	    var lthis = window.toshakiii.lynxChanWrapper;
         var utils = window.toshakiii.utils;
         var etcthis = {};
 
         window.toshakiii.etCetera = etcthis;
 
-	etcthis.postCellOnLoadHooks = [];
+	    etcthis.postCellOnLoadHooks = [];
         etcthis.divPostsMutationObserver = undefined;
 
         etcthis.startObserveDivPosts =
@@ -1971,7 +1891,7 @@
         };
 
         etcthis.onYoutubeEmbedButtonClick =
-                function( ev )
+            function( ev )
         {
             var iframes = this.parentElement.getElementsByTagName('IFRAME');
             if( 0 < iframes.length )
@@ -2064,7 +1984,7 @@
                 div.appendChild( document.createTextNode("埋め込みで見たければ http のここへ") );
                 div.appendChild( document.createElement('BR') );
                 div.style.border = "1px solid red";
-                var httpthreUri = location.href.replace(/^https/,"http");
+                var httpthreUri = location.href.replace(/^https/,"http").replace(/#.*/);
                 var httpthreLink = document.createElement('A');
                 httpthreLink.href = httpthreUri + "#" + etcthis.getAncestorPostCellId( this );
                 httpthreLink.appendChild( document.createTextNode( httpthreLink.href ) );
@@ -2114,14 +2034,14 @@
                     {
                         etcthis.overrideEmbedNiconicoButton( niconico_wrappers[ nwIdx ] );
                     };
-		    var hooks = etcthis.postCellOnLoadHooks;
-		    for( var hkIdx = 0, hkLen = hooks.length; hkIdx < hkLen ; ++hkIdx )
-		    {
-			if( 0 <= addedNode.className.indexOf('postCell') )
-			{
-			    hooks[ hkIdx ]( addedNode );
-			};
-		    };
+		            var hooks = etcthis.postCellOnLoadHooks;
+		            for( var hkIdx = 0, hkLen = hooks.length; hkIdx < hkLen ; ++hkIdx )
+		            {
+			            if( 0 <= addedNode.className.indexOf('postCell') )
+			            {
+			                hooks[ hkIdx ]( addedNode );
+			            };
+		            };
                 };
             };
 
@@ -2142,6 +2062,11 @@
             return dayTextList[ day ];
         };
 
+	    etcthis.dataFormatB =
+	        function( dateObj, timezone, expressionType )
+	    {
+	    };
+
         etcthis.dateFormatA =
             function( d, dayTextList, useUTC )
         {
@@ -2149,35 +2074,14 @@
             var leftpad = utils.leftpad;
             var year, month, date, hours, minutes, seconds, day;
 
-            if( useUTC )
-            {
-                [ year, month, date, hours, minutes, seconds ] =
-                    [ d.getUTCFullYear().toString(),
-                      (d.getUTCMonth() + 1).toString(),
-                      d.getUTCDate().toString(),
-                      d.getUTCHours().toString(),
-                      d.getUTCMinutes().toString(),
-                      d.getUTCSeconds().toString() ];
-                day = etcthis.getDayText( d.getUTCDay(), dayTextList );;
-            }
-            else
-            {
-                [ year, month, date, hours, minutes, seconds ] =
-                    [ d.getFullYear().toString(),
-                      (d.getMonth() + 1).toString(),
-                      d.getDate().toString(),
-                      d.getHours().toString(),
-                      d.getMinutes().toString(),
-                      d.getSeconds().toString() ];
-                day = etcthis.getDayText( d.getDay(), dayTextList );;
-            };
-
+            [ year, month, date, day, hours, minutes, seconds ] =
+		        utils.getYearMonthDateDayHoursMinutesSeconds( d );
 
             var text =
                     year + "/"
-                    + leftpad( month, 2, "0") + "/"
+                    + leftpad( month + 1, 2, "0") + "/"
                     + leftpad( date , 2, "0") +
-                    "(" + day + ")"
+                    "(" + etcthis.getDayText( day, dayTextList ) + ")"
                     + leftpad( hours, 2, "0") + ":" +
                     leftpad( minutes, 2, "0") + ":" +
                     leftpad( seconds, 2, "0");
@@ -2209,7 +2113,7 @@
             hours   = matches[4];
             minutes = matches[5];
             seconds = matches[6];
-
+	        /**/
             if( seconds == undefined )
             {
                 return true;
@@ -2334,82 +2238,83 @@
 
         };
 
-	etcthis.hackSendReplyDataToSupportChromeMp3 =
-	    function hackSendReplyDataToSupportChromeMp3()
-	{
-	    if( undefined == window.sendReplyData )
+	    etcthis.hackSendReplyDataToSupportChromeMp3 =
+	        function hackSendReplyDataToSupportChromeMp3()
 	    {
-		if( 'complete' == document.readyState )
-		{
-		    return;
-		};
-		setTimeout( hackSendReplyDataToSupportChromeMp3, 10 );
-		return;
-	    };
-	    if( 'function' != typeof( window.sendReplyData ) )
-	    {
-		return;
-	    };
-	    var originalSendReplyData = window.sendReplyData;
+	        if( undefined == window.sendReplyData )
+	        {
+		        if( 'complete' == document.readyState )
+		        {
+		            return;
+		        };
+		        setTimeout( hackSendReplyDataToSupportChromeMp3, 10 );
+		        return;
+	        };
+	        if( 'function' != typeof( window.sendReplyData ) )
+	        {
+		        return;
+	        };
+	        var originalSendReplyData = window.sendReplyData;
 
-	    window.sendReplyData
-		= function ymncSendReplyData( files )
-	    {
-		try
-		{
-		    var data_audio_mpeg = 'data:audio/mpeg;';
-		    var data_audio_mp3 = 'data:audio/mp3;';
-		    var IANA_mp3_mime = 'audio/mpeg';
-		    var Chrome_mp3_mime = 'audio/mp3';
-		    for( var i in files )
-		    {
-			var file = files[ i ];
-			if( 0 == file.content.indexOf( data_audio_mp3 ) )
-			{
-			    file.mime = IANA_mp3_mime;
-			    file.content = data_audio_mpeg
-				+ file.content.substring( data_audio_mp3.length );
-			};
-		    };
-		    i = undefined;
-		    file = undefined;
-		    data_audio_mpeg = undefined;
-		    data_audio_mp3 = undefined;
-		    IANA_mp3_mime = undefined;
-		}
-		catch(e)
-		{};
+	        window.sendReplyData
+		        = function ymncSendReplyData( files )
+	        {
+		        try
+		        {
+		            var data_audio_mpeg = 'data:audio/mpeg;';
+		            var data_audio_mp3 = 'data:audio/mp3;';
+		            var IANA_mp3_mime = 'audio/mpeg';
+		            var Chrome_mp3_mime = 'audio/mp3';
+		            for( var i in files )
+		            {
+			            var file = files[ i ];
+			            if( 0 == file.content.indexOf( data_audio_mp3 ) )
+			            {
+			                file.mime = IANA_mp3_mime;
+			                file.content = data_audio_mpeg
+				                + file.content.substring( data_audio_mp3.length );
+			            };
+		            };
+		            i = undefined;
+		            file = undefined;
+		            data_audio_mpeg = undefined;
+		            data_audio_mp3 = undefined;
+		            IANA_mp3_mime = undefined;
+		        }
+		        catch(e)
+		        {};
 
-		return originalSendReplyData.apply( window, Array.prototype.slice.call( arguments ) );
+		        return originalSendReplyData.apply( window, Array.prototype.slice.call( arguments ) );
+	        };
+	        lthis.selectedDivOnChangeHandlers.push( etcthis.replaceAudioMp3WithAudioMpeg );
+	        etcthis.replaceAudioMp3WithAudioMpeg();
 	    };
-	    lthis.selectedDivOnChangeHandlers.push( etcthis.replaceAudioMp3WithAudioMpeg );
-	    etcthis.replaceAudioMp3WithAudioMpeg();
-	};
 
-	etcthis.replaceAudioMp3WithAudioMpeg =
-	    function()
-	{
-	    if( null == window.selectedFiles )
+	    etcthis.replaceAudioMp3WithAudioMpeg =
+	        function()
 	    {
-		return;
+	        if( null == window.selectedFiles )
+	        {
+		        return;
+	        };
+	        for( var i in window.selectedFiles )
+	        {
+		        var selectedFile = window.selectedFiles[ i ];
+		        if( 'audio/mp3' == selectedFile.type )
+		        {
+		            Object.defineProperty( selectedFile, "type",
+					                       { enumerable: false,
+					                         configurable: false,
+					                         writable: true,
+					                         value: "audio/mpeg" } );
+		        };
+	        };
 	    };
-	    for( var i in window.selectedFiles )
-	    {
-		var selectedFile = window.selectedFiles[ i ];
-		if( 'audio/mp3' == selectedFile.type )
-		{
-		    Object.defineProperty( selectedFile, "type",
-					   { enumerable: false,
-					     configurable: false,
-					     writable: true,
-					     value: "audio/mpeg" } );
-		};
-	    };
-	};
-	
+
         etcthis.addConsecutiveNumberStyle =
             function()
         {
+
             var style = document.createElement('style');
             style.type = "text/css";
             style.id = "postsConsecutiveNumberStyle";
@@ -2424,6 +2329,7 @@
              */
             style.innerHTML =
                 "div.divPosts div.postCell{counter-increment:consecutiveNumber;}" +
+                "div.divPosts div.postCell div.markedPost:before{content:counter(consecutiveNumber);}" +
                 "div.divPosts div.postCell div.innerPost:before{content:counter(consecutiveNumber);}";
             document.head.appendChild( style );
         };
@@ -2444,8 +2350,12 @@
             etcthis.startObserveDivPosts();
             setTimeout( etcthis.localizeDateTimeLabelAll, 0 );
             setTimeout( etcthis.overrideWrapperAll, 0 );
-            setTimeout( etcthis.addConsecutiveNumberStyle, 0 );
-	    setTimeout( etcthis.hackSendReplyDataToSupportChromeMp3, 0 );
+	        if( 0 <= document.location.href.indexOf("/res/") )
+	        {
+		        setTimeout( etcthis.addConsecutiveNumberStyle, 0 );
+	        };
+
+	        setTimeout( etcthis.hackSendReplyDataToSupportChromeMp3, 0 );
         };
 
         etcthis.trigger = function()
@@ -2471,89 +2381,89 @@
         var utils = window.toshakiii.utils;
 
         window.toshakiii.multiPopup = mthis;
-	var etCetera = window.toshakiii.etCetera;
+	    var etCetera = window.toshakiii.etCetera;
 
         mthis.Popup =
             function(){};
         mthis.popups = {};
-	/* { <ElementUniqueId>:
-             { uid: <ElementUniqueId>:
-	       quoteAnchor: <HTMLAnchorElement>,
-               targetPosition: {x:<int>, y:<int>},
-	       element: <HTMLElement>,
-	       phase: <int>,
-	       showTimer: <timer ID>,
-	       closeTimer: <timer ID>,
-	       parent: <ElementUniqueId>,
-	       children: [ <ElementUniqueId>, ... ],
-	       brothers: (reseved)[ <ElementUniqueId>, ... ],
-               }... } */
-	mthis.POPUP_PHASE =
-	    {   DO_NOTHING               : 0,
-		COUNTDOWN_FOR_SHOW_POPUP : 1,
-		NOW_SHOWING              : 2,
-		COUNTDOWN_FOR_CLOSE_POPUP: 3 };
+	    /* { <ElementUniqueId>:
+         { uid: <ElementUniqueId>:
+	     quoteAnchor: <HTMLAnchorElement>,
+         targetPosition: {x:<int>, y:<int>},
+	     element: <HTMLElement>,
+	     phase: <int>,
+	     showTimer: <timer ID>,
+	     closeTimer: <timer ID>,
+	     parent: <ElementUniqueId>,
+	     children: [ <ElementUniqueId>, ... ],
+	     brothers: (reseved)[ <ElementUniqueId>, ... ],
+         }... } */
+	    mthis.POPUP_PHASE =
+	        {   DO_NOTHING               : 0,
+		        COUNTDOWN_FOR_SHOW_POPUP : 1,
+		        NOW_SHOWING              : 2,
+		        COUNTDOWN_FOR_CLOSE_POPUP: 3 };
         mthis.cache = {};
-	/* { <URI> : { element: <HTMLElement>, message: <string> } } */
+	    /* { <URI> : { element: <HTMLElement>, message: <string> } } */
         mthis.defaultSettings = { 'timeToPopup': 250/*ms*/,
-				  'timeToClosePopup': 350/*ms*/ };
+				                  'timeToClosePopup': 350/*ms*/ };
         mthis.panelBacklinksObservers = {};
-	mthis.mouseClientPos = {x:0,y:0};
+	    mthis.mouseClientPos = {x:0,y:0};
 
-	mthis.preparePopupInfo =
-	    function( popups, arg2 )
-	{
-	    var uid, quoteAnchor;
-	    if( "string" == typeof(arg2) )
+	    mthis.preparePopupInfo =
+	        function( popups, arg2 )
 	    {
-		uid = arg2;
-	    }
-	    else
-	    {
-		quoteAnchor = arg2;
-		uid = utils.getElementUniqueId( quoteAnchor );
-	    };
-	    arg2 = undefined;
-	    
-	    if( undefined != popups[ uid ] )
-	    {
-		return popups[ uid ];
-	    };
-	    popups[ uid ] =
-		{ 'brothers'      : [],
-		  'children'      : [],
-		  'closeTimer'    : undefined,
-		  'element'       : undefined,
-		  'parent'        : undefined,
-		  'phase'         : mthis.POPUP_PHASE.DO_NOTHING,
-		  'quoteAnchor'   : quoteAnchor,
-		  'showTimer'     : undefined,
-		  'targetPosition': undefined,
-		  'uid'           : uid };
-	    return popups[ uid ];
-	};
+	        var uid, quoteAnchor;
+	        if( "string" == typeof(arg2) )
+	        {
+		        uid = arg2;
+	        }
+	        else
+	        {
+		        quoteAnchor = arg2;
+		        uid = utils.getElementUniqueId( quoteAnchor );
+	        };
+	        arg2 = undefined;
 
-	mthis.setUidOfPopupParent =
-	    function( element, parentUid )
-	{
-	    /* no parent‐child relation of DOM. parent-child relation of popups. */
-	    var cdaName = 'data-tsk-parent-popup-uid';
-	    element.setAttribute( cdaName, parentUid );
-	    return true;
-	};
-
-	mthis.getUidOfPopupParent =
-	    function( element )
-	{
-	    var cdaName = 'data-tsk-parent-popup-uid';
-	    var parentUid = element.getAttribute( cdaName );
-	    if( undefined == parentUid )
-	    {
-		return parentUid;
+	        if( undefined != popups[ uid ] )
+	        {
+		        return popups[ uid ];
+	        };
+	        popups[ uid ] =
+		        { 'brothers'      : [],
+		          'children'      : [],
+		          'closeTimer'    : undefined,
+		          'element'       : undefined,
+		          'parent'        : undefined,
+		          'phase'         : mthis.POPUP_PHASE.DO_NOTHING,
+		          'quoteAnchor'   : quoteAnchor,
+		          'showTimer'     : undefined,
+		          'targetPosition': undefined,
+		          'uid'           : uid };
+	        return popups[ uid ];
 	    };
-	    return parentUid;
-	};
-	
+
+	    mthis.setUidOfPopupParent =
+	        function( element, parentUid )
+	    {
+	        /* no parent‐child relation of DOM. parent-child relation of popups. */
+	        var cdaName = 'data-tsk-parent-popup-uid';
+	        element.setAttribute( cdaName, parentUid );
+	        return true;
+	    };
+
+	    mthis.getUidOfPopupParent =
+	        function( element )
+	    {
+	        var cdaName = 'data-tsk-parent-popup-uid';
+	        var parentUid = element.getAttribute( cdaName );
+	        if( undefined == parentUid )
+	        {
+		        return parentUid;
+	        };
+	        return parentUid;
+	    };
+
         mthis.getSettings =
             function( name )
         {
@@ -2564,274 +2474,274 @@
             return settings[ name ];
         };
 
-	mthis.startCountdownForClosePopup =
-	    function( popupInfo )
-	{
-	    if( mthis.POPUP_PHASE.NOW_SHOWING != popupInfo['phase'] )
+	    mthis.startCountdownForClosePopup =
+	        function( popupInfo )
 	    {
-		return false;
+	        if( mthis.POPUP_PHASE.NOW_SHOWING != popupInfo['phase'] )
+	        {
+		        return false;
+	        };
+	        var timeToClosePopup = mthis.getSettings('timeToClosePopup');
+	        popupInfo['phase'] = mthis.POPUP_PHASE.COUNTDOWN_FOR_CLOSE_POPUP;
+	        popupInfo['closeTimer'] =
+		        setTimeout( function(){ mthis.PopupHasExpired( popupInfo, true ); },
+			                timeToClosePopup );
+	        return true;
 	    };
-	    var timeToClosePopup = mthis.getSettings('timeToClosePopup');
-	    popupInfo['phase'] = mthis.POPUP_PHASE.COUNTDOWN_FOR_CLOSE_POPUP;
-	    popupInfo['closeTimer'] =
-		setTimeout( function(){ mthis.PopupHasExpired( popupInfo, true ); },
-			    timeToClosePopup );
-	    return true;
-	};
-	mthis.startCountdownForShowPopup =
-	    function( popupInfo )
-	{
-	    var quoteLink = popupInfo['quoteAnchor'];
-	    var uid = popupInfo['uid'];
+	    mthis.startCountdownForShowPopup =
+	        function( popupInfo )
+	    {
+	        var quoteLink = popupInfo['quoteAnchor'];
+	        var uid = popupInfo['uid'];
 
-	    if( mthis.POPUP_PHASE.DO_NOTHING != popupInfo['phase'] )
-	    {
-		return false;
-	    };
+	        if( mthis.POPUP_PHASE.DO_NOTHING != popupInfo['phase'] )
+	        {
+		        return false;
+	        };
 
-	    if( undefined != popupInfo['showTimer'] )
-	    {
-		return true;
-	    };
-	    popupInfo['phase'] = mthis.POPUP_PHASE.COUNTDOWN_FOR_SHOW_POPUP;
+	        if( undefined != popupInfo['showTimer'] )
+	        {
+		        return true;
+	        };
+	        popupInfo['phase'] = mthis.POPUP_PHASE.COUNTDOWN_FOR_SHOW_POPUP;
             var timeToPopup = mthis.getSettings( 'timeToPopup' );
             popupInfo['showTimer'] =
                 setTimeout( function(){ popupInfo['showTimer'] = undefined;
-					mthis.showPopup( popupInfo ); }
-			    , timeToPopup );
+					                    mthis.showPopup( popupInfo ); }
+			                , timeToPopup );
             return true;
-	};
-
-	mthis.extendExpirationDate =
-	    function extendExpirationDate( popupInfo )
-	{
-	    var timeToClosePopup = mthis.getSettings('timeToClosePopup');
-
-	    if( mthis.POPUP_PHASE.COUNTDOWN_FOR_CLOSE_POPUP != popupInfo['phase'] )
-	    {
-		return false;
 	    };
-	    var timer = popupInfo['closeTimer'];
-	    if( undefined != timer )
-	    {
-		clearTimeout( popupInfo['closeTimer'] );
-	    };
-	    popupInfo['closeTimer'] = undefined;
-	    popupInfo['phase'] = mthis.POPUP_PHASE.NOW_SHOWING;
-	    
-	    if( undefined == popupInfo['parent'] )
-	    {
-		return true;
-	    }
 
-	    var parentPopupInfo = mthis.popups[ popupInfo['parent'] ];
-	    if( undefined == parentPopupInfo )
+	    mthis.extendExpirationDate =
+	        function extendExpirationDate( popupInfo )
 	    {
-		popupInfo['parent'] = undefined;
-	    }
-	    else
-	    {
-		extendExpirationDate( parentPopupInfo );
-	    };
-	    return true;
-	};
+	        var timeToClosePopup = mthis.getSettings('timeToClosePopup');
 
-	mthis.touchElement =
+	        if( mthis.POPUP_PHASE.COUNTDOWN_FOR_CLOSE_POPUP != popupInfo['phase'] )
+	        {
+		        return false;
+	        };
+	        var timer = popupInfo['closeTimer'];
+	        if( undefined != timer )
+	        {
+		        clearTimeout( popupInfo['closeTimer'] );
+	        };
+	        popupInfo['closeTimer'] = undefined;
+	        popupInfo['phase'] = mthis.POPUP_PHASE.NOW_SHOWING;
+
+	        if( undefined == popupInfo['parent'] )
+	        {
+		        return true;
+	        }
+
+	        var parentPopupInfo = mthis.popups[ popupInfo['parent'] ];
+	        if( undefined == parentPopupInfo )
+	        {
+		        popupInfo['parent'] = undefined;
+	        }
+	        else
+	        {
+		        extendExpirationDate( parentPopupInfo );
+	        };
+	        return true;
+	    };
+
+	    mthis.touchElement =
             function( event )
         {
             var quoteLink = event.target;
-	    var popupInfo = mthis.preparePopupInfo( mthis.popups, quoteLink );
+	        var popupInfo = mthis.preparePopupInfo( mthis.popups, quoteLink );
 
-	    var PP = mthis.POPUP_PHASE;
-	    var rect;
-	    switch( popupInfo['phase'] )
-	    {
-	    default:
-	    case PP.DO_NOTHING:
-		/*rect = quoteLink.getBoundingClientRect();*/
-		popupInfo['targetPosition'] = {'x': event.pageX, 'y':event.pageY };
-		mthis.startCountdownForShowPopup( popupInfo );
-		return true;
-	    case PP.COUNTDOWN_FOR_SHOW_POPUP:
-		popupInfo['targetPosition'] = {'x': event.pageX, 'y':event.pageY };
-		return true;
-	    case PP.NOW_SHOWING:
-		return true;
-	    case PP.COUNTDOWN_FOR_CLOSE_POPUP:
-		mthis.extendExpirationDate( popupInfo );
-		return true;
-	    };
-	    return true;
+	        var PP = mthis.POPUP_PHASE;
+	        var rect;
+	        switch( popupInfo['phase'] )
+	        {
+	            default:
+	        case PP.DO_NOTHING:
+		        /*rect = quoteLink.getBoundingClientRect();*/
+		        popupInfo['targetPosition'] = {'x': event.pageX, 'y':event.pageY };
+		        mthis.startCountdownForShowPopup( popupInfo );
+		        return true;
+	        case PP.COUNTDOWN_FOR_SHOW_POPUP:
+		        popupInfo['targetPosition'] = {'x': event.pageX, 'y':event.pageY };
+		        return true;
+	        case PP.NOW_SHOWING:
+		        return true;
+	        case PP.COUNTDOWN_FOR_CLOSE_POPUP:
+		        mthis.extendExpirationDate( popupInfo );
+		        return true;
+	        };
+	        return true;
         };
 
         mthis.untouchElement =
             function( event )
         {
             var quoteLink = event.target;
-	    var popupInfo = mthis.preparePopupInfo( mthis.popups, quoteLink );
+	        var popupInfo = mthis.preparePopupInfo( mthis.popups, quoteLink );
 
-	    var PP = mthis.POPUP_PHASE;
-	    if( PP.COUNTDOWN_FOR_SHOW_POPUP == popupInfo['phase'] )
-	    {
-		var timer = popupInfo['showTimer'];
-		if( undefined != timer )
-		{
+	        var PP = mthis.POPUP_PHASE;
+	        if( PP.COUNTDOWN_FOR_SHOW_POPUP == popupInfo['phase'] )
+	        {
+		        var timer = popupInfo['showTimer'];
+		        if( undefined != timer )
+		        {
                     clearTimeout( timer );
-		    popupInfo['showTimer'] = undefined;
-		};
-		popupInfo['phase'] = PP.DO_NOTHING;
-		return true;
-	    }
-	    else if( PP.NOW_SHOWING == popupInfo['phase'] )
-	    {
-		mthis.startCountdownForClosePopup( popupInfo );
-	    };
-	    return true;
+		            popupInfo['showTimer'] = undefined;
+		        };
+		        popupInfo['phase'] = PP.DO_NOTHING;
+		        return true;
+	        }
+	        else if( PP.NOW_SHOWING == popupInfo['phase'] )
+	        {
+		        mthis.startCountdownForClosePopup( popupInfo );
+	        };
+	        return true;
         };
 
 
-	mthis.getRelatedPostCell =
-	    function getAncientPostCell( element )
-	{
-	    if( null == element )
+	    mthis.getRelatedPostCell =
+	        function getAncientPostCell( element )
 	    {
-		return null;
-	    };
-	    if( document.body == element )
-	    {
-		return null;
-	    }
-	    if( 0 <= element.className.indexOf("postCell") )
-	    {
-		return element;
-	    };
-	    return getAncientPostCell( element.parentElement );
-	};
-
-	mthis.getRelatedDivMessage =
-	    function( element )
-	{
-	    var postCell = mthis.getRelatedPostCell( element );
-	    if( null == postCell )
-	    {
-		return null;
-	    };
-	    var divMessageList = postCell.getElementsByClassName("divMessage");
-	    if( 0 < divMessageList.length )
-	    {
-		return divMessageList[0];
-	    };
-	    return null;
-
-	};
-
-	mthis.downloadPostCell =
-	    function( popupInfo, callback )
-	{
-	    var quoteAnchor = popupInfo['quoteAnchor'];
-	    var msg;
-	    if( quoteAnchor.host != location.host )
-	    {
-		callback( popupInfo, null, msg );
-		return;
+	        if( null == element )
+	        {
+		        return null;
+	        };
+	        if( document.body == element )
+	        {
+		        return null;
+	        }
+	        if( 0 <= element.className.indexOf("postCell") )
+	        {
+		        return element;
+	        };
+	        return getAncientPostCell( element.parentElement );
 	    };
 
-	    if( 0 > quoteAnchor.pathname.indexOf("/res/") )
+	    mthis.getRelatedDivMessage =
+	        function( element )
 	    {
-		callback( popupInfo, null, "unexpected uri:" + quoteAnchor );
-		return;
+	        var postCell = mthis.getRelatedPostCell( element );
+	        if( null == postCell )
+	        {
+		        return null;
+	        };
+	        var divMessageList = postCell.getElementsByClassName("divMessage");
+	        if( 0 < divMessageList.length )
+	        {
+		        return divMessageList[0];
+	        };
+	        return null;
+
 	    };
 
-	    var pathname = quoteAnchor.pathname;
-	    var hash = quoteAnchor.hash;
-	    var uri = "";
-	    if( 0 == hash.length )
+	    mthis.downloadPostCell =
+	        function( popupInfo, callback )
 	    {
-		uri = pathname.replace("/res/","/preview/");
-	    }
-	    else if( 0 == hash.indexOf("#q") )
-	    {
-		uri = pathname.replace(/\/res\/[^/]*/,"/preview/") + hash.substring(2) + ".html";
-	    }
-	    else
-	    {
-		uri = pathname.replace(/\/res\/[^/]*/,"/preview/") + hash.substring(1) + ".html";
+	        var quoteAnchor = popupInfo['quoteAnchor'];
+	        var msg;
+	        if( quoteAnchor.host != location.host )
+	        {
+		        callback( popupInfo, null, msg );
+		        return;
+	        };
+
+	        if( 0 > quoteAnchor.pathname.indexOf("/res/") )
+	        {
+		        callback( popupInfo, null, "unexpected uri:" + quoteAnchor );
+		        return;
+	        };
+
+	        var pathname = quoteAnchor.pathname;
+	        var hash = quoteAnchor.hash;
+	        var uri = "";
+	        if( 0 == hash.length )
+	        {
+		        uri = pathname.replace("/res/","/preview/");
+	        }
+	        else if( 0 == hash.indexOf("#q") )
+	        {
+		        uri = pathname.replace(/\/res\/[^/]*/,"/preview/") + hash.substring(2) + ".html";
+	        }
+	        else
+	        {
+		        uri = pathname.replace(/\/res\/[^/]*/,"/preview/") + hash.substring(1) + ".html";
+	        };
+	        uri = "//" + quoteAnchor.host + uri;
+	        /* ex. "//yamanu.org/chan/preview/123.html" */
+
+	        if( undefined != mthis.cache[ uri ] )
+	        {
+		        var postCell = mthis.cache[ uri ]['element'];
+		        if( null != postCell )
+		        {
+		            postCell = postCell.cloneNode( true );
+		        };
+		        callback( popupInfo, postCell, mthis.cache[ uri ]['message'] );
+		        return;
+	        };
+
+	        callback( popupInfo, null, "now loading" );
+
+	        var xhr = new XMLHttpRequest();
+	        var fullUri = location.protocol + uri; /* for message */
+	        xhr.onreadystatechange = function()
+	        {
+		        switch( this.readyState )
+		        {
+		        case 0:
+		        case 1:
+		        case 3:
+		            return;
+		        case 4:
+		            if( 200 <= this.status &&
+			            300 >  this.status )
+		            {
+			            if( 'document' != this.responseType )
+			            {
+			                msg = "unknown response contents(1): + " + this.responseType;
+			                mthis.cache[ uri ] = { 'message': msg };
+			                callback( popupInfo, null, msg );
+			                return;
+			            };
+
+			            /*
+			             freech: #panelContent は空。body 直下に .postCell がある
+			             */
+
+			            var postCellList = this.response.getElementsByClassName('postCell');
+			            if( 0 >= postCellList.length )
+			            {
+			                msg = "unknown response contents: postCell not found: " + fullUri;
+			                mthis.cache[ uri ] = { 'message': msg };
+			                window.lastPanelContent = this.response;
+			                callback( popupInfo, null, msg );
+			                /*callback( popupInfo, null, msg );*/
+			                return;
+			            };
+			            var postCell = postCellList[0];
+			            postCell = utils.removeIdAll( document.importNode( postCell, true ) );
+			            mthis.cache[ uri ] = { 'element': postCell };
+			            callback( popupInfo, postCell );
+			            return;
+		            };
+		            msg = 'not found(HTTP ' + this.status + '): ' + fullUri;
+		            mthis.cache[ uri ] = { 'message': msg };
+		            callback( popupInfo, null, msg );
+		            return;
+		        };
+	        };
+	        xhr.responseType = 'document';
+	        xhr.open('GET', uri);
+	        xhr.send(null);
+
+	        return;
 	    };
-	    uri = "//" + quoteAnchor.host + uri;
-	    /* ex. "//yamanu.org/chan/preview/123.html" */
 
-	    if( undefined != mthis.cache[ uri ] )
-	    {
-		var postCell = mthis.cache[ uri ]['element'];
-		if( null != postCell )
-		{
-		    postCell = postCell.cloneNode( true );
-		};
-		callback( popupInfo, postCell, mthis.cache[ uri ]['message'] );
-		return;
-	    };
-
-	    callback( popupInfo, null, "now loading" );
-
-	    var xhr = new XMLHttpRequest();
-	    var fullUri = location.protocol + uri; /* for message */
-	    xhr.onreadystatechange = function()
-	    {
-		switch( this.readyState )
-		{
-		case 0:
-		case 1:
-		case 3:
-		    return;
-		case 4:
-		    if( 200 <= this.status &&
-			300 >  this.status )
-		    {
-			if( 'document' != this.responseType )
-			{
-			    msg = "unknown response contents(1): + " + this.responseType;
-			    mthis.cache[ uri ] = { 'message': msg };
-			    callback( popupInfo, null, msg );
-			    return;
-			};
-
-			/*
-			 freech: #panelContent は空。body 直下に .postCell がある
-			 */
-
-			var postCellList = this.response.getElementsByClassName('postCell');
-			if( 0 >= postCellList.length )
-			{
-			    msg = "unknown response contents: postCell not found: " + fullUri;
-			    mthis.cache[ uri ] = { 'message': msg };
-			    window.lastPanelContent = this.response;
-			    callback( popupInfo, null, msg );
-			    /*callback( popupInfo, null, msg );*/
-			    return;
-			};
-			var postCell = postCellList[0];
-			postCell = utils.removeIdAll( document.importNode( postCell, true ) );
-			mthis.cache[ uri ] = { 'element': postCell };
-			callback( popupInfo, postCell );
-			return;
-		    };
-		    msg = 'not found(HTTP ' + this.status + '): ' + fullUri;
-		    mthis.cache[ uri ] = { 'message': msg };
-		    callback( popupInfo, null, msg );
-		    return;
-		};
-	    };
-	    xhr.responseType = 'document';
-	    xhr.open('GET', uri);
-	    xhr.send(null);
-	    
-	    return;
-	};
-	
-	mthis.lookForPostCellFromDocument =
+	    mthis.lookForPostCellFromDocument =
             function( popupInfo, callback )
-	{
-	    var quoteAnchor = popupInfo['quoteAnchor'];
+	    {
+	        var quoteAnchor = popupInfo['quoteAnchor'];
             var localNo = quoteAnchor.hash;
             if( 0 == localNo.length )
             {
@@ -2856,22 +2766,22 @@
             {
                 return callback( popupInfo, null, "no such post:No." + localNo );
             };
-	    postCell = postCell.cloneNode(true);
+	        postCell = postCell.cloneNode(true);
 
-	    var divPostsList = postCell.getElementsByClassName("divPosts");
-	    for( var dpIdx = divPostsList.length - 1; -1 < dpIdx ; --dpIdx )
-	    {
-		divPostsList[ dpIdx ].parentElement.removeChild( divPostsList[ dpIdx ] );
-	    };
-	    postCell = utils.removeIdAll( postCell );
+	        var divPostsList = postCell.getElementsByClassName("divPosts");
+	        for( var dpIdx = divPostsList.length - 1; -1 < dpIdx ; --dpIdx )
+	        {
+		        divPostsList[ dpIdx ].parentElement.removeChild( divPostsList[ dpIdx ] );
+	        };
+	        postCell = utils.removeIdAll( postCell );
             return callback( popupInfo, postCell );
-	};
+	    };
 
         mthis.lookForPostCell =
             function( popupInfo, callback )
         {
-	    /* TODO:"//yamanu.org/chang/index.html" とかのスレが複数あるページで、
-	            通信なしに取得できないか試行すること */
+	        /* TODO:"//yamanu.org/chang/index.html" とかのスレが複数あるページで、
+	         通信なしに取得できないか試行すること */
             var here = location;
             var target = popupInfo['quoteAnchor'];
             var postCell;
@@ -2879,15 +2789,15 @@
                 here.port     == target.port    &&
                 here.pathname == target.pathname  )
             {
-		return mthis.lookForPostCellFromDocument( popupInfo, callback);
+		        return mthis.lookForPostCellFromDocument( popupInfo, callback);
             };
-	    return mthis.downloadPostCell( popupInfo, callback );
+	        return mthis.downloadPostCell( popupInfo, callback );
         };
 
         mthis.showPopup =
             function( popupInfo, postCell, errorMessage )
         {
-	    var quoteLink = popupInfo['quoteAnchor'];
+	        var quoteLink = popupInfo['quoteAnchor'];
             if( undefined == postCell && undefined == errorMessage )
             {
                 mthis.lookForPostCell( popupInfo, mthis.showPopup );
@@ -2898,48 +2808,49 @@
                 postCell = document.createElement('DIV');
                 postCell.appendChild( document.createTextNode(errorMessage) );
             };
-	    var originElement = mthis.getRelatedDivMessage( quoteLink );
-	    if( null == originElement )
-	    {
-		originElement = quoteLink;
-	    };
+	        var originElement = mthis.getRelatedDivMessage( quoteLink );
+	        if( null == originElement )
+	        {
+		        originElement = quoteLink;
+	        };
 
-	    var quoteblock;
-	    if( undefined != popupInfo['element'] )
-	    {
-		if( null == popupInfo['element'].firstChild )
-		{
-		    popupInfo['element'].appendChild( postCell );
-		}
-		else
-		{
-		    popupInfo['element'].replaceChild( postCell, popupInfo['element'].firstChild );
-		};
-		quoteblock = popupInfo['element'];
-	    }
-	    else
-	    {
-		quoteblock = document.createElement('DIV');
-		quoteblock.appendChild( postCell );
-	    };
+	        var quoteblock;
+	        if( undefined != popupInfo['element'] )
+	        {
+		        if( null == popupInfo['element'].firstChild )
+		        {
+		            popupInfo['element'].appendChild( postCell );
+		        }
+		        else
+		        {
+		            popupInfo['element'].replaceChild( postCell, popupInfo['element'].firstChild );
+		        };
+		        quoteblock = popupInfo['element'];
+	        }
+	        else
+	        {
+		        quoteblock = document.createElement('DIV');
+		        quoteblock.appendChild( postCell );
+	        };
 
             quoteblock.className = "tskQuoteblock";
-	    var uid = popupInfo['uid'];
+	        var uid = popupInfo['uid'];
+	        mthis.processPostCell( postCell );
             mthis.overridePostCellQuotePopups( postCell,
-					       function( e ){
-						   mthis.setUidOfPopupParent( e, uid );
-					       } );
+					                           function( e ){
+						                           mthis.setUidOfPopupParent( e, uid );
+					                           } );
 
-	    quoteblock.addEventListener("mouseout" , function(){
-		mthis.startCountdownForClosePopup( popupInfo ); } );
+	        quoteblock.addEventListener("mouseout" , function(){
+		        mthis.startCountdownForClosePopup( popupInfo ); } );
 
-	    quoteblock.addEventListener("mousemove", function(){
-		mthis.extendExpirationDate( popupInfo );
-		return true; } );
+	        quoteblock.addEventListener("mousemove", function(){
+		        mthis.extendExpirationDate( popupInfo );
+		        return true; } );
 
-	    quoteblock.addEventListener("click",     function(){
-		mthis.extendExpirationDate( popupInfo );
-		return true; } );
+	        quoteblock.addEventListener("click",     function(){
+		        mthis.extendExpirationDate( popupInfo );
+		        return true; } );
 
             quoteblock.style.position = "absolute";
             quoteblock.style.paddingTop = "2px";
@@ -2955,21 +2866,21 @@
             var scrollBottom = scrollTop + window.innerHeight;
 
             var divThreads = document.getElementById("divThreads");
-	    /* css rule のために divThreads に入れる */
+	        /* css rule のために divThreads に入れる */
 
             divThreads.appendChild( quoteblock );
             var height    = quoteblock.offsetHeight;
             var width     = quoteblock.offsetWidth;
 
-	    var targetPosition = popupInfo['targetPosition'];
-	    var rect      = originElement.getBoundingClientRect();
-	    var left    = rect.left + rect.height + scrollLeft;
-	    var top     = rect.top  + rect.height + scrollTop;
-	    if( undefined != targetPosition )
-	    {
-		left = targetPosition.x;
-		top  = targetPosition.y;
-	    };
+	        var targetPosition = popupInfo['targetPosition'];
+	        var rect      = originElement.getBoundingClientRect();
+	        var left    = rect.left + rect.height + scrollLeft;
+	        var top     = rect.top  + rect.height + scrollTop;
+	        if( undefined != targetPosition )
+	        {
+		        left = targetPosition.x;
+		        top  = targetPosition.y;
+	        };
             var tmpRight  = left + width;
             var tmpBottom = top  + height;
 
@@ -2982,344 +2893,382 @@
                 top = scrollBottom - height;
             };
 
-	    quoteblock.style.top  = top + "px";
-	    quoteblock.style.left = left + "px";
+	        quoteblock.style.top  = top + "px";
+	        quoteblock.style.left = left + "px";
 
-	    var parentUid = mthis.getUidOfPopupParent( quoteLink );
-	    if( undefined != parentUid )
-	    {
-		popupInfo['parent']  = parentUid;
-		var parentPopupInfo = mthis.popups[ parentUid ];
-		if( undefined != parentPopupInfo )
-		{
-		    parentPopupInfo['children'].push( popupInfo['uid'] );
-		};
-	    };
-	    popupInfo['phase']   = mthis.POPUP_PHASE.NOW_SHOWING;
-	    popupInfo['element'] = quoteblock;
+	        var parentUid = mthis.getUidOfPopupParent( quoteLink );
+	        if( undefined != parentUid )
+	        {
+		        popupInfo['parent']  = parentUid;
+		        var parentPopupInfo = mthis.popups[ parentUid ];
+		        if( undefined != parentPopupInfo )
+		        {
+		            parentPopupInfo['children'].push( popupInfo['uid'] );
+		        };
+	        };
+	        popupInfo['phase']   = mthis.POPUP_PHASE.NOW_SHOWING;
+	        popupInfo['element'] = quoteblock;
 
-	    /* parent の期限を伸ばす: */
-	    mthis.extendExpirationDate( popupInfo );
-	    
-	    return;
-	};
-	/* end mthis.showPopup */
+	        /* parent の期限を伸ばす: */
+	        mthis.extendExpirationDate( popupInfo );
 
-	mthis.PopupHasExpired =
-	    function( popupInfo, deletep )
-	{
-	    var rect = popupInfo['element'].getBoundingClientRect();
-	    var mcx = mthis.mouseClientPos.x;
-	    var mcy = mthis.mouseClientPos.y;
-	    if( rect.left   <= mcx &&
-		rect.right  >  mcx &&
-		rect.top    <= mcy &&
-		rect.bottom >  mcy   )
-	    {
-		popupInfo['closeTimer'] = undefined;
-		popupInfo['phase'] = mthis.POPUP_PHASE.NOW_SHOWING;
-		return;
+	        return;
 	    };
-	    mthis.closePopup( popupInfo, deletep );
-	};
-	
-	mthis.closePopup =
-	    function( popupInfo, deletep )
-	{
-	    for( var childIdx in popupInfo['children'] )
-	    {
-		var childUid = popupInfo['children'][ childIdx ];
-		var child = mthis.popups[ childUid ];
-		if( undefined != child )
-		{
-		    mthis.closePopup( child );
-		};
-	    };
-	    var element = popupInfo['element'];
-	    if( undefined != element )
-	    {
-		if( undefined != element.parentElement )
-		{
-		    element.parentElement.removeChild( element );
-		};
-		utils.toMarkElementDiscarded( element );
-	    };
-	    popupInfo['phase'] = mthis.POPUP_PHASE.DO_NOTHING;
-	    
-	    if( deletep )
-	    {
-		delete mthis.popups[ popupInfo['uid'] ];
-	    };
-	};
+	    /* end mthis.showPopup */
 
-	mthis.DateToLastCheckMouseIn = 0;
-	mthis.onBodyMouseMove =
-	    function( event )
-	{
-	    var now = (+new Date());
-	    var intervalToCheck = 100;
-	    if( now > ( intervalToCheck + mthis.DateToLastCheckMouseIn ) )
+	    mthis.PopupHasExpired =
+	        function( popupInfo, deletep )
 	    {
-		mthis.checkMouseIn( event );
-		mthis.DateToLastCheckMouseIn = now;
+	        var rect = popupInfo['element'].getBoundingClientRect();
+	        var mcx = mthis.mouseClientPos.x;
+	        var mcy = mthis.mouseClientPos.y;
+	        if( rect.left   <= mcx &&
+		        rect.right  >  mcx &&
+		        rect.top    <= mcy &&
+		        rect.bottom >  mcy   )
+	        {
+		        popupInfo['closeTimer'] = undefined;
+		        popupInfo['phase'] = mthis.POPUP_PHASE.NOW_SHOWING;
+		        return;
+	        };
+	        mthis.closePopup( popupInfo, deletep );
 	    };
 
-	    mthis.mouseClientPos = {x:event.clientX, y:event.clientY};
-	    return;
-	};
-	
-	mthis.checkMouseIn =
-	    function( event )
-	{
-	    mthis.mouseClientPos = {x:event.clientX, y:event.clientY};
-
-	    var uidsToClosePopup = [];
-	    var popupInfo;
-	    for( var key in mthis.popups )
+	    mthis.closePopup =
+	        function( popupInfo, deletep )
 	    {
-		popupInfo = mthis.popups[ key ];
-		if( mthis.POPUP_PHASE.NOW_SHOWING != popupInfo['phase'] )
-		{
-		    continue;
-		};
+	        for( var childIdx in popupInfo['children'] )
+	        {
+		        var childUid = popupInfo['children'][ childIdx ];
+		        var child = mthis.popups[ childUid ];
+		        if( undefined != child )
+		        {
+		            mthis.closePopup( child );
+		        };
+	        };
+	        var element = popupInfo['element'];
+	        if( undefined != element )
+	        {
+		        if( undefined != element.parentElement )
+		        {
+		            element.parentElement.removeChild( element );
+		        };
+		        utils.toMarkElementDiscarded( element );
+	        };
+	        popupInfo['phase'] = mthis.POPUP_PHASE.DO_NOTHING;
 
-		var rect2 = popupInfo['quoteAnchor'].getBoundingClientRect();
-		var rect = popupInfo['element'].getBoundingClientRect();
-		var mcx = mthis.mouseClientPos.x;
-		var mcy = mthis.mouseClientPos.y;
-		if( ( rect.left   <= mcx &&
-		      rect.right  >  mcx &&
-		      rect.top    <= mcy &&
-		      rect.bottom >  mcy   ) ||
-		    ( rect2.left   <= mcx &&    
-		      rect2.right  >  mcx &&    
-		      rect2.top    <= mcy &&    
-		      rect2.bottom >  mcy   )   )
-		{
-		    continue;
-		};
-		uidsToClosePopup.push( key );
+	        if( deletep )
+	        {
+		        delete mthis.popups[ popupInfo['uid'] ];
+	        };
 	    };
-	    for( var idx in uidsToClosePopup )
+
+	    mthis.DateToLastCheckMouseIn = 0;
+	    mthis.onBodyMouseMove =
+	        function( event )
 	    {
-		key = uidsToClosePopup[ idx ];
-		popupInfo = mthis.popups[ key ];
-		if( undefined == popupInfo )
-		{
-		    continue;
-		};
-		var descList = mthis.popupDescendants( popupInfo );
-		var noClose = false;
-		for( var dlIdx in descList )
-		{
-		    if( mthis.POPUP_PHASE.NOW_SHOWING == descList[ dlIdx ]['phase'] )
-		    {
-			noClose = true;
-			break;
-		    };
-		};
-		if( ! noClose )
-		{
-		    mthis.closePopup( popupInfo, true );
-		};
+	        var now = (+new Date());
+	        var intervalToCheck = 100;
+	        if( now > ( intervalToCheck + mthis.DateToLastCheckMouseIn ) )
+	        {
+		        mthis.checkMouseIn( event );
+		        mthis.DateToLastCheckMouseIn = now;
+	        };
+
+	        mthis.mouseClientPos = {x:event.clientX, y:event.clientY};
+	        return;
 	    };
-	};
-	
-	mthis.disableQuotePopup =
-	    function( anchor )
-	{
-	    anchor.removeEventListener("mousemove", mthis.touchElement );
-	    anchor.removeEventListener("mouseout" , mthis.untouchElement );
-	};
 
-	mthis.removeOriginalPopupFeature =
-	    function( quoteLink )
-	{
-	    /* click でその場所に飛ぶのは残す */
-	    quoteLink.onmouseenter = null;
-	    quoteLink.onmouseout = null;
-	};
-
-	mthis.enableQuotePopup =
-	    function( anchor )
-	{
-	    mthis.disableQuotePopup( anchor );
-	    anchor.addEventListener("mousemove", mthis.touchElement );
-	    anchor.addEventListener("mouseout" , mthis.untouchElement );
-	};
-
-	mthis.overridePostCellQuotePopups =
-	    function( postCell, hook  )
-	{
-	    var quoteLinks = postCell.getElementsByClassName('quoteLink');
-	    for( var qlIdx = 0, qlLen = quoteLinks.length; qlIdx < qlLen ; ++qlIdx )
+	    mthis.checkMouseIn =
+	        function( event )
 	    {
-		mthis.overrideQuotePopup( quoteLinks[ qlIdx ] );
-		if( hook != undefined )
-		{
-		    hook( quoteLinks[ qlIdx ] );
-		};
+	        mthis.mouseClientPos = {x:event.clientX, y:event.clientY};
+
+	        var uidsToClosePopup = [];
+	        var popupInfo;
+	        for( var key in mthis.popups )
+	        {
+		        popupInfo = mthis.popups[ key ];
+		        if( mthis.POPUP_PHASE.NOW_SHOWING != popupInfo['phase'] )
+		        {
+		            continue;
+		        };
+
+		        var rect2 = popupInfo['quoteAnchor'].getBoundingClientRect();
+		        var rect = popupInfo['element'].getBoundingClientRect();
+		        var mcx = mthis.mouseClientPos.x;
+		        var mcy = mthis.mouseClientPos.y;
+		        if( ( rect.left   <= mcx &&
+		              rect.right  >  mcx &&
+		              rect.top    <= mcy &&
+		              rect.bottom >  mcy   ) ||
+		            ( rect2.left   <= mcx &&
+		              rect2.right  >  mcx &&
+		              rect2.top    <= mcy &&
+		              rect2.bottom >  mcy   )   )
+		        {
+		            continue;
+		        };
+		        uidsToClosePopup.push( key );
+	        };
+	        for( var idx in uidsToClosePopup )
+	        {
+		        key = uidsToClosePopup[ idx ];
+		        popupInfo = mthis.popups[ key ];
+		        if( undefined == popupInfo )
+		        {
+		            continue;
+		        };
+		        var descList = mthis.popupDescendants( popupInfo );
+		        var noClose = false;
+		        for( var dlIdx in descList )
+		        {
+		            if( mthis.POPUP_PHASE.NOW_SHOWING == descList[ dlIdx ]['phase'] )
+		            {
+			            noClose = true;
+			            break;
+		            };
+		        };
+		        if( ! noClose )
+		        {
+		            mthis.closePopup( popupInfo, true );
+		        };
+	        };
 	    };
-	    var panelBacklinksList = postCell.getElementsByClassName('panelBacklinks');
-	    for( var pbIdx = 0, pbLen = panelBacklinksList.length; pbIdx < pbLen ; ++pbIdx )
+
+	    mthis.disableQuotePopup =
+	        function( anchor )
 	    {
-		mthis.overrideChildrenQuotePopup( panelBacklinksList[ pbIdx ], hook );
+	        anchor.removeEventListener("mousemove", mthis.touchElement );
+	        anchor.removeEventListener("mouseout" , mthis.untouchElement );
 	    };
-	};
 
-	mthis.overrideChildrenQuotePopup =
-	    function( panelBacklinks, hook )
-	{
-	    if( undefined == panelBacklinks.children )
+	    mthis.removeOriginalPopupFeature =
+	        function( quoteLink )
 	    {
-		return;
+	        /* click でその場所に飛ぶのは残す */
+	        quoteLink.onmouseenter = null;
+	        quoteLink.onmouseout = null;
 	    };
-	    for( var anIdx = 0, anLen = panelBacklinks.children.length; anIdx < anLen ; ++anIdx )
+
+	    mthis.enableQuotePopup =
+	        function( anchor )
 	    {
-		var child = panelBacklinks.children[ anIdx ];
-		mthis.removeOriginalPopupFeature( child );
-		mthis.enableQuotePopup( child );
-		if( hook != undefined )
-		{
-		    hook( child );
-		};
+	        mthis.disableQuotePopup( anchor );
+	        anchor.addEventListener("mousemove", mthis.touchElement );
+	        anchor.addEventListener("mouseout" , mthis.untouchElement );
 	    };
-	};
 
-	mthis.popupDescendants =
-	    function popupDescendants( obj, descList )
-	{
-	    if( undefined == descList )
+	    mthis.processPostCell =
+	        function( postCell )
 	    {
-		descList = [];
+	        var linkQuoteList = postCell.getElementsByClassName('linkQuote');
+	        for( var lqIdx = linkQuoteList.length - 1; -1 < lqIdx ; --lqIdx )
+	        {
+		        var linkQuote = linkQuoteList[ lqIdx ];
+		        linkQuote.removeEventListener( "click", mthis.add_reply_quote );
+		        linkQuote.onclick = null;
+		        linkQuote.addEventListener( "click", mthis.add_reply_quote );
+	        };
 	    };
-	    if( undefined == obj.children )
+
+	    mthis.sharpQRegexp = new RegExp("^#q[0-9]*");
+	    mthis.add_reply_quote = function()
 	    {
-		return descList;
+	        var linkQuote = this;
+
+	        if( ! mthis.sharpQRegexp.test( linkQuote.hash ) )
+	        {
+		        return true;
+	        };
+	        var toQuote = linkQuote.hash.substring(2);
+
+	        if( undefined !== window.add_quick_reply_quote )
+	        {
+		        window.add_quick_reply_quote( toQuote );
+	        };
+
+	        var fieldMessage = document.getElementById('fieldMessage');
+	        if( null != fieldMessage )
+	        {
+		        fieldMessage.value += '>>' + toQuote + '\n';
+	        };
+
+	        return true;
 	    };
-	    for( var i in obj.children )
+
+	    mthis.overridePostCellQuotePopups =
+	        function( postCell, hook  )
 	    {
-		var child = mthis.popups[ obj.children[ i ] ];
-		if( undefined == child )
-		{
-		    continue;
-		};
-		descList.push( child );
-		popupDescendants( child, descList );
+	        var quoteLinks = postCell.getElementsByClassName('quoteLink');
+	        for( var qlIdx = 0, qlLen = quoteLinks.length; qlIdx < qlLen ; ++qlIdx )
+	        {
+		        mthis.overrideQuotePopup( quoteLinks[ qlIdx ] );
+		        if( hook != undefined )
+		        {
+		            hook( quoteLinks[ qlIdx ] );
+		        };
+	        };
+	        var panelBacklinksList = postCell.getElementsByClassName('panelBacklinks');
+	        for( var pbIdx = 0, pbLen = panelBacklinksList.length; pbIdx < pbLen ; ++pbIdx )
+	        {
+		        mthis.overrideChildrenQuotePopup( panelBacklinksList[ pbIdx ], hook );
+	        };
 	    };
-	    return descList;
-	};
 
-	mthis.addBodyEvents =
-	    function()
-	{
-	    mthis.removeBodyEvents();
-	    document.body.addEventListener("click"    , mthis.checkMouseIn );
-	    document.body.addEventListener("mousemove", mthis.onBodyMouseMove );
-	};
-	mthis.removeBodyEvents =
-	    function()
-	{
-	    document.body.removeEventListener("click"    , mthis.checkMouseIn );
-	    document.body.removeEventListener("mousemove", mthis.onBodyMouseMove );
-	};
-
-	mthis.overrideQuotePopup =
-	    function( quoteLink )
-	{
-	    mthis.removeOriginalPopupFeature( quoteLink );
-	    mthis.enableQuotePopup( quoteLink );
-	};
-
-	mthis.startObservePanelBacklinks =
-	    function( panelBacklinks )
-	{
-	    var cdaName = "data-tsk-observing";
-	    var nid = utils.getElementUniqueId( panelBacklinks );
-	    var mo = mthis.panelBacklinksObservers[ nid ];
-	    var opts = { childList: true };
-	    if( undefined == mo )
+	    mthis.overrideChildrenQuotePopup =
+	        function( panelBacklinks, hook )
 	    {
-		mo = new MutationObserver( mthis.overrideChildrenQuotePopup );
-		mthis.panelBacklinksObservers[ nid ] = mo;
-		mo.observe( panelBacklinks, { childList: true } );
+	        if( undefined == panelBacklinks.children )
+	        {
+		        return;
+	        };
+	        for( var anIdx = 0, anLen = panelBacklinks.children.length; anIdx < anLen ; ++anIdx )
+	        {
+		        var child = panelBacklinks.children[ anIdx ];
+		        mthis.removeOriginalPopupFeature( child );
+		        mthis.enableQuotePopup( child );
+		        if( hook != undefined )
+		        {
+		            hook( child );
+		        };
+	        };
 	    };
-	    mo.observe( panelBacklinks, opts );
-	    panelBacklinks.setAttribute( cdaName, "1" );
-	    return;
-	};
-	mthis.stopObservePanelBacklinks =
-	    function( panelBacklinks )
-	{
-	    var cdaName = "data-tsk-observing";
-	    var nid = utils.getElementUniqueId( panelBacklinks );
-	    var mo = mthis.panelBacklinksObservers[ nid ];
-	    if( undefined != mo )
+
+	    mthis.popupDescendants =
+	        function popupDescendants( obj, descList )
 	    {
-		mo.disconnect();
-		delete mthis.panelBacklinksObservers[ nid ];
+	        if( undefined == descList )
+	        {
+		        descList = [];
+	        };
+	        if( undefined == obj.children )
+	        {
+		        return descList;
+	        };
+	        for( var i in obj.children )
+	        {
+		        var child = mthis.popups[ obj.children[ i ] ];
+		        if( undefined == child )
+		        {
+		            continue;
+		        };
+		        descList.push( child );
+		        popupDescendants( child, descList );
+	        };
+	        return descList;
 	    };
-	    panelBacklinks.setAttribute( cdaName, "0" );
-	    return;
-	};
 
-	mthis.trigger = function()
-	{
-	    mthis.enable();
-	};
+	    mthis.addBodyEvents =
+	        function()
+	    {
+	        mthis.removeBodyEvents();
+	        document.body.addEventListener("click"    , mthis.checkMouseIn );
+	        document.body.addEventListener("mousemove", mthis.onBodyMouseMove );
+	    };
+	    mthis.removeBodyEvents =
+	        function()
+	    {
+	        document.body.removeEventListener("click"    , mthis.checkMouseIn );
+	        document.body.removeEventListener("mousemove", mthis.onBodyMouseMove );
+	    };
 
-	mthis.enable = function()
-	{
-	    mthis.addBodyEvents();
-	    /* etCetera の監視対象は .divPosts。Popup の挿入場所は .divPosts の親の親の中。
-	     * だから Popup 挿入時に冗長呼び出しにはならない */
-	    etCetera.postCellOnLoadHooks.push( mthis.overridePostCellQuotePopups );
-	    
-	    var iloops = utils.IntermittentLoops();
-	    var links;
-	    var idx = 0;
-	    var break_ = false;
-	    var continue_ = true;
-	    var quoteblockList;
+	    mthis.overrideQuotePopup =
+	        function( quoteLink )
+	    {
+	        mthis.removeOriginalPopupFeature( quoteLink );
+	        mthis.enableQuotePopup( quoteLink );
+	    };
 
-	    iloops.push( function(){
-		links = document.getElementsByClassName('quoteLink');
-		idx = links.length - 1;
-	    } ).push( function(){
-		if( -1 >= idx ){ return break_; };
-		mthis.overrideQuotePopup( links[ idx ] );
-		--idx;
-		return continue_;
-	    } ).push( function(){
-		links = document.getElementsByClassName('panelBacklinks');
-		idx = links.length - 1;
-	    } ).push( function(){
-		if( -1 >= idx ){ return break_; };
-		var panelBacklinks = links[ idx ];
-		mthis.overrideChildrenQuotePopup( panelBacklinks );
-		mthis.startObservePanelBacklinks( panelBacklinks );
-		--idx;
-		return continue_;
-	    } ).push( function(){
-		quoteblockList = document.getElementsByClassName('quoteblock');
-		idx = quoteblockList.length - 1;
-	    } ).push( function(){
-		if( -1 >= idx ){ return break_; };
-		var quoteblock = quoteblockList[ idx ];
-		if( quoteblock.style.display != 'none' )
-		{
-		    quoteblock.style.display = 'none';
-		};
-		--idx;
-		return continue_;
-	    } ).exec();
-	};
-	mthis.disable = function()
-	{
-	    mthis.removeBodyEvents();
-	};
+	    mthis.startObservePanelBacklinks =
+	        function( panelBacklinks )
+	    {
+	        var cdaName = "data-tsk-observing";
+	        var nid = utils.getElementUniqueId( panelBacklinks );
+	        var mo = mthis.panelBacklinksObservers[ nid ];
+	        var opts = { childList: true };
+	        if( undefined == mo )
+	        {
+		        mo = new MutationObserver( mthis.overrideChildrenQuotePopup );
+		        mthis.panelBacklinksObservers[ nid ] = mo;
+		        mo.observe( panelBacklinks, { childList: true } );
+	        };
+	        mo.observe( panelBacklinks, opts );
+	        panelBacklinks.setAttribute( cdaName, "1" );
+	        return;
+	    };
+	    mthis.stopObservePanelBacklinks =
+	        function( panelBacklinks )
+	    {
+	        var cdaName = "data-tsk-observing";
+	        var nid = utils.getElementUniqueId( panelBacklinks );
+	        var mo = mthis.panelBacklinksObservers[ nid ];
+	        if( undefined != mo )
+	        {
+		        mo.disconnect();
+		        delete mthis.panelBacklinksObservers[ nid ];
+	        };
+	        panelBacklinks.setAttribute( cdaName, "0" );
+	        return;
+	    };
 
-	return mthis;
+	    mthis.trigger = function()
+	    {
+	        mthis.enable();
+	    };
+
+	    mthis.enable = function()
+	    {
+	        mthis.addBodyEvents();
+	        /* etCetera の監視対象は .divPosts。Popup の挿入場所は .divPosts の親の親の中。
+	         * だから Popup 挿入時に冗長呼び出しにはならない */
+	        etCetera.postCellOnLoadHooks.push( mthis.overridePostCellQuotePopups );
+
+	        var iloops = utils.IntermittentLoops();
+	        var links;
+	        var idx = 0;
+	        var break_ = false;
+	        var continue_ = true;
+	        var quoteblockList;
+
+	        iloops.push( function(){
+		        links = document.getElementsByClassName('quoteLink');
+		        idx = links.length - 1;
+	        } ).push( function(){
+		        if( -1 >= idx ){ return break_; };
+		        mthis.overrideQuotePopup( links[ idx ] );
+		        --idx;
+		        return continue_;
+	        } ).push( function(){
+		        links = document.getElementsByClassName('panelBacklinks');
+		        idx = links.length - 1;
+	        } ).push( function(){
+		        if( -1 >= idx ){ return break_; };
+		        var panelBacklinks = links[ idx ];
+		        mthis.overrideChildrenQuotePopup( panelBacklinks );
+		        mthis.startObservePanelBacklinks( panelBacklinks );
+		        --idx;
+		        return continue_;
+	        } ).push( function(){
+		        quoteblockList = document.getElementsByClassName('quoteblock');
+		        idx = quoteblockList.length - 1;
+	        } ).push( function(){
+		        if( -1 >= idx ){ return break_; };
+		        var quoteblock = quoteblockList[ idx ];
+		        if( quoteblock.style.display != 'none' )
+		        {
+		            quoteblock.style.display = 'none';
+		        };
+		        --idx;
+		        return continue_;
+	        } ).exec();
+	    };
+	    mthis.disable = function()
+	    {
+	        mthis.removeBodyEvents();
+	    };
+
+	    return mthis;
     };
 
     /**********************************
@@ -3327,19 +3276,19 @@
      **********************************/
     function modLynxChanWrapper()
     {
-	if( undefined === window.toshakiii )
-	{   window.toshakiii = {};};
-	
-	var lthis = {};
-	window.toshakiii.lynxChanWrapper = lthis;
-	
-	lthis.selectedDivOnChangeHandlers = [];
-	
-	lthis.disable = function(){};
-	lthis.trigger = function(){};
-	lthis.enable = function(){};
+	    if( undefined === window.toshakiii )
+	    {   window.toshakiii = {};};
 
-	return lthis;
+	    var lthis = {};
+	    window.toshakiii.lynxChanWrapper = lthis;
+
+	    lthis.selectedDivOnChangeHandlers = [];
+
+	    lthis.disable = function(){};
+	    lthis.trigger = function(){};
+	    lthis.enable = function(){};
+
+	    return lthis;
     };
 
 
@@ -3349,56 +3298,39 @@
      **********************************/
     function main()
     {
-	if( false )
-	{
-	    var script = document.createElement('SCRIPT');
-	    script.innerText =
-		"try{("+modUtils          .toString() +")().trigger();}catch(e){};" +
-		"try{("+modLynxChanWrapper.toString() +")().trigger();}catch(e){};" +
-		"try{("+modEtCetera       .toString() +")().trigger();}catch(e){};" +
-		"try{("+modCatalogSorter  .toString() +")().trigger();}catch(e){};" +
-		"try{("+modFilePreview    .toString() +")().trigger();}catch(e){};" +
-		"try{("+modMultiPopup     .toString() +")().trigger();}catch(e){};" +
-		"";
-	    document.head.appendChild( script );
-	}
-	else if( 0 <= window.navigator.userAgent.toLowerCase().indexOf("chrome") )
-	{
-	    location.href = "javascript:" +
-		"try{("+modUtils          .toString() +")().trigger();}catch(e){};" +
-		"try{("+modLynxChanWrapper.toString() +")().trigger();}catch(e){};" +
-		"try{("+modEtCetera       .toString() +")().trigger();}catch(e){};" +
-		"try{("+modCatalogSorter  .toString() +")().trigger();}catch(e){};" +
-		"try{("+modFilePreview    .toString() +")().trigger();}catch(e){};" +
-		"try{("+modMultiPopup     .toString() +")().trigger();}catch(e){};" +
-		"";
-	}
-	else
-	{
-	    modUtils().trigger();
-	    modLynxChanWrapper().trigger();
-	    modEtCetera().trigger();
-	    modFilePreview().trigger();
-	    modCatalogSorter().trigger();
-	    modMultiPopup().trigger();
-	};
+	    if( 0 <= window.navigator.userAgent.toLowerCase().indexOf("chrome") )
+	    {
+	        var script = document.createElement('SCRIPT');
+	        script.innerText =
+		        "try{("+modUtils          .toString() +")().trigger();}catch(e){};" +
+		        "try{("+modLynxChanWrapper.toString() +")().trigger();}catch(e){};" +
+		        "try{("+modEtCetera       .toString() +")().trigger();}catch(e){};" +
+		        "try{("+modCatalogSorter  .toString() +")().trigger();}catch(e){};" +
+		        "try{("+modFilePreview    .toString() +")().trigger();}catch(e){};" +
+		        "try{("+modMultiPopup     .toString() +")().trigger();}catch(e){};" +
+		        "";
+	        document.head.appendChild( script );
+	    }
+	    /* else if(  )
+	    {
+	        location.href = "javascript:" +
+		        "try{("+modUtils          .toString() +")().trigger();}catch(e){};" +
+		        "try{("+modLynxChanWrapper.toString() +")().trigger();}catch(e){};" +
+		        "try{("+modEtCetera       .toString() +")().trigger();}catch(e){};" +
+		        "try{("+modCatalogSorter  .toString() +")().trigger();}catch(e){};" +
+                "try{("+modFilePreview    .toString() +")().trigger();}catch(e){};" +
+		        "try{("+modMultiPopup     .toString() +")().trigger();}catch(e){};" +
+		        "";
+	    } */
+	    else
+	    {
+	        modUtils().trigger();
+	        modLynxChanWrapper().trigger();
+	        modEtCetera().trigger();
+	        modFilePreview().trigger();
+            modCatalogSorter().trigger();
+            modMultiPopup().trigger();
+        };
     };
     main();
 })();
-
-/*
-演技用
-(function(){
-    if( location.protocol == "https:" )
-    {
-	var elts = document.getElementsByClassName("postCell");
-	for( var i = elts.length - 1 ; -1 < i ; --i )
-	{
-	    var elt = elts[ i ];
-	    elt.parentElement.removeChild( elt );
-	};
-	setTimeout( function(){ location.href = "javascript: window.lastReplyId=0;"; }, 100 );
-    };
-})();
-*/
-/*window.refreshPosts(true);*/
