@@ -17,7 +17,7 @@
 // @include    /https?://waifuchan\.moe/.*$/
 // @include    /https?://waifuchan\.moe/.*$/
 //
-// @version     1.90
+// @version     1.91
 // @grant       none
 // ==/UserScript==
 
@@ -41,6 +41,9 @@
 
 /*
  yamanu-chang(山ぬちゃん)です。
+・(v1.91)
+  ・カタログのスレ立てフォームを表示/非表示にできるよう。初期値は非表示。
+  ・通報/削除フォームを表示/非表示にできるよう。初期値は非表示。
 ・(v1.90)
   ・div.markedPost にも通し番号が出るように
   ・endchan のカタログ hide の新仕様に対応。hide したスレが下に溜まるように。
@@ -132,6 +135,15 @@
 	        return false;
 	    };
 
+        uthis.getFirstLanguage =
+            function()
+        {
+            return (window.navigator.languages && window.navigator.languages[0]) ||
+                window.navigator.language ||
+                window.navigator.userLanguage ||
+                window.navigator.browserLanguage;
+        };
+        
 	    uthis.getBodyBackgroundColor =
 	        function()
 	    {
@@ -2334,10 +2346,112 @@
             document.head.appendChild( style );
         };
 
+        etcthis.isHiddenCDAName = 'data-is-hidden';
+        etcthis.insertButtonShowHidePostingForm =
+            function()
+        {
+            var postingForm = document.getElementById('postingForm');
+            var topAnchorElement = document.getElementById('top');
+            if( null === postingForm ||
+                null === topAnchorElement )
+            {
+                return;
+            };
+            var showHideAnchor = document.createElement('A');
+            var showText = document.createTextNode('[Show hidden posting form]');
+            showHideAnchor.appendChild( showText );
+
+            showHideAnchor.setAttribute( etcthis.isHiddenCDAName, '1' );
+            showHideAnchor.addEventListener('click', etcthis.showHidePostingForm);
+            postingForm.style.display = 'none';
+
+            topAnchorElement.parentElement.insertBefore( showHideAnchor, topAnchorElement.nextSibling );
+        };
+
+        etcthis.showHidePostingForm =
+            function()
+        {
+            var showHideAnchor = this;
+            var postingForm = document.getElementById('postingForm');
+            if( '0' === showHideAnchor.getAttribute( etcthis.isHiddenCDAName ) )
+            {
+                showHideAnchor.setAttribute( etcthis.isHiddenCDAName, '1' );
+                postingForm.style.display = 'none';
+                showHideAnchor.replaceChild( document.createTextNode('[Show hidden posting form]'),
+                                           showHideAnchor.firstChild );
+            }
+            else
+            {
+                showHideAnchor.setAttribute( etcthis.isHiddenCDAName, '0' );
+                postingForm.style.display = '';
+                showHideAnchor.replaceChild( document.createTextNode('[Hide a posting form]'),
+                                             showHideAnchor.firstChild );
+            };
+        };
+
+        etcthis.getContentActionElement =
+            function()
+        {
+            var reportFieldReason = document.getElementById('reportFieldReason');
+            if( null == reportFieldReason ||
+                null == reportFieldReason.parentElement ||
+                null == reportFieldReason.parentElement.parentElement ||
+                0 > reportFieldReason.parentElement.parentElement.className.indexOf('contentAction') )
+            {
+                return null;
+            };
+            return reportFieldReason.parentElement.parentElement;
+        };
+
+        etcthis.insertButtonShowHideContentAction =
+            function()
+        {
+            var contentAction = etcthis.getContentActionElement();
+            if( null == contentAction )
+            {
+                return;
+            };
+            var showHideAnchor = document.createElement('A');
+            showHideAnchor.appendChild( document.createTextNode('[Show hidden report and deletion form]') );
+            showHideAnchor.setAttribute( etcthis.isHiddenCDAName, '1' );
+            showHideAnchor.addEventListener('click', etcthis.showHideContentAction);
+
+            contentAction.parentElement.insertBefore( showHideAnchor, contentAction );
+            contentAction.style.display = 'none';
+        };
+
+        etcthis.showHideContentAction =
+            function()
+        {
+            var showHideAnchor = this;
+            var target = etcthis.getContentActionElement();
+            var toShowText = '[Show hidden report and deletion form]';
+            var toHideText = '[Hide a report and delettion form]';
+            
+            if( null == target )
+            {
+                return;
+            };
+            if( '0' === showHideAnchor.getAttribute( etcthis.isHiddenCDAName ) )
+            {
+                showHideAnchor.setAttribute( etcthis.isHiddenCDAName, '1' );
+                target.style.display = 'none';
+                showHideAnchor.replaceChild( document.createTextNode( toShowText ),
+                                           showHideAnchor.firstChild );
+            }
+            else
+            {
+                showHideAnchor.setAttribute( etcthis.isHiddenCDAName, '0' );
+                target.style.display = '';
+                showHideAnchor.replaceChild( document.createTextNode( toHideText),
+                                             showHideAnchor.firstChild );
+            };
+        };
+        
         etcthis.disable =
             function()
         {
-            var style = document.getElementsById("postsConsecutiveNumberStyle");
+            var style = document.getElementById("postsConsecutiveNumberStyle");
             if( null != style )
             {
                 style.parentElement.removeChild( style );
@@ -2356,6 +2470,8 @@
 	        };
 
 	        setTimeout( etcthis.hackSendReplyDataToSupportChromeMp3, 0 );
+            setTimeout( etcthis.insertButtonShowHidePostingForm, 0 );
+            setTimeout( etcthis.insertButtonShowHideContentAction, 0 );
         };
 
         etcthis.trigger = function()
