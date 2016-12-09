@@ -17,7 +17,7 @@
 // @include    /https?://waifuchan\.moe/.*$/
 // @include    /https?://waifuchan\.moe/.*$/
 //
-// @version     1.91
+// @version     1.92
 // @grant       none
 // ==/UserScript==
 
@@ -41,9 +41,11 @@
 
 /*
  yamanu-chang(山ぬちゃん)です。
+・(v1.92)
+  ・autoRefresh の状態を記憶する補助機能を追加。
 ・(v1.91)
-  ・カタログのスレ立てフォームを表示/非表示にできるよう。初期値は非表示。
-  ・通報/削除フォームを表示/非表示にできるよう。初期値は非表示。
+  ・カタログのスレ立てフォームを表示/非表示できるように。初期値は非表示。
+  ・通報/削除フォームを表示/非表示できるように。初期値は非表示。
 ・(v1.90)
   ・div.markedPost にも通し番号が出るように
   ・endchan のカタログ hide の新仕様に対応。hide したスレが下に溜まるように。
@@ -73,24 +75,24 @@
   ・通し番号に対応
   ・v1.80 が Chrome で動かなかったのを修正
   ・こっそりとLynxChan系の他掲示板に対応。
-・レス時間をローカルタイム表記にします。
-・カタログソートと、ファイルプレビューをひとつにまとめました。
-・mp3 とか mp4 とか webm のプレビューに対応しました。
-   ( Chrome でたまにページごと落ちるけれど、回避方法は分からない )
-・カタログに[Refresh]ボタンを追加しました。
-・カタログソート。カタログに Sort By: セレクトボックスを設置します。
-    ・選ぶと、カタログがその順でソートされます。
-    ・localStorage上にどのソート方法を選んでいるか記録し、開き直した際もそのソートを適用します。
-
-    ・「Sort by:」の部分を押してもソートが切り替わります。
-    ・「r」の部分を押すとランダムにソートします。
-    ・歯車ボタンを押すと設定が出ます
-        ・Hideしたスレは下げる(ソート変更後に適用)
-            (endchan の機能である)カタログ hide したあとに出る [Show hidden thread 0000]
-            を常に一番下に置きます。
-    ・厳密なレス新着順は、カタログにある情報だけでは構築できないため実装していません。
-      (全スレの取得すればできるけど負荷がかかっちゃう)
-    ・同順位についての扱いがブラウザによってマチマチかも
+・(vその前)
+  ・レス時間をローカルタイム表記にします。
+  ・カタログソートと、ファイルプレビューをひとつにまとめました。
+  ・mp3 とか mp4 とか webm のプレビューに対応しました。
+     ( Chrome でたまにページごと落ちるけれど、回避方法は分からない )
+  ・カタログに[Refresh]ボタンを追加しました。
+  ・カタログソート。カタログに Sort By: セレクトボックスを設置します。
+      ・選ぶと、カタログがその順でソートされます。
+      ・localStorage上にどのソート方法を選んでいるか記録し、開き直した際もそのソートを適用します。
+      ・「Sort by:」の部分を押してもソートが切り替わります。
+      ・「r」の部分を押すとランダムにソートします。
+      ・歯車ボタンを押すと設定が出ます
+          ・Hideしたスレは下げる(ソート変更後に適用)
+              (endchan の機能である)カタログ hide したあとに出る [Show hidden thread 0000]
+              を常に一番下に置きます。
+      ・厳密なレス新着順は、カタログにある情報だけでは構築できないため実装していません。
+        (全スレの取得すればできるけど負荷がかかっちゃう)
+      ・同順位についての扱いがブラウザによってマチマチかも
   ----------------------------------------
  */
 
@@ -122,6 +124,27 @@
 
 	    var uthis = window.toshakiii.utils = {};
 
+        uthis.foreEachElementDescendants =
+            function foreEachElementDescendants( element, func )
+        {
+            var children, idx, len;
+            for( children = element.children, idx = 0, len = element.children.length; idx < len ; ++idx )
+            {
+                if( ! func( children[ idx ] ) )
+                {
+                    return false;
+                };
+            };
+            for( children = element.children, idx = 0, len = element.children.length; idx < len ; ++idx )
+            {
+                if( ! foreEachElementDescendants( children[ idx ], func ) )
+                {
+                    return false;
+                };
+            };
+            return true;
+        };
+        
 	    uthis.contains =
 	        function( array, item )
 	    {
@@ -408,7 +431,102 @@
         return uthis;
     };
 
+    /**********************************
+     * settings                       *
+     **********************************/
+    function modSettings()
+    {
+        window.toshakiii = window.toshakiii || {};
+        window.toshakiii.settings = window.toshakiii.settings || {};
+        var settings = window.toshakiii.settings;
 
+        /*                         [<keynames>...] */
+        settings.miniDataKeyList = [ 'ThreadAutoRefresh' ];
+
+        settings.getMiniDataIndex =
+            function( keyname )
+        {
+            for( var index = 0, length = settings.miniDataKeyList.length;
+                 index < length; ++index )
+            {
+                if( keyname === settings.miniDataKeyList[ index ] )
+                {
+                    return index;
+                };
+            };
+            return -1;
+        };
+
+        settings.setMiniDataContainer =
+            function( value )
+        {
+            localStorage.setItem('toshakiii.settings.miniData', JSON.stringify( value ) );
+        };
+        settings.getMiniDataContainer =
+            function()
+        {
+            var miniDataStr = localStorage.getItem('toshakiii.settings.miniData');
+            var miniData, mdIdx, mdLen;
+            if( null == miniDataStr )
+            {
+                miniData = Array( settings.miniDataKeyList.length );
+                for( mdIdx = 0, mdLen = miniData.length; mdIdx < mdLen ; ++mdIdx )
+                {
+                    miniData[ mdIdx ] = 0;
+                };
+            }
+            else
+            {
+                miniData = JSON.parse( miniDataStr );
+                for( mdIdx = miniData.length, mdLen = settings.miniDataKeyList.length;
+                     mdIdx < mdLen; ++mdIdx )
+                {
+                    miniData[ mdIdx ] = 0;
+                };
+            };
+            return miniData;
+        };
+        
+        settings.getMiniData =
+            function( keyname )
+        {
+            var index = settings.getMiniDataIndex( keyname );
+            var miniDataContainer = settings.getMiniDataContainer();
+
+            if( 0 > index )
+            {
+                return null;
+            };
+
+            if( index < (miniDataContainer.length) )
+            {
+                return miniDataContainer[ index ];
+            };
+
+            return null;
+        };
+        settings.setMiniData =
+            function( keyname, value )
+        {
+            var index = settings.getMiniDataIndex( keyname );
+            if( 0 > index )
+            {
+                return null;
+            };
+            var miniDataContainer = settings.getMiniDataContainer();
+            miniDataContainer[ index ] = value;
+
+            settings.setMiniDataContainer( miniDataContainer );
+            return value;
+        };
+        
+        settings.trigger = function(){};
+        settings.enable = function(){};
+        settings.disable = function(){};
+        
+        return settings;
+    };
+    
     /**********************************
      * filePreview                    *
      **********************************/
@@ -1852,6 +1970,7 @@
 	    var lthis = window.toshakiii.lynxChanWrapper;
         var utils = window.toshakiii.utils;
         var etcthis = {};
+        var settings = window.toshakiii.settings;
 
         window.toshakiii.etCetera = etcthis;
 
@@ -2447,6 +2566,100 @@
                                              showHideAnchor.firstChild );
             };
         };
+
+        etcthis.getAutoRefreshCheckboxElement =
+            function()
+        {
+            var labelRefresh = document.getElementById('labelRefresh');
+            if( null === labelRefresh )
+            {
+                return null;
+            };
+
+            /* なんだこの仕様は… */
+            /* elt.getElementsByTagName()[idx].addEventListener === undefined */
+            /* var inputList = labelRefresh.parentElement.getElementsByTagName('INPUT'); */
+
+            var break_ = false;
+            var continue_ = true;
+            var target = null;
+
+            function f( descendant )
+            {
+                if( 'INPUT' === descendant.tagName &&
+                    'checkbox' === descendant.type )
+                {
+                    target = descendant;
+                    return break_;
+                };
+                return continue_;
+            };
+            utils.foreEachElementDescendants( labelRefresh.parentElement              , f );
+            if( null !== target )
+            {
+                return target;
+            };
+            utils.foreEachElementDescendants( labelRefresh.parentElement.parentElement, f );
+
+            return target;
+        };
+        
+        etcthis.autoRefreshCheckboxPersistent =
+            function()
+        {
+            var autoRefreshCheckbox = etcthis.getAutoRefreshCheckboxElement();
+            if( null === autoRefreshCheckbox ||
+                undefined === window.changeRefresh ||
+                undefined === window.autoRefresh
+              )
+            {
+                return;
+            };
+
+            if( false === window.autoRefresh )
+            {
+                /* サイト指定の初期値が false の場合は、この機能は動かさない */
+                return;
+            };
+
+            /* ブラウザがチェックボックスの状態を覚えていて、ページを開いた時に状態を反映する。
+             autoRefresh の状態はチェックボックスに従わない。
+             autoRefresh はチェックボックスが初期状態で、checked だと思っている。
+             上記の理由で、autoRefreshCheckbox.dispatchEvent だけで対応することは不可能 */
+
+            if( autoRefreshCheckbox.checked !== window.autoRefresh )
+            {
+                window.changeRefresh();
+            };
+
+            if( autoRefreshCheckbox.checked !==
+                ( 0 !== settings.getMiniData('ThreadAutoRefresh') ) )
+            {
+                autoRefreshCheckbox.checked = !autoRefreshCheckbox.checked;
+
+                /*
+                 var evt = document.createEvent("HTMLEvents");
+                 evt.initEvent("change", true, true);
+                 autoRefreshCheckbox.dispatchEvent(evt);
+                 alert( "2617:autoRefresh:" + window.autoRefresh );*/
+                window.changeRefresh();
+            };
+            autoRefreshCheckbox.addEventListener('change', etcthis.autoRefreshCheckboxOnChange );
+        };
+
+        etcthis.autoRefreshCheckboxOnChange =
+            function()
+        {
+            var autoRefreshCheckbox = this;
+            if( autoRefreshCheckbox.checked )
+            {
+                settings.setMiniData('ThreadAutoRefresh', 1);
+            }
+            else
+            {
+                settings.setMiniData('ThreadAutoRefresh', 0);
+            };
+        };
         
         etcthis.disable =
             function()
@@ -2472,6 +2685,7 @@
 	        setTimeout( etcthis.hackSendReplyDataToSupportChromeMp3, 0 );
             setTimeout( etcthis.insertButtonShowHidePostingForm, 0 );
             setTimeout( etcthis.insertButtonShowHideContentAction, 0 );
+            setTimeout( etcthis.autoRefreshCheckboxPersistent, 0 );
         };
 
         etcthis.trigger = function()
@@ -3419,6 +3633,7 @@
 	        var script = document.createElement('SCRIPT');
 	        script.innerText =
 		        "try{("+modUtils          .toString() +")().trigger();}catch(e){};" +
+		        "try{("+modSettings       .toString() +")().trigger();}catch(e){};" +
 		        "try{("+modLynxChanWrapper.toString() +")().trigger();}catch(e){};" +
 		        "try{("+modEtCetera       .toString() +")().trigger();}catch(e){};" +
 		        "try{("+modCatalogSorter  .toString() +")().trigger();}catch(e){};" +
@@ -3441,6 +3656,7 @@
 	    else
 	    {
 	        modUtils().trigger();
+            modSettings().trigger();
 	        modLynxChanWrapper().trigger();
 	        modEtCetera().trigger();
 	        modFilePreview().trigger();
