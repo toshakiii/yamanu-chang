@@ -17,7 +17,7 @@
 // @include    /https?://waifuchan\.moe/.*$/
 // @include    /https?://waifuchan\.moe/.*$/
 //
-// @version     1.92
+// @version     1.93
 // @grant       none
 // ==/UserScript==
 
@@ -41,6 +41,8 @@
 
 /*
  yamanu-chang(山ぬちゃん)です。
+・(v1.93)
+  ・Refresh読み込み分のレスにも、[X] と del を設置する補助機能を追加。
 ・(v1.92)
   ・autoRefresh の状態を記憶する補助機能を追加。
 ・(v1.91)
@@ -268,6 +270,17 @@
 
             elt.appendChild( document.createTextNode(str) );
             elt.appendChild( document.createElement('BR') );
+        };
+        
+        uthis.removePostCells =
+            function()
+        {
+            var postCellList = document.getElementsByClassName('postCell');
+            for( var idx = postCellList.length - 1; -1 < idx ; --idx )
+            {
+                postCellList[idx].parentElement.removeChild( postCellList[idx] );
+            };
+            window.lastReplyId = 0;
         };
 
         uthis.differenceSet =
@@ -2660,6 +2673,31 @@
                 settings.setMiniData('ThreadAutoRefresh', 0);
             };
         };
+
+        etcthis.enableDelButtonAndHideButton =
+            function( postCell )
+        {
+            if( undefined !== window.enableHidePostLink )
+            {
+                /* [X] の設置 */
+                window.enableHidePostLink(postCell);
+            };
+            if( undefined !== window.delPost )
+            {
+                /* del の設置 */
+                var delPostButton = document.createElement('A');
+                delPostButton.appendChild( document.createTextNode('del') );
+                delPostButton.href = '#bottom';
+                delPostButton.onclick = (function(){return window.delPost(this);});
+
+                var panelBacklinksList = postCell.getElementsByClassName( 'panelBacklinks' );
+                if( 0 < panelBacklinksList.length )
+                {
+                    var panelBackLinks = panelBacklinksList[0];
+                    panelBackLinks.parentElement.insertBefore( delPostButton, panelBackLinks );
+                };
+            };
+        };
         
         etcthis.disable =
             function()
@@ -2686,6 +2724,12 @@
             setTimeout( etcthis.insertButtonShowHidePostingForm, 0 );
             setTimeout( etcthis.insertButtonShowHideContentAction, 0 );
             setTimeout( etcthis.autoRefreshCheckboxPersistent, 0 );
+
+            if( undefined !== window.enableHidePostLink ||
+                undefined !== window.delPost )
+            {
+                etcthis.postCellOnLoadHooks.push( etcthis.enableDelButtonAndHideButton );
+            };
         };
 
         etcthis.trigger = function()
@@ -3642,17 +3686,6 @@
 		        "";
 	        document.head.appendChild( script );
 	    }
-	    /* else if(  )
-	    {
-	        location.href = "javascript:" +
-		        "try{("+modUtils          .toString() +")().trigger();}catch(e){};" +
-		        "try{("+modLynxChanWrapper.toString() +")().trigger();}catch(e){};" +
-		        "try{("+modEtCetera       .toString() +")().trigger();}catch(e){};" +
-		        "try{("+modCatalogSorter  .toString() +")().trigger();}catch(e){};" +
-                "try{("+modFilePreview    .toString() +")().trigger();}catch(e){};" +
-		        "try{("+modMultiPopup     .toString() +")().trigger();}catch(e){};" +
-		        "";
-	    } */
 	    else
 	    {
 	        modUtils().trigger();
