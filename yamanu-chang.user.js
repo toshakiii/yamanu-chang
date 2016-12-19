@@ -1,5 +1,6 @@
 // ==UserScript==
 // @name        yamanu-chang
+// @author      to_sha_ki_ii
 // @namespace   to_sha_ki_ii
 // @description endchan: catalog sorter, preview upload files, recursive quote popup
 //
@@ -17,7 +18,7 @@
 // @include    /https?://waifuchan\.moe/.*$/
 // @include    /https?://waifuchan\.moe/.*$/
 //
-// @version     1.93
+// @version     1.94
 // @grant       none
 // ==/UserScript==
 
@@ -31,16 +32,10 @@
  */
 
 /*
- TODO:
- ・sendReplyData の hack をオフにできるオプションを追加すること。
- ・日時表記に dd/MM/YYYY 追加を
- ・2回もダウンロードしないように
- ・ボードトップでページ内引用をするように。サウロンの目にも対応したい。
- ・selectedDivOnChange を lynxChanWrapper に移動すること。今時点、ファイルプレビューに依存している。
-*/
-
-/*
  yamanu-chang(山ぬちゃん)です。
+・(v1.94)
+  ・ページタイトルを "<何々> - /<板名>/" にする補助機能を追加。
+  ・Google Chrome で mp3 を貼れるようにする機能の実装を変更。
 ・(v1.93)
   ・Refresh読み込み分のレスにも、[X] と del を設置する補助機能を追加。
 ・(v1.92)
@@ -108,21 +103,39 @@
   ・trigger, enable, disable
 */
 
+/*
+ TODO:
+ ・圧縮しても動くコードにしたい
+ ・sendReplyData の hack をオフにできるオプションを追加すること。
+ ・日時表記に dd/MM/YYYY 追加を
+ ・2回もダウンロードしないように
+ ・ボードトップでページ内引用をするように。サウロンの目にも対応したい。
+ ・selectedDivOnChange を lynxChanWrapper に移動すること。今時点、ファイルプレビューに依存している。
+*/
+
 (function(){
     // pthis: modFilePreview
     // sthis: modCatalogSorter
     // mthis: modMultiPopup
     // etcthis: modEtCetera
     // ethis: DOM Elementを指すthis
-    // lthis: modLynxChanWrapper
+    // lthis: modFeWrapper
     // cthis: 一時使用用
 
+    window.toshakiii = window.toshakiii || {};
+    window.toshakiii2 = window.toshakiii || {};
+    var toshakiii = window.toshakiii;
+    var toshakiii2 = window.toshakiii || {};
+    
     /*********
      * utils *
      *********/
     function modUtils()
     {
-	    window.toshakiii = window.toshakiii || {};
+        window.toshakiii = window.toshakiii || {};
+        window.toshakiii.settings = window.toshakiii.settings || {};
+        var toshakiii = window.toshakiii;
+        var settings = window.toshakiii.settings;
 
 	    var uthis = window.toshakiii.utils = {};
 
@@ -451,6 +464,7 @@
     {
         window.toshakiii = window.toshakiii || {};
         window.toshakiii.settings = window.toshakiii.settings || {};
+        var toshakiii = window.toshakiii;
         var settings = window.toshakiii.settings;
 
         /*                         [<keynames>...] */
@@ -545,13 +559,13 @@
      **********************************/
     function modFilePreview()
     {
-        if( undefined === window.toshakiii )
-        {   window.toshakiii = {}; };
-        if( undefined === window.toshakiii.settings )
-        {   window.toshakiii.settings = {}; };
+        window.toshakiii = window.toshakiii || {};
+        window.toshakiii.settings = window.toshakiii.settings || {};
+        var toshakiii = window.toshakiii;
+        var settings = window.toshakiii.settings;
 
         var pthis = {};
-	    var lthis = window.toshakiii.lynxChanWrapper;
+	    var lthis = window.toshakiii.feWrapper;
 
         window.toshakiii.filePreview = pthis;
 
@@ -897,13 +911,12 @@
      **********************************/
     function modCatalogSorter()
     {
-        if( undefined === window.toshakiii )
-        {   window.toshakiii = {}; };
-        if( undefined === window.toshakiii.settings )
-        {   window.toshakiii.settings = {}; };
+        window.toshakiii = window.toshakiii || {};
+        window.toshakiii.settings = window.toshakiii.settings || {};
+        var toshakiii = window.toshakiii;
+        var settings = window.toshakiii.settings;
 
         var sthis = {};
-        var settings = window.toshakiii.settings;
         var utils = window.toshakiii.utils;
 
         window.toshakiii.catalogSorter = sthis;
@@ -1975,15 +1988,14 @@
      **********************************/
     function modEtCetera()
     {
-        if( undefined === window.toshakiii )
-        {   window.toshakiii = {}; };
-        if( undefined === window.toshakiii.settings )
-        {   window.toshakiii.settings = {}; };
+        window.toshakiii = window.toshakiii || {};
+        window.toshakiii.settings = window.toshakiii.settings || {};
+        var toshakiii = window.toshakiii;
+        var settings = window.toshakiii.settings;
 
-	    var lthis = window.toshakiii.lynxChanWrapper;
+	    var feWrapper = window.toshakiii.feWrapper;
         var utils = window.toshakiii.utils;
         var etcthis = {};
-        var settings = window.toshakiii.settings;
 
         window.toshakiii.etCetera = etcthis;
 
@@ -2382,27 +2394,43 @@
 
         };
 
-	    etcthis.hackSendReplyDataToSupportChromeMp3 =
-	        function hackSendReplyDataToSupportChromeMp3()
+
+	    etcthis.fixGoogleChromeMp3Mime =
+	        function fixGoogleChromeMp3Mime()
 	    {
-	        if( undefined == window.sendReplyData )
+	        if( undefined === window.sendReplyData )
 	        {
-		        if( 'complete' == document.readyState )
+		        if( 'complete' === document.readyState )
 		        {
 		            return;
 		        };
-		        setTimeout( hackSendReplyDataToSupportChromeMp3, 10 );
+		        setTimeout( fixGoogleChromeMp3Mime, 0 );
 		        return;
 	        };
-	        if( 'function' != typeof( window.sendReplyData ) )
+	        if( 'function' !== typeof( window.sendReplyData ) ||
+                'function' !== typeof( window.checkExistance ) )
 	        {
 		        return;
 	        };
-	        var originalSendReplyData = window.sendReplyData;
 
-	        window.sendReplyData
-		        = function ymncSendReplyData( files )
-	        {
+            var originalCheckExistance = window.checkExistance;
+            window.checkExistance
+                = function ymnccheckExistance()
+            {
+		        if( 'audio/mp3' === arguments[0].type )
+		        {
+                    arguments[0].type = 'audio/mpeg';
+		            Object.defineProperty( arguments[0], "type",
+					                       { enumerable: false,
+					                         configurable: false,
+					                         writable: true,
+					                         value: 'audio/mpeg' } );
+		        };
+		        return originalCheckExistance.apply( window, Array.prototype.slice.call( arguments ) );
+            };
+
+            var fixMp3BlobMime = function( files )
+            {
 		        try
 		        {
 		            var data_audio_mpeg = 'data:audio/mpeg;';
@@ -2427,32 +2455,21 @@
 		        }
 		        catch(e)
 		        {};
-
+            };
+            
+	        var originalSendReplyData = window.sendReplyData;
+	        window.sendReplyData = function ymncSendReplyData( files )
+	        {
+                fixMp3BlobMime( files );
 		        return originalSendReplyData.apply( window, Array.prototype.slice.call( arguments ) );
 	        };
-	        lthis.selectedDivOnChangeHandlers.push( etcthis.replaceAudioMp3WithAudioMpeg );
-	        etcthis.replaceAudioMp3WithAudioMpeg();
-	    };
 
-	    etcthis.replaceAudioMp3WithAudioMpeg =
-	        function()
-	    {
-	        if( null == window.selectedFiles )
-	        {
-		        return;
-	        };
-	        for( var i in window.selectedFiles )
-	        {
-		        var selectedFile = window.selectedFiles[ i ];
-		        if( 'audio/mp3' == selectedFile.type )
-		        {
-		            Object.defineProperty( selectedFile, "type",
-					                       { enumerable: false,
-					                         configurable: false,
-					                         writable: true,
-					                         value: "audio/mpeg" } );
-		        };
-	        };
+            var originalQRsendReplyData = window.QRsendReplyData;
+            window.QRsendReplyData = function ymncQRsendReplyData( files )
+            {
+                fixMp3BlobMime( files );
+		        return originalQRsendReplyData.apply( window, Array.prototype.slice.call( arguments ) );
+            };
 	    };
 
         etcthis.addConsecutiveNumberStyle =
@@ -2698,6 +2715,21 @@
                 };
             };
         };
+
+        etcthis.titleOrder = function()
+        {
+            var boardUri = feWrapper.getBoardUri();
+            var title = document.title;
+            var prefix = '/' + boardUri + '/ - ';
+            if( 0 === title.lastIndexOf( prefix ) )
+            {
+                document.title = title.substring( prefix.length ) + ' - /' + boardUri + '/';
+            };
+        };
+
+        etcthis.removeYoutubeIframes = function()
+        {
+        };
         
         etcthis.disable =
             function()
@@ -2712,7 +2744,8 @@
         etcthis.enable =
             function()
         {
-            etcthis.startObserveDivPosts();
+            etcthis.removeYoutubeIframes();
+            setTimeout( etcthis.startObserveDivPosts, 0 );
             setTimeout( etcthis.localizeDateTimeLabelAll, 0 );
             setTimeout( etcthis.overrideWrapperAll, 0 );
 	        if( 0 <= document.location.href.indexOf("/res/") )
@@ -2720,16 +2753,18 @@
 		        setTimeout( etcthis.addConsecutiveNumberStyle, 0 );
 	        };
 
-	        setTimeout( etcthis.hackSendReplyDataToSupportChromeMp3, 0 );
+	        setTimeout( etcthis.fixGoogleChromeMp3Mime, 0 );
             setTimeout( etcthis.insertButtonShowHidePostingForm, 0 );
             setTimeout( etcthis.insertButtonShowHideContentAction, 0 );
             setTimeout( etcthis.autoRefreshCheckboxPersistent, 0 );
+            setTimeout( etcthis.titleOrder, 0 );
 
             if( undefined !== window.enableHidePostLink ||
                 undefined !== window.delPost )
             {
                 etcthis.postCellOnLoadHooks.push( etcthis.enableDelButtonAndHideButton );
             };
+
         };
 
         etcthis.trigger = function()
@@ -2745,13 +2780,12 @@
      **********************************/
     function modMultiPopup()
     {
-        if( undefined === window.toshakiii )
-        {   window.toshakiii = {}; };
-        if( undefined === window.toshakiii.settings )
-        {   window.toshakiii.settings = {}; };
+        window.toshakiii = window.toshakiii || {};
+        window.toshakiii.settings = window.toshakiii.settings || {};
+        var toshakiii = window.toshakiii;
+        var settings = window.toshakiii.settings;
 
         var mthis = {};
-        var settings = window.toshakiii.settings;
         var utils = window.toshakiii.utils;
 
         window.toshakiii.multiPopup = mthis;
@@ -3337,23 +3371,23 @@
 	        };
 	    };
 
-	    mthis.DateToLastCheckMouseIn = 0;
+	    mthis.DateToLastCheckMouseIsIn = 0;
 	    mthis.onBodyMouseMove =
 	        function( event )
 	    {
 	        var now = (+new Date());
 	        var intervalToCheck = 100;
-	        if( now > ( intervalToCheck + mthis.DateToLastCheckMouseIn ) )
+	        if( now > ( intervalToCheck + mthis.DateToLastCheckMouseIsIn ) )
 	        {
-		        mthis.checkMouseIn( event );
-		        mthis.DateToLastCheckMouseIn = now;
+		        mthis.checkMouseIsIn( event );
+		        mthis.DateToLastCheckMouseIsIn = now;
 	        };
 
 	        mthis.mouseClientPos = {x:event.clientX, y:event.clientY};
 	        return;
 	    };
 
-	    mthis.checkMouseIn =
+	    mthis.checkMouseIsIn =
 	        function( event )
 	    {
 	        mthis.mouseClientPos = {x:event.clientX, y:event.clientY};
@@ -3537,13 +3571,13 @@
 	        function()
 	    {
 	        mthis.removeBodyEvents();
-	        document.body.addEventListener("click"    , mthis.checkMouseIn );
+	        document.body.addEventListener("click"    , mthis.checkMouseIsIn );
 	        document.body.addEventListener("mousemove", mthis.onBodyMouseMove );
 	    };
 	    mthis.removeBodyEvents =
 	        function()
 	    {
-	        document.body.removeEventListener("click"    , mthis.checkMouseIn );
+	        document.body.removeEventListener("click"    , mthis.checkMouseIsIn );
 	        document.body.removeEventListener("mousemove", mthis.onBodyMouseMove );
 	    };
 
@@ -3646,17 +3680,29 @@
     };
 
     /**********************************
-     * LynxChan Wrapper               *
+     * LynxChan Front-End Wrapper               *
      **********************************/
-    function modLynxChanWrapper()
+    function modFeWrapper()
     {
-	    if( undefined === window.toshakiii )
-	    {   window.toshakiii = {};};
+        window.toshakiii = window.toshakiii || {};
+        window.toshakiii.settings = window.toshakiii.settings || {};
+        var toshakiii = window.toshakiii;
+        var settings = window.toshakiii.settings;
 
 	    var lthis = {};
-	    window.toshakiii.lynxChanWrapper = lthis;
+	    window.toshakiii.feWrapper = lthis;
 
 	    lthis.selectedDivOnChangeHandlers = [];
+
+        lthis.getBoardUri = function()
+        {
+            /* /b/ の "b" とか、 /librejp/ の "librejp" とかを返す */
+            if( undefined !== window.boardUri )
+            {
+                return window.boardUri;
+            };
+            return document.location.pathname.replace(/\/([^/]*).*/,"$1");            
+        };
 
 	    lthis.disable = function(){};
 	    lthis.trigger = function(){};
@@ -3665,7 +3711,87 @@
 	    return lthis;
     };
 
+    /*****************************
+     * odcl : OnDomContentLoaded *
+     *****************************/
+    function odclRemoveYoutubeIframes()
+    {
+        var iframeList = document.getElementsByTagName('IFRAME');
+        var urlList = Array( iframeList.length );
+        var spanList = Array( iframeList.length );
+        var idx = iframeList.length - 1;
+        for(; -1 < idx ; --idx )
+        {
+            if( 0 === iframeList[idx].src.lastIndexOf('https://www.youtube.com/embed/') )
+            {
+                urlList[idx] = iframeList[idx].src;
+                spanList[ idx ] = document.createElement('SPAN');
+                iframeList[idx].parentElement.replaceChild( spanList[idx],
+                                                            iframeList[idx]  );
+            };
+        };
+        toshakiii2['removedYoutubeUrls'] = urlList;
+        toshakiii2['spanInsteadOfYoutubeIframeList'] = spanList;
+    };
+    toshakiii2['odclRemoveYoutubeIframes'] = odclRemoveYoutubeIframes;
 
+    function odclEnable()
+    {
+        return odclRemoveYoutubeIframes();
+    };
+    toshakiii2['odclEnable'] = odclEnable;
+
+    /*****************************
+     * olod *
+     *****************************/
+    function olodInsertLinkInsteadOfYoutubeIframes()
+    {
+        var urlList = toshakiii2['removedYoutubeUrls'];
+        var idx = urlList.length;
+        var spanList = toshakiii2['spanInsteadOfYoutubeIframeList'];
+        var etCetera = window.toshakiii.etCetera;
+        var IntermittentLoops = window.toshakiii.utils.IntermittentLoops;
+        var break_ = false;
+        var continue_ = true;
+
+        var iloops = IntermittentLoops();
+        iloops.push( function(){
+            --idx;
+            if( -1 >= idx )
+            {
+                return break_;
+            };
+            var url = urlList[idx];
+
+            url = url.replace(/^http:/,'https:')
+                .replace(/^https:\/\/www\.youtube\.com\/embed\//,'https://youtube.com/watch?v=');
+            var span = spanList[ idx ];
+            span.className = 'youtube_wrapper';
+            var embedButton = document.createElement('A');
+            embedButton.href = url;
+            embedButton.appendChild( document.createTextNode('embeD') );
+            span.appendChild( document.createTextNode( url + '[') );
+            span.appendChild( embedButton );
+            span.appendChild( document.createTextNode(']') );
+            etCetera.overrideEmbedYoutubeButton( embedButton );
+            return continue_;
+        } )
+            .exec();
+    };
+    toshakiii2['olodInsertLinkInsteadOfYoutubeIframes'] = olodInsertLinkInsteadOfYoutubeIframes;
+
+    function olodEnable()
+    {
+        setTimeout( olodInsertLinkInsteadOfYoutubeIframes, 0 );
+    };
+    toshakiii2['olodEnable'] = olodEnable;
+
+    function mainEnable()
+    {
+        olodEnable();
+        odclEnable();
+    };
+    toshakiii2['enable'] = mainEnable;
 
     /**********************************
      * main                           *
@@ -3676,25 +3802,31 @@
 	    {
 	        var script = document.createElement('SCRIPT');
 	        script.innerText =
-		        "try{("+modUtils          .toString() +")().trigger();}catch(e){};" +
-		        "try{("+modSettings       .toString() +")().trigger();}catch(e){};" +
-		        "try{("+modLynxChanWrapper.toString() +")().trigger();}catch(e){};" +
-		        "try{("+modEtCetera       .toString() +")().trigger();}catch(e){};" +
-		        "try{("+modCatalogSorter  .toString() +")().trigger();}catch(e){};" +
-		        "try{("+modFilePreview    .toString() +")().trigger();}catch(e){};" +
-		        "try{("+modMultiPopup     .toString() +")().trigger();}catch(e){};" +
-		        "";
+                "var toshakiii_errors = [];" +
+		        "try{("+modUtils        .toString() +")().trigger();}catch(e){toshakiii_errors.push(e);};" +
+		        "try{("+modSettings     .toString() +")().trigger();}catch(e){toshakiii_errors.push(e);};" +
+		        "try{("+modFeWrapper    .toString() +")().trigger();}catch(e){toshakiii_errors.push(e);};" +
+		        "try{("+modEtCetera     .toString() +")().trigger();}catch(e){toshakiii_errors.push(e);};" +
+		        "try{("+modCatalogSorter.toString() +")().trigger();}catch(e){toshakiii_errors.push(e);};" +
+		        "try{("+modFilePreview  .toString() +")().trigger();}catch(e){toshakiii_errors.push(e);};" +
+		        "try{("+modMultiPopup   .toString() +")().trigger();}catch(e){toshakiii_errors.push(e);};" +
+                /*
+                 "try{(window.toshakiii2 = ("+toshakiii2.toString() + "))['enable']();}catch(e){ toshakiii_errors.push(e); };" +
+                 */
+		        "if( 0 != toshakiii_errors.length ){ alert( toshakiii_errors ); };" +
+                "";
 	        document.head.appendChild( script );
 	    }
 	    else
 	    {
 	        modUtils().trigger();
             modSettings().trigger();
-	        modLynxChanWrapper().trigger();
+	        modFeWrapper().trigger();
 	        modEtCetera().trigger();
 	        modFilePreview().trigger();
             modCatalogSorter().trigger();
             modMultiPopup().trigger();
+            /*toshakiii2['enable']();*/
         };
     };
     main();
