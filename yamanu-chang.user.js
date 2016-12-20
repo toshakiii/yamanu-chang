@@ -8,6 +8,8 @@
 // @include    /https?://32ch\.org/.*$/
 // @include    /https?://bunkerchan\.xyz/.*$/
 // @include    /https?://endchan\.xyz/.*$/
+// @include    /https?://endchan\.net/.*$/
+// @include    /https?://infinow\.net.*$/
 // @include    /https?://freech\.net/.*$/
 // @include    /https?://infinow\.net/.*$/
 // @include    /https?://keksec\.com/.*$/
@@ -18,7 +20,7 @@
 // @include    /https?://waifuchan\.moe/.*$/
 // @include    /https?://waifuchan\.moe/.*$/
 //
-// @version     1.94
+// @version     1.95
 // @grant       none
 // ==/UserScript==
 
@@ -33,6 +35,9 @@
 
 /*
  yamanu-chang(山ぬちゃん)です。
+・(v1.95)
+  ・Refresh時にタイトルの順番が戻ってしまうのを修正。
+  ・対象サイトを追記
 ・(v1.94)
   ・ページタイトルを "<何々> - /<板名>/" にする補助機能を追加。
   ・Google Chrome で mp3 を貼れるようにする機能の実装を変更。
@@ -138,6 +143,89 @@
         var settings = window.toshakiii.settings;
 
 	    var uthis = window.toshakiii.utils = {};
+
+        uthis.MOSubject =
+            function MOSubject( initFunc )
+        {
+            this.initFunc = initFunc;
+            this.subject = undefined;
+            this.options = undefined;
+            this.mutationObserver = undefined;
+            this.observers = [];
+            this.noticer = undefined;
+        };
+        uthis.MOSubject.prototype =
+            {
+                start : function start()
+                {
+                    if( undefined !== this.initFunc )
+                    {
+                        this.initFunc( this );
+                        this.initFunc = undefined;
+                    };
+                    if( undefined === this.mutationObserver )
+                    {
+                        this.mutationObserver = new MutationObserver( this.delegateObserver.bind( this ) );
+                        this.mutationObserver.observe( this.subject, this.options );
+                    };
+                },
+                stop : function stop()
+                {
+                    if( undefined !== this.mutationObserver )
+                    {
+                        this.mutationObserver.disconnect();
+                        this.mutationObserver = undefined;
+                    };
+                },
+                delegateObserver : function( mutationRecords, mutationObserver )
+                {
+                    if( undefined !== this.noticer )
+                    {
+                        this.noticer( mutationRecords, mutationObserver, this.observers );
+                        return;
+                    }
+                    else
+                    {
+                        for( var idx = 0, len = this.observers.length;
+                             idx < len ; ++idx )
+                        {
+                            this.observers[ idx ]( mutationRecords, mutationObserver );
+                        };
+                    };
+                },
+                appendObserver : function appendObserver( func, noStart )
+                {
+                    this.observers.push( func );
+                    if( ! noStart )
+                    {
+                        this.start();
+                    };
+                    return func;
+                },
+                removeObserver : function removeObserver( func )
+                {
+                    for( var idx = this.observers.length - 1; -1 < idx ; --idx )
+                    {
+                        if( this.observers[ idx ] === func )
+                        {
+                            this.observers.splice( idx, 1 );
+                            return func;
+                        };
+                    };
+                    return null;
+                },
+                setNoticer : function setNoticer( noticer_func )
+                {
+                    this.noticer = noticer_func;
+                },
+                setSubject : function setSubject( subject )
+                {
+                    this.subject = subject;
+                }, setOptions : function setOptions( options )
+                {
+                    this.options = options;
+                }
+            };
 
         uthis.foreEachElementDescendants =
             function foreEachElementDescendants( element, func )
@@ -2716,15 +2804,32 @@
             };
         };
 
-        etcthis.titleOrder = function()
+        etcthis.titleNewReplysCountReg = /^([(]\d*[)] ).*$/;
+        etcthis.procTitle = function()
         {
             var boardUri = feWrapper.getBoardUri();
             var title = document.title;
+            var newReplys = title.match( etcthis.titleNewReplysCountReg );
+            if( null === newReplys )
+            {
+                newReplys = "";
+            }
+            else
+            {
+                newReplys = newReplys[1];
+            };
+
+            title = title.substring( newReplys.length );
             var prefix = '/' + boardUri + '/ - ';
             if( 0 === title.lastIndexOf( prefix ) )
             {
-                document.title = title.substring( prefix.length ) + ' - /' + boardUri + '/';
+                document.title = newReplys + title.substring( prefix.length ) + ' - /' + boardUri + '/';
             };
+        };
+        etcthis.titleOrder = function()
+        {
+            etcthis.procTitle();
+            feWrapper.titleMos.appendObserver( etcthis.procTitle );
         };
 
         etcthis.removeYoutubeIframes = function()
@@ -3688,13 +3793,26 @@
         window.toshakiii.settings = window.toshakiii.settings || {};
         var toshakiii = window.toshakiii;
         var settings = window.toshakiii.settings;
+        var utils = window.toshakiii.utils;
 
-	    var lthis = {};
-	    window.toshakiii.feWrapper = lthis;
+	    var fewrapper = {};
+	    window.toshakiii.feWrapper = fewrapper;
+        
+	    fewrapper.selectedDivOnChangeHandlers = [];
 
-	    lthis.selectedDivOnChangeHandlers = [];
+        fewrapper.titleMos = undefined;
+        fewrapper.titleMosInit = function( titleMos )
+        {
+            titleMos.setSubject( document.head.getElementsByTagName('TITLE')[0] );
+            titleMos.setOptions( { childList: true} );
+        };
 
-        lthis.getBoardUri = function()
+	    fewrapper.enable = function()
+        {
+            fewrapper.titleMos = new utils.MOSubject( fewrapper.titleMosInit );
+        };
+
+        fewrapper.getBoardUri = function()
         {
             /* /b/ の "b" とか、 /librejp/ の "librejp" とかを返す */
             if( undefined !== window.boardUri )
@@ -3704,11 +3822,10 @@
             return document.location.pathname.replace(/\/([^/]*).*/,"$1");            
         };
 
-	    lthis.disable = function(){};
-	    lthis.trigger = function(){};
-	    lthis.enable = function(){};
+	    fewrapper.disable = function(){};
+	    fewrapper.trigger = function(){ fewrapper.enable(); };
 
-	    return lthis;
+	    return fewrapper;
     };
 
     /*****************************
