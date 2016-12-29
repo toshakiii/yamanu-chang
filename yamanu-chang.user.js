@@ -25,8 +25,8 @@
 // @include    /https?://waifuchan\.moe/.*$/
 // @include    /https?://waifuchan\.moe/.*$/
 //
-// @version     1.97
-// @description v.197: endchan: catalog sorter, preview upload files, recursive quote popup
+// @version      1.98
+// @description v1.98: endchan: catalog sorter, preview upload files, recursive quote popup
 // @grant       none
 // ==/UserScript==
 
@@ -42,11 +42,13 @@
 
 /*
  yamanu-chang(山ぬちゃん)です。
+・(v1.98 2016.12.30.05.25 JST)
+  ・引用ポップアップで画像が表示できなかったのを修正
 ・(v1.97 2016.12.30.02.53 JST)
   ・Tor用アドレスに対応してみる(動作未確認)
 ・(v1.96 2016.12.30.02.34 JST)
   ・endchan が http を廃止して https に全面移行したみたいだから
-    http に対応していないニコニコの埋め込みメッセージを変更
+    https に対応していないニコニコの埋め込みメッセージを変更
 ・(v1.95)
   ・Refresh時にタイトルの順番が戻ってしまうのを修正。
   ・対象サイトを追記
@@ -3591,6 +3593,7 @@
 		        linkQuote.onclick = null;
 		        linkQuote.addEventListener( "click", mthis.add_reply_quote );
 	        };
+            /*
             var panelUploadsList = postCell.getElementsByClassName('panelUploads');
             for( var upIdx = 0, upLen = panelUploadsList.length; upIdx < upLen; ++upIdx )
             {
@@ -3600,7 +3603,7 @@
                     imgs[ imIdx ].width = "50%";
                     imgs[ imIdx ].height = "50%";
                 };
-            };
+            };*/
 	    };
 
 	    mthis.sharpQRegexp = new RegExp("^#q[0-9]*");

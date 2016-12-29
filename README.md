@@ -10,10 +10,9 @@ endchan: catalog sorter, preview upload files, recursive popup
 - 投稿時間の表記をユーザーローカルに(日本なら日本時間に)
 - スレ内通し番号を表示(各スレページのみ)
 - Auto RefreshチェックON/OFFの記憶
-- 通報フォームのを隠す
+- 通報フォームを隠す
 - カタログのスレ立てフォームを隠す
 - Google Chrome で mp3 が貼れるようにする補助機能(スレ立て時は不可)
-- Refreshでの読み込みレスに[X]・delを付与
 - 動画 Embed 補助機能( ニコニコ動画に関しては、ブラウザのセキュリティを下げている場合のみ )
 - Refresh読み込み分のレスにも、[X] と del を設置する補助機能
 
