@@ -2,13 +2,18 @@
 // @name        yamanu-chang
 // @author      to_sha_ki_ii
 // @namespace   to_sha_ki_ii
-// @description endchan: catalog sorter, preview upload files, recursive quote popup
+//
+// @include    /https?://endchan\.xyz/.*$/
+// @include    /https?://endchan\.net/.*$/
+// @include    /https?://endchan5doxvprs5\.onion/.*$/
+// @include    /https?://s6424n4x4bsmqs27\.onion/.*$/
+// @include    /https?://endchan5doxvprs5\.onion.to/.*$/
+// @include    /https?://s6424n4x4bsmqs27\.onion.to/.*$/
 //
 // @include    /https?://32ch\.org/.*$/
 // @include    /https?://32ch\.org/.*$/
 // @include    /https?://bunkerchan\.xyz/.*$/
-// @include    /https?://endchan\.xyz/.*$/
-// @include    /https?://endchan\.net/.*$/
+//
 // @include    /https?://infinow\.net.*$/
 // @include    /https?://freech\.net/.*$/
 // @include    /https?://infinow\.net/.*$/
@@ -20,9 +25,11 @@
 // @include    /https?://waifuchan\.moe/.*$/
 // @include    /https?://waifuchan\.moe/.*$/
 //
-// @version     1.95
+// @version     1.96
+// @description v.196: endchan: catalog sorter, preview upload files, recursive quote popup
 // @grant       none
 // ==/UserScript==
+
 
 /**************************************************
  *  yamanu-chang
@@ -35,6 +42,11 @@
 
 /*
  yamanu-chang(山ぬちゃん)です。
+・(v1.97 2016.12.30.02.53 JST)
+  ・Tor用アドレスに対応してみる(動作未確認)
+・(v1.96 2016.12.30.02.34 JST)
+  ・endchan が http を廃止して https に全面移行したみたいだから
+    http に対応していないニコニコの埋め込みメッセージを変更
 ・(v1.95)
   ・Refresh時にタイトルの順番が戻ってしまうのを修正。
   ・対象サイトを追記
@@ -2219,26 +2231,25 @@
             if( "https:" == location.protocol )
             {
                 var div = document.createElement('DIV');
-                div.appendChild( document.createTextNode("https から http へはつなげられないから、") );
-                div.appendChild( document.createElement('BR') );
-                div.appendChild( document.createTextNode("ニコニコ動画の埋め込みはできません。") );
-                div.appendChild( document.createElement('BR') );
-                div.appendChild( document.createTextNode("http から http へはつなげられるから") );
-                div.appendChild( document.createElement('BR') );
-                div.appendChild( document.createTextNode("埋め込みで見たければ http のここへ") );
-                div.appendChild( document.createElement('BR') );
                 div.style.border = "1px solid red";
-                var httpthreUri = location.href.replace(/^https/,"http").replace(/#.*/);
-                var httpthreLink = document.createElement('A');
-                httpthreLink.href = httpthreUri + "#" + etcthis.getAncestorPostCellId( this );
-                httpthreLink.appendChild( document.createTextNode( httpthreLink.href ) );
-                div.appendChild( httpthreLink );
-                this.parentElement.appendChild( document.createElement('BR') );
+                var br = document.createElement('BR');
+
+                div.appendChild( document.createTextNode("https から http へはつなげられないから、" ) );
+                div.appendChild( br );
+                div.appendChild( document.createTextNode("ニコニコ動画の埋め込みはできません。") );
+                div.appendChild( br.cloneNode() );
+                div.appendChild( document.createTextNode("embed をホイールクリックやら、Control Key + 左クリックやらで別タブで開くか、") );
+                div.appendChild( br.cloneNode() );
+                div.appendChild( document.createTextNode("Google Chrome の人はアドレスバー右の、縦と×のアイコンから、") );
+                div.appendChild( br.cloneNode() );
+                div.appendChild( document.createTextNode("「安全でないスクリプトを読み込む」で表示できないこともありません。") );
+                div.appendChild( br.cloneNode() );
+
                 this.parentElement.appendChild( div );
 
                 this.replaceChild( document.createTextNode("closE"), this.firstChild );
-                ev.preventDefault();
-                return false;
+                /*ev.preventDefault();
+                 return false;*/
             };
             var videoUri = this.href.replace(/nico.ms/,"embed.nicovideo.jp/watch")
                     .replace(/www\.nicovideo/,"embed.nicovideo");
@@ -2249,9 +2260,6 @@
             iframe.frameBorder = 0;
             iframe.allowFullScreen = true;
             iframe.src = videoUri;
-            iframe.alt = "https で見てる人はニコニコの埋め込みはできません。\n" +
-                "Google Chrome の人の場合は、アドレスバー右に出て来る「盾を破った」アイコンをクリックすると、\n" +
-                "埋め込めます。";
             this.parentElement.appendChild( document.createElement('BR') );
             this.parentElement.appendChild( iframe );
             this.replaceChild( document.createTextNode("closE"), this.firstChild );
@@ -3583,6 +3591,16 @@
 		        linkQuote.onclick = null;
 		        linkQuote.addEventListener( "click", mthis.add_reply_quote );
 	        };
+            var panelUploadsList = postCell.getElementsByClassName('panelUploads');
+            for( var upIdx = 0, upLen = panelUploadsList.length; upIdx < upLen; ++upIdx )
+            {
+                var imgs = panelUploadsList[ upIdx ].getElementsByTagName('IMG');
+                for( var imIdx = 0, imLen = imgs.length; imIdx < imLen ; ++imIdx )
+                {
+                    imgs[ imIdx ].width = "50%";
+                    imgs[ imIdx ].height = "50%";
+                };
+            };
 	    };
 
 	    mthis.sharpQRegexp = new RegExp("^#q[0-9]*");
