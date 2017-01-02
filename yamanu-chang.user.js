@@ -25,8 +25,8 @@
 // @include    /https?://waifuchan\.moe/.*$/
 // @include    /https?://waifuchan\.moe/.*$/
 //
-// @version      1.98
-// @description v1.98: endchan: catalog sorter, preview upload files, recursive quote popup
+// @version      1.99
+// @description v1.99: endchan: catalog sorter, preview upload files, recursive quote popup
 // @grant       none
 // ==/UserScript==
 
@@ -42,6 +42,9 @@
 
 /*
  yamanu-chang(山ぬちゃん)です。
+・(v1.99 2017.01.02.19.05 JST)
+  ・オブザーバーパターンを歪めて統一した扱いができるようなコードに変更。(CompulsoryProcesses周り)
+  ・Audioファイルのインライン再生時に画像を残す補助機能を追加。
 ・(v1.98 2016.12.30.05.25 JST)
   ・引用ポップアップで画像が表示できなかったのを修正
 ・(v1.97 2016.12.30.02.53 JST)
@@ -156,91 +159,244 @@
         var toshakiii = window.toshakiii;
         var settings = window.toshakiii.settings;
 
-	    var uthis = window.toshakiii.utils = {};
+	    var uthis = window.toshakiii.utils = window.toshakiii.utils || {};
+        var utils = uthis;
 
-        uthis.MOSubject =
-            function MOSubject( initFunc )
+        uthis.CompulsoryProcesses = function( initFunc )
         {
             this.initFunc = initFunc;
-            this.subject = undefined;
-            this.options = undefined;
+            /* mutationRecords を preProc したものを渡される関数のリスト */
+            this.processes = [];
+
+            /* 名前要再考 */
+            /* mutationRecords 1つにつき、1回だけ呼びだされる関数のリスト */
+            this.processesAfter = [];
+
             this.mutationObserver = undefined;
-            this.observers = [];
-            this.noticer = undefined;
+            this.observingElement = undefined;
+            this.observingOptions = undefined;
+            this.preProc = undefined;
+
+            this.funcEnumExistingTargets = undefined;
         };
-        uthis.MOSubject.prototype =
+
+        uthis.CompulsoryProcesses.prototype.setObservingElement =
+            function setObservingElement( element )
+        {
+            this.observingElement = element;
+        };
+        uthis.CompulsoryProcesses.prototype.setObservingOptions =
+            function setObservingElement( options )
+        {
+            this.observingOptions = options;
+        };
+        uthis.CompulsoryProcesses.prototype.setFuncEnumExistingTargets =
+            function setFuncEnumExistingTargets( value )
+        {
+            this.funcEnumExistingTargets = value;
+        };
+        uthis.CompulsoryProcesses.prototype.setPreProc =
+            function setPreProc( value )
+        {
+            this.preProc = value;
+        };
+        uthis.CompulsoryProcesses.prototype.processExistingTargets =
+            function processExistingTargets( proc, procAfter)
+        {
+            if( undefined === proc )
             {
-                start : function start()
+                procAfter();
+                return;
+            };
+            if( undefined === this.funcEnumExistingTargets )
+            {
+                return;
+            };
+            var break_ = false;
+            var continue_ = true;
+            var iloops = utils.IntermittentLoops();
+            var obj = this;
+            var tlist, idx;
+            iloops.push( function(){
+                tlist = obj.funcEnumExistingTargets();
+                idx = tlist.length;
+            } ).push( function(){
+                --idx;
+                if( -1 >= idx )
                 {
-                    if( undefined !== this.initFunc )
-                    {
-                        this.initFunc( this );
-                        this.initFunc = undefined;
-                    };
-                    if( undefined === this.mutationObserver )
-                    {
-                        this.mutationObserver = new MutationObserver( this.delegateObserver.bind( this ) );
-                        this.mutationObserver.observe( this.subject, this.options );
-                    };
-                },
-                stop : function stop()
+                    return break_;
+                };
+
+                proc( tlist[ idx ] );
+                return continue_;
+            } ).push( function(){
+                if( undefined !== procAfter )
                 {
-                    if( undefined !== this.mutationObserver )
-                    {
-                        this.mutationObserver.disconnect();
-                        this.mutationObserver = undefined;
-                    };
-                },
-                delegateObserver : function( mutationRecords, mutationObserver )
+                    procAfter();
+                };
+            } ).exec();
+        };
+        uthis.CompulsoryProcesses.prototype.startApply =
+            function startApply()
+        {
+            if( undefined !== this.initFunc )
+            {
+                this.initFunc( this );
+                this.initFunc = undefined;
+            };
+            if( undefined === this.mutationObserver &&
+                this.observingElement !== undefined &&
+                this.observingOptions !== undefined   )
+            {
+                this.mutationObserver = new MutationObserver( this.defaultCallback.bind( this ) );
+                this.mutationObserver.observe( this.observingElement, this.observingOptions );
+            };
+        };
+        uthis.CompulsoryProcesses.prototype.stopApply =
+            function stopApply()
+        {
+            if( undefined !== this.mutationObserver )
+            {
+                this.mutationObserver.disconnect();
+                this.mutationObserver = undefined;
+            };
+        };
+        uthis.CompulsoryProcesses.prototype.defaultCallback =
+            function defaultCallback( mutationRecords, mutationObserver)
+        {
+            if( undefined === this.preProc )
+            {
+                this.process( mutationRecords );
+                this.processAfter( mutationRecords );
+                return;
+            };
+            var tlist, tidx;
+            var break_ = false;
+            var continue_ = true;
+            var iloops = utils.IntermittentLoops();
+            var obj = this;
+            iloops.push( function(){
+                tlist = obj.preProc( mutationRecords, mutationObserver );
+                tidx = tlist.length;
+            } ).push( function(){
+                --tidx;
+                if( -1 >= tidx )
                 {
-                    if( undefined !== this.noticer )
-                    {
-                        this.noticer( mutationRecords, mutationObserver, this.observers );
-                        return;
-                    }
-                    else
-                    {
-                        for( var idx = 0, len = this.observers.length;
-                             idx < len ; ++idx )
-                        {
-                            this.observers[ idx ]( mutationRecords, mutationObserver );
-                        };
-                    };
-                },
-                appendObserver : function appendObserver( func, noStart )
-                {
-                    this.observers.push( func );
-                    if( ! noStart )
-                    {
-                        this.start();
-                    };
-                    return func;
-                },
-                removeObserver : function removeObserver( func )
-                {
-                    for( var idx = this.observers.length - 1; -1 < idx ; --idx )
-                    {
-                        if( this.observers[ idx ] === func )
-                        {
-                            this.observers.splice( idx, 1 );
-                            return func;
-                        };
-                    };
-                    return null;
-                },
-                setNoticer : function setNoticer( noticer_func )
-                {
-                    this.noticer = noticer_func;
-                },
-                setSubject : function setSubject( subject )
-                {
-                    this.subject = subject;
-                }, setOptions : function setOptions( options )
-                {
-                    this.options = options;
-                }
+                    return break_;
+                };
+                obj.process( tlist[ tidx ] );
+                return continue_;
+            } ).push( function(){
+                obj.processAfter( mutationRecords );
+            } ).exec();
+        };
+        uthis.CompulsoryProcesses.prototype.process =
+            function process( target )
+        {
+            for( var pidx = 0, plen = this.processes.length; pidx < plen ; ++pidx )
+            {
+                this.processes[ pidx ]( target );
+            };
+        };
+        uthis.CompulsoryProcesses.prototype.processAfter =
+            function processAfter()/* to_sha_ki: 名前と設計を再考すること */
+        {
+            for( var pidx = 0, plen = this.processesAfter.length; pidx < plen ; ++pidx )
+            {
+                this.processesAfter[ pidx ]();
             };
 
+        };
+
+        uthis.CompulsoryProcesses.prototype.appendCP =
+            function appendCP( func, noStartApply, noApplyToExistingTargets )
+        {
+            this.processes.push( func );
+            if( ! noStartApply )
+            {
+                this.startApply();
+            };
+            if( ! noApplyToExistingTargets )
+            {
+                this.processExistingTargets( func, undefined);
+            };
+            return func;
+        };
+        uthis.CompulsoryProcesses.prototype.removeCP =
+            function removeCP( func, noStopApply )
+        {
+            for( var idx = this.processes.length - 1; -1 < idx ; --idx )
+            {
+                if( this.processes[ idx ] === func )
+                {
+                    this.processes.splice( idx, 1 );
+                    if( ! noStopApply &&
+                        0 === this.processes.length &&
+                        0 === this.processesAfter.length )
+                    {
+                        this.stopApply();
+                    };
+                    return func;
+                };
+            };
+            return null;
+        };
+        uthis.CompulsoryProcesses.prototype.appendAfterCP =
+            function appendAfterCP( func, noStartApply, noApplyToExistingTargets )
+        {
+            this.processesAfter.push( func );
+            if( ! noStartApply )
+            {
+                this.startApply();
+            };
+            if( ! noApplyToExistingTargets )
+            {
+                this.processExistingTargets( undefined, func );
+            };
+            return func;
+        };
+        uthis.CompulsoryProcesses.prototype.removeAfterCP =
+            function removeCP( func, noStopApply )
+        {
+            for( var idx = this.processesAfter.length - 1; -1 < idx ; --idx )
+            {
+                if( this.processesAfter[ idx ] === func )
+                {
+                    this.processesAfter.splice( idx, 1 );
+                    if( ! noStopApply &&
+                        0 === this.processes.length &&
+                        0 === this.processesAfter.length )
+                    {
+                        this.stopApply();
+                    };
+                    return func;
+                };
+            };
+            return null;
+        };
+        
+        uthis.CompulsoryProcesses.prototype.preProc_enumAddedNodes =
+            function preProc_enumAddedNodes( mutationRecords )
+        {
+            var tlist = [];
+            for( var mrIdx = 0, mrLen = mutationRecords.length; mrIdx < mrLen ; ++mrIdx )
+            {
+                var mr = mutationRecords[ mrIdx ];
+                for( var anIdx = 0, anLen = mr.addedNodes.length; anIdx < anLen ; ++anIdx )
+                {
+                    tlist.push( mr.addedNodes[ anIdx ] );
+                }
+            };
+            return tlist;
+        };
+        
+
+        uthis.endsWith =
+            function endsWith( str, suffix )
+        {
+            return -1 !== str.indexOf(suffix, str.length - suffix.length);
+        };
+        
         uthis.foreEachElementDescendants =
             function foreEachElementDescendants( element, func )
         {
@@ -1533,7 +1689,7 @@
 		        var child = children[idx];
 		        if( null != child.firstChild &&
 		            'A' === child.firstChild.tagName &&
-		            0 === child.firstChild.innerHTML.indexOf("[Show hidden thread ") )
+		            0 === child.firstChild.innerHTML.lastIndexOf("[Show hidden thread ",0) )
                 {
                     n = child.id.replace( /[^0-9]/g, "");
                     showButtonElts[ n ] = child;
@@ -2101,51 +2257,44 @@
 
         window.toshakiii.etCetera = etcthis;
 
-	    etcthis.postCellOnLoadHooks = [];
-        etcthis.divPostsMutationObserver = undefined;
-
-        etcthis.startObserveDivPosts =
-            function()
-        {
-            var divPostsList = document.getElementsByClassName('divPosts');
-            if( 0 >= divPostsList.length )
-            {
-                return;
-            };
-            var divPosts = divPostsList[0];
-            etcthis.divPostsMutationObserver =
-                new MutationObserver( etcthis.onRefresh );
-            etcthis.divPostsMutationObserver.observe( divPosts, { childList: true } );
-        };
-
-
-        /*etcthis.enableEmbedYoutubeButton =*/
         etcthis.overrideEmbedYoutubeButton =
             function( youtube_wrapper )
         {
+            if( "1" === youtube_wrapper.getAttribute("data-tsk-overrode") )
+            {
+                return 0;
+            };
             var embedButtons = youtube_wrapper.getElementsByTagName('A');
             if( 0 >= embedButtons.length )
             {
-                return;
+                return -1;
             };
             var embedButton = embedButtons[0];
             embedButton.onclick = null;
             embedButton.addEventListener("click", etcthis.onYoutubeEmbedButtonClick );
             embedButton.replaceChild( document.createTextNode("embeD") , embedButton.firstChild );
+            youtube_wrapper.setAttribute("data-tsk-overrode","1");
+            return 1;
         };
 
         etcthis.overrideEmbedNiconicoButton =
             function( niconico_wrapper )
         {
+            if( "1" === niconico_wrapper.getAttribute("data-tsk-overrode") )
+            {
+                return 0;
+            };
             var embedButtons = niconico_wrapper.getElementsByTagName('A');
             if( 0 >= embedButtons.length )
             {
-                return;
+                return -1;
             };
             var embedButton = embedButtons[0];
             embedButton.onclick = null;
             embedButton.addEventListener("click", etcthis.onNiconicoEmbedButtonClick );
             embedButton.replaceChild( document.createTextNode("embeD") , embedButton.firstChild );
+            niconico_wrapper.setAttribute("data-tsk-overrode","1");
+            return 1;
         };
 
         etcthis.onYoutubeEmbedButtonClick =
@@ -2269,41 +2418,6 @@
             return false;
         };
 
-        etcthis.onRefresh = function( mutationRecords, mutationObserver)
-        {
-            var mrs = mutationRecords;
-            for( var mrIdx = 0, mrLen = mrs.length; mrIdx < mrLen ; ++mrIdx )
-            {
-                var mr = mrs[ mrIdx ];
-                for( var anIdx = 0, anLen = mr.addedNodes.length; anIdx < anLen ; ++anIdx )
-                {
-                    var addedNode = mr.addedNodes[ anIdx ];
-                    var youtube_wrappers = addedNode.getElementsByClassName("youtube_wrapper");
-                    for( var ywIdx = 0, ywLen = youtube_wrappers.length; ywIdx < ywLen ; ++ywIdx )
-                    {
-                        etcthis.overrideEmbedYoutubeButton( youtube_wrappers[ ywIdx ] );
-                    };
-                    var niconico_wrappers = addedNode.getElementsByClassName("niconico_wrapper");
-                    for( var nwIdx = 0, nwLen = niconico_wrappers.length; nwIdx < nwLen ; ++nwIdx )
-                    {
-                        etcthis.overrideEmbedNiconicoButton( niconico_wrappers[ nwIdx ] );
-                    };
-		            var hooks = etcthis.postCellOnLoadHooks;
-		            for( var hkIdx = 0, hkLen = hooks.length; hkIdx < hkLen ; ++hkIdx )
-		            {
-			            if( 0 <= addedNode.className.indexOf('postCell') )
-			            {
-			                hooks[ hkIdx ]( addedNode );
-			            };
-		            };
-                };
-            };
-
-
-            etcthis.localizeDateTimeLabelAll();
-        };
-
-
         etcthis.timezoneOffset = 0;
 
         etcthis.localDaysList =
@@ -2419,6 +2533,8 @@
             var idx = 0;
             var youtubeWrappers;
             var niconicoWrappers;
+            var break_ = false;
+            var continue_ = true;
 
             iloops.push( function(){
                 youtubeWrappers = document.getElementsByClassName('youtube_wrapper');
@@ -2426,22 +2542,22 @@
             } ).push( function(){
                 if( -1 >= idx )
                 {
-                    return false;
+                    return break_;
                 };
                 etcthis.overrideEmbedYoutubeButton( youtubeWrappers[ idx ] );
                 --idx;
-                return true;
+                return continue_;
             } ).push( function(){
                 niconicoWrappers = document.getElementsByClassName('niconico_wrapper');
                 idx = niconicoWrappers.length - 1;
             } ).push( function(){
                 if( -1 >= idx )
                 {
-                    return false;
+                    return break_;
                 };
                 etcthis.overrideEmbedNiconicoButton( niconicoWrappers[ idx ] );
                 --idx;
-                return true;
+                return continue_;
             } ).exec();
         };
 
@@ -2815,7 +2931,7 @@
         };
 
         etcthis.titleNewReplysCountReg = /^([(]\d*[)] ).*$/;
-        etcthis.procTitle = function()
+        etcthis.procTitle = function procTitle()
         {
             var boardUri = feWrapper.getBoardUri();
             var title = document.title;
@@ -2828,22 +2944,46 @@
             {
                 newReplys = newReplys[1];
             };
-
             title = title.substring( newReplys.length );
             var prefix = '/' + boardUri + '/ - ';
-            if( 0 === title.lastIndexOf( prefix ) )
+            if( 0 === title.lastIndexOf( prefix, 0 ) )
             {
                 document.title = newReplys + title.substring( prefix.length ) + ' - /' + boardUri + '/';
             };
         };
-        etcthis.titleOrder = function()
+
+        /* override と言いつつ、新規設置も行う。
+           引数は、postCell でなくてもかまわない */
+        etcthis.overrideInlinePlayers =
+            function overrideInlinePlayers( postCell )
         {
-            etcthis.procTitle();
-            feWrapper.titleMos.appendObserver( etcthis.procTitle );
+            var uploadCellList = postCell.getElementsByClassName('uploadCell');
+            var idx = uploadCellList.length;
+            var iloops = utils.IntermittentLoops();
+            var break_ = false, continue_ = true;
+            iloops.push( function(){
+                --idx;
+                if( -1 >= idx )
+                { return break_; };
+                etcthis.addHookToAudioInlinePlayer( uploadCellList[ idx ] );
+                /*etcthis.overrideInlinePlayer( uploadCellList[ idx ] );*/
+                return continue_;
+            } ).exec();
         };
 
-        etcthis.removeYoutubeIframes = function()
+        etcthis.addHookToAudioInlinePlayer =
+            function addHookToAudioInlinePlayer( uploadCell )
         {
+            var audioList = uploadCell.getElementsByTagName('AUDIO');
+            var imgList = uploadCell.getElementsByTagName('IMG');
+            if( 0 >= audioList.length ||
+                0 >= imgList.length )
+            {
+                return;
+            };
+            
+            var img = imgList[0];
+            img.addEventListener('click', function(){ this.style.display = 'inline'; } );
         };
         
         etcthis.disable =
@@ -2859,26 +2999,28 @@
         etcthis.enable =
             function()
         {
-            etcthis.removeYoutubeIframes();
-            setTimeout( etcthis.startObserveDivPosts, 0 );
-            setTimeout( etcthis.localizeDateTimeLabelAll, 0 );
-            setTimeout( etcthis.overrideWrapperAll, 0 );
-	        if( 0 <= document.location.href.indexOf("/res/") )
-	        {
-		        setTimeout( etcthis.addConsecutiveNumberStyle, 0 );
-	        };
+            feWrapper.postCellCP.appendAfterCP( etcthis.localizeDateTimeLabelAll );
+            feWrapper.postCellCP.appendAfterCP( etcthis.overrideWrapperAll );
+            feWrapper.postCellCP.appendCP( etcthis.overrideInlinePlayers );
 
-	        setTimeout( etcthis.fixGoogleChromeMp3Mime, 0 );
+            feWrapper.titleCP.appendAfterCP( etcthis.procTitle );
+
             setTimeout( etcthis.insertButtonShowHidePostingForm, 0 );
             setTimeout( etcthis.insertButtonShowHideContentAction, 0 );
+
+	        setTimeout( etcthis.fixGoogleChromeMp3Mime, 0 );
             setTimeout( etcthis.autoRefreshCheckboxPersistent, 0 );
-            setTimeout( etcthis.titleOrder, 0 );
 
             if( undefined !== window.enableHidePostLink ||
                 undefined !== window.delPost )
             {
-                etcthis.postCellOnLoadHooks.push( etcthis.enableDelButtonAndHideButton );
+                feWrapper.postCellCP.appendCP( etcthis.enableDelButtonAndHideButton, false, true );
             };
+
+	        if( 0 <= document.location.href.indexOf("/res/") )
+	        {
+		        setTimeout( etcthis.addConsecutiveNumberStyle, 0 );
+	        };
 
         };
 
@@ -2897,10 +3039,11 @@
     {
         window.toshakiii = window.toshakiii || {};
         window.toshakiii.settings = window.toshakiii.settings || {};
+        window.toshakiii.multiPopup = window.toshakiii.multiPopup || {};
         var toshakiii = window.toshakiii;
         var settings = window.toshakiii.settings;
-
-        var mthis = {};
+        var mthis = window.toshakiii.multiPopup;
+        var feWrapper = window.toshakiii.feWrapper;
         var utils = window.toshakiii.utils;
 
         window.toshakiii.multiPopup = mthis;
@@ -3756,7 +3899,8 @@
 	        mthis.addBodyEvents();
 	        /* etCetera の監視対象は .divPosts。Popup の挿入場所は .divPosts の親の親の中。
 	         * だから Popup 挿入時に冗長呼び出しにはならない */
-	        etCetera.postCellOnLoadHooks.push( mthis.overridePostCellQuotePopups );
+
+            feWrapper.postCellCP.appendCP( mthis.overridePostCellQuotePopups );
 
 	        var iloops = utils.IntermittentLoops();
 	        var links;
@@ -3821,16 +3965,38 @@
         
 	    fewrapper.selectedDivOnChangeHandlers = [];
 
-        fewrapper.titleMos = undefined;
-        fewrapper.titleMosInit = function( titleMos )
+        fewrapper.postCellCPInit =
+            function postCellCPInit( postCellCP )
         {
-            titleMos.setSubject( document.head.getElementsByTagName('TITLE')[0] );
-            titleMos.setOptions( { childList: true} );
-        };
+            var divPostsList = document.getElementsByClassName('divPosts');
+            if( 0 >= divPostsList.length )
+            {
+                return;
+            };
 
+            postCellCP.setObservingElement( divPostsList[0] );
+            postCellCP.setObservingOptions( { childList: true } );
+            postCellCP.setFuncEnumExistingTargets( function(){
+                return document.getElementsByClassName('postCell');
+            } );
+            postCellCP.setPreProc( utils.CompulsoryProcesses.prototype.preProc_enumAddedNodes );
+        };
+        fewrapper.postCellCP = undefined;
+
+        fewrapper.titleCPInit = function( titleCP )
+        {
+            titleCP.setObservingElement( document.head.getElementsByTagName('TITLE')[0] );
+            titleCP.setObservingOptions( { childList: true} );
+            titleCP.setFuncEnumExistingTargets( function(){ return [titleCP.observingElement]; } );
+        };
+        fewrapper.titleCP = undefined;
+
+        fewrapper.postCellOverrides = undefined;
+        
 	    fewrapper.enable = function()
         {
-            fewrapper.titleMos = new utils.MOSubject( fewrapper.titleMosInit );
+            fewrapper.titleCP = new utils.CompulsoryProcesses( fewrapper.titleCPInit );
+            fewrapper.postCellCP = new utils.CompulsoryProcesses( fewrapper.postCellCPInit );
         };
 
         fewrapper.getBoardUri = function()
@@ -3860,7 +4026,7 @@
         var idx = iframeList.length - 1;
         for(; -1 < idx ; --idx )
         {
-            if( 0 === iframeList[idx].src.lastIndexOf('https://www.youtube.com/embed/') )
+            if( 0 === iframeList[idx].src.lastIndexOf('https://www.youtube.com/embed/', 0) )
             {
                 urlList[idx] = iframeList[idx].src;
                 spanList[ idx ] = document.createElement('SPAN');
@@ -3969,3 +4135,16 @@
     };
     main();
 })();
+
+
+/*
+if( 0 == (""+location).lastIndexOf("http://127.0.0.1:8082/",0) )
+{
+    var postCellList = document.getElementsByClassName('postCell');
+    for( var idx = postCellList.length - 1; -1 < idx ; --idx )
+    {
+        postCellList[idx].parentElement.removeChild( postCellList[idx] );
+    };
+    window.lastReplyId = 0;
+};
+*/
