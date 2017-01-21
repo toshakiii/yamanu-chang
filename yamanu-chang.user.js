@@ -25,8 +25,8 @@
 // @include    /https?://waifuchan\.moe/.*$/
 // @include    /https?://waifuchan\.moe/.*$/
 //
-// @version      1.99
-// @description v1.99: endchan: catalog sorter, preview upload files, recursive quote popup
+// @version      2.00
+// @description v2.00: endchan: catalog sorter, preview upload files, recursive quote popup
 // @grant       none
 // ==/UserScript==
 
@@ -42,9 +42,11 @@
 
 /*
  yamanu-chang(山ぬちゃん)です。
+・(v2.00 2017.01.22 03:03 JST)
+  ・クイックリプライの複数行引用の補助機能を追加。
 ・(v1.99 2017.01.02.19.05 JST)
   ・オブザーバーパターンを歪めて統一した扱いができるようなコードに変更。(CompulsoryProcesses周り)
-  ・Audioファイルのインライン再生時に画像を残す補助機能を追加。
+  ・Audioファイルのインライン再生時にサムネを残す補助機能を追加。
 ・(v1.98 2016.12.30.05.25 JST)
   ・引用ポップアップで画像が表示できなかったのを修正
 ・(v1.97 2016.12.30.02.53 JST)
@@ -2820,10 +2822,6 @@
                 return null;
             };
 
-            /* なんだこの仕様は… */
-            /* elt.getElementsByTagName()[idx].addEventListener === undefined */
-            /* var inputList = labelRefresh.parentElement.getElementsByTagName('INPUT'); */
-
             var break_ = false;
             var continue_ = true;
             var target = null;
@@ -2986,20 +2984,104 @@
             img.addEventListener('click', function(){ this.style.display = 'inline'; } );
         };
         
-        etcthis.disable =
-            function()
+        etcthis.addQuote = function addQuote()
+        {
+            var postIdToQuote = this.hash.substring(2);
+
+            if (typeof window.add_quick_reply_quote != "undefined") {
+                window.add_quick_reply_quote( postIdToQuote );
+            }
+
+            document.getElementById('fieldMessage').value += '>>' + postIdToQuote + '\n';
+        };
+
+        etcthis.override_add_quick_reply_quote = function override_add_quick_reply_quote()
+        {
+            if( undefined !== window.add_quick_reply_quote )
+            {
+                window.add_quick_reply_quote = etcthis.add_quick_reply_quote;
+            };
+        };
+        
+        etcthis.add_quick_reply_quote = function( postId )
+        {
+            if ( typeof( window.show_quick_reply ) == 'function' && window.should_show_qr)
+            {
+                window.show_quick_reply();
+            }
+            else
+            {
+                return;
+            }
+
+            var qrBody = document.getElementById('qrbody');
+            if ( qrBody == null )
+            {
+                return;
+            };
+
+            var textToAdd = ">>" + postId + '\n'
+                    + etcthis.textToQuotationFormat( window.getSelection().toString() );
+
+            if( '\n' !== textToAdd[ textToAdd.length - 1 ] )
+            {
+                textToAdd = textToAdd + '\n';
+            };
+
+            var insertPos = 0;
+            if( 'forward' === qrBody.selectionDirection )
+            {
+                insertPos = qrBody.selectionEnd;
+            }
+            else
+            {
+                insertPos = qrBody.selectionStart;
+            };
+
+            qrBody.value = qrBody.value.substring( 0, insertPos ) + textToAdd +
+                qrBody.value.substring( insertPos );
+        };
+        
+        etcthis.textToQuotationFormat = function textToQuotationFormat( text )
+        {
+            var v = text.split('\n');
+            if( 0 === v.length )
+            {
+                return text;
+            };
+            var idx = 0, len = v.length;
+            if( 0 === v[ v.length - 1 ].length )
+            {   /* no quote empty line at the last. */
+                len = len - 1;
+            };
+            
+            for(; idx < len ; ++idx )
+            {
+                var s = v[ idx ];
+                if( null !== s.match(/^(?:>>?[0-9]+|>>>?\/\w+\/\d*)/) )
+                {   /* matches with starts with ">>50" , ">>>/cancer/" , ">>>/cancer/50" , ">50" , ">>/cancer/" , ">>/cancer/50" */
+                    /* space is put so as to keeps link quoting format and non-link quoting format. */
+                    v[ idx ] = "> " + v[ idx ];
+                }
+                else
+                {
+                    v[ idx ] = ">" + v[ idx ];
+                };
+            };
+            return v.join('\n');
+        };
+        
+        etcthis.disable = function disable()
         {
             var style = document.getElementById("postsConsecutiveNumberStyle");
             if( null != style )
             {
                 style.parentElement.removeChild( style );
-            }
+            };
         };
 
-        etcthis.enable =
-            function()
+        etcthis.enable = function enable()
         {
-            feWrapper.postCellCP.appendAfterCP( etcthis.localizeDateTimeLabelAll );
             feWrapper.postCellCP.appendAfterCP( etcthis.overrideWrapperAll );
             feWrapper.postCellCP.appendCP( etcthis.overrideInlinePlayers );
 
@@ -3007,10 +3089,14 @@
 
             setTimeout( etcthis.insertButtonShowHidePostingForm, 0 );
             setTimeout( etcthis.insertButtonShowHideContentAction, 0 );
-
+            
 	        setTimeout( etcthis.fixGoogleChromeMp3Mime, 0 );
+            
             setTimeout( etcthis.autoRefreshCheckboxPersistent, 0 );
+            feWrapper.postCellCP.appendAfterCP( etcthis.localizeDateTimeLabelAll );
 
+            setTimeout( etcthis.override_add_quick_reply_quote, 0 );
+                
             if( undefined !== window.enableHidePostLink ||
                 undefined !== window.delPost )
             {

@@ -15,6 +15,7 @@ endchan: catalog sorter, preview upload files, recursive popup
 - Google Chrome で mp3 が貼れるようにする補助機能(スレ立て時は不可)
 - 動画 Embed 補助機能( ニコニコ動画に関しては、ブラウザのセキュリティを下げている場合のみ )
 - Refresh読み込み分のレスにも、[X] と del を設置する補助機能
+- クイックリプライの複数行引用時に全部の行に">"をつけるようにする補助機能
 
 ***
 
