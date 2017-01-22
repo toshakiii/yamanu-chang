@@ -25,8 +25,8 @@
 // @include    /https?://waifuchan\.moe/.*$/
 // @include    /https?://waifuchan\.moe/.*$/
 //
-// @version      2.00
-// @description v2.00: endchan: catalog sorter, preview upload files, recursive quote popup
+// @version      2.01
+// @description v2.01: endchan: catalog sorter, preview upload files, recursive quote popup
 // @grant       none
 // ==/UserScript==
 
@@ -41,7 +41,9 @@
  */
 
 /*
- yamanu-chang(山ぬちゃん)です。
+ yamanu-chang(山ぬちゃん)です
+・(v2.01 2017.01.22 03:15 JST)
+  ・複数行引用の引用方法の微修正
 ・(v2.00 2017.01.22 03:03 JST)
   ・クイックリプライの複数行引用の補助機能を追加。
 ・(v1.99 2017.01.02.19.05 JST)
@@ -3050,24 +3052,28 @@
                 return text;
             };
             var idx = 0, len = v.length;
+            var q = ">";
+
             if( 0 === v[ v.length - 1 ].length )
-            {   /* no quote empty line at the last. */
-                len = len - 1;
+            {
+                len = len - 1; /* no quote empty line at the last. */
             };
             
             for(; idx < len ; ++idx )
             {
-                var s = v[ idx ];
-                if( null !== s.match(/^(?:>>?[0-9]+|>>>?\/\w+\/\d*)/) )
+                if( null !== v[ idx ].match(/^(?:>>?[0-9]+|>>>?\/\w+\/\d*)/) )
                 {   /* matches with starts with ">>50" , ">>>/cancer/" , ">>>/cancer/50" , ">50" , ">>/cancer/" , ">>/cancer/50" */
                     /* space is put so as to keeps link quoting format and non-link quoting format. */
-                    v[ idx ] = "> " + v[ idx ];
-                }
-                else
-                {
-                    v[ idx ] = ">" + v[ idx ];
+                    q = "> ";
+                    break;
                 };
             };
+
+            for( idx = 0; idx < len ; ++idx )
+            {
+                v[ idx ] = q + v[ idx ];
+            };
+
             return v.join('\n');
         };
         
