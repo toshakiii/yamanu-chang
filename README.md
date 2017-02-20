@@ -15,7 +15,6 @@ endchan: catalog sorter, preview upload files, recursive popup
 - Google Chrome で mp3 が貼れるようにする補助機能(スレ立て時は不可)
 - 動画 Embed 補助機能( ニコニコ動画に関しては、ブラウザのセキュリティを下げている場合のみ )
 - Refresh読み込み分のレスにも、[X] と del を設置する補助機能
-- クイックリプライの複数行引用時に全部の行に">"をつけるようにする補助機能
 
 ***
 
@@ -40,3 +39,16 @@ Tampermonkey に移行する人は、「設定 → 拡張機能」に入って�
 ・右上の Tampermonkey のアイコン → ダッシュボード
 あるいは
 ・右上の縦… → 設定 → 拡張機能
+
+# Features List
+- recursive quote popup
+- sort for catalog, refresh for catalog
+- upload preview (image/audio/video)
+- local time
+- view in-thread serial number to the post
+- "Auto Refresh" state persistence
+- to fold up report/delete form
+- to fold up new topic form in catalog
+- fix mp3 mime that be specified by google-chrome
+- video embed auxiliary function
+- put [X] and del to the post what be added by Refresh feature.
