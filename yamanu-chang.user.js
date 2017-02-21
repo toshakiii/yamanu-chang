@@ -25,8 +25,8 @@
 // @include    /https?://waifuchan\.moe/.*$/
 // @include    /https?://waifuchan\.moe/.*$/
 //
-// @version      2.02
-// @description v2.02: endchan: catalog sorter, preview upload files, recursive quote popup
+// @version      2.03
+// @description v2.03: endchan: catalog sorter, preview upload files, recursive quote popup
 // @grant       none
 // ==/UserScript==
 
@@ -42,6 +42,8 @@
 
 /*
  yamanu-chang(山ぬちゃん)です
+・(v2.03 2017.02.21 JST)
+  ・デバッグコードが消えていなかったのを修正
 ・(v2.02 2017.02.21.01.09 JST)
   ・endchan公式に入ったため、複数行引用機能削除
   ・名前変更: CompulsoryProcesses → CompulsoryProcessing
@@ -2883,7 +2885,6 @@
         /* [X] の設置 */
         window.enableHidePostLink(postCell);
       };
-      alert(2886);
       if( undefined !== window.delPost )
       {
         /* del の設置 */
