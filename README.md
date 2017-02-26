@@ -14,6 +14,7 @@ endchan: catalog sorter, preview upload files, recursive popup
 - カタログのスレ立てフォームを隠す
 - Google Chrome で mp3 が貼れるようにする補助機能(スレ立て時は不可)
 - 動画 Embed 補助機能( ニコニコ動画に関しては、ブラウザのセキュリティを下げている場合のみ )
+- youtu.be, soundcloud.com の Embed
 - Refresh読み込み分のレスにも、[X] と del を設置する補助機能
 
 ***
@@ -50,5 +51,5 @@ Tampermonkey に移行する人は、「設定 → 拡張機能」に入って�
 - to fold up report/delete form
 - to fold up new topic form in catalog
 - fix mp3 mime that be specified by google-chrome
-- video embed auxiliary function
+- video embed auxiliary function: close feature and support youtu.be, soundcloud.com
 - put [X] and del to the post what be added by Refresh feature.

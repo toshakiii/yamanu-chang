@@ -25,8 +25,8 @@
 // @include    /https?://waifuchan\.moe/.*$/
 // @include    /https?://waifuchan\.moe/.*$/
 //
-// @version      2.03
-// @description v2.03: endchan: catalog sorter, preview upload files, recursive quote popup
+// @version      2.04
+// @description v2.04: endchan: catalog sorter, preview upload files, recursive quote popup
 // @grant       none
 // ==/UserScript==
 
@@ -42,6 +42,10 @@
 
 /*
  yamanu-chang(山ぬちゃん)です
+・(v2.04 2017.02.26 JST)
+  ・Youtube埋め込みをautoplyに
+  ・soundcloudの埋め込み対応
+  ・endchanがEmbedを表示しないURIの埋め込みにも対応
 ・(v2.03 2017.02.21 JST)
   ・デバッグコードが消えていなかったのを修正
 ・(v2.02 2017.02.21.01.09 JST)
@@ -132,7 +136,6 @@
   ・セミコロンは全ての場所につける。
   ・"message"
   ・'system_constant_value'
-
   ・trigger, enable, disable
 */
 
@@ -140,10 +143,12 @@
  TODO:
  ・圧縮しても動くコードにしたい
  ・sendReplyData の hack をオフにできるオプションを追加すること。
- ・日時表記に dd/MM/YYYY 追加を
  ・2回もダウンロードしないように
  ・ボードトップでページ内引用をするように。サウロンの目にも対応したい。
  ・selectedDivOnChange を lynxChanWrapper に移動すること。今時点、ファイルプレビューに依存している。
+ ・Youtubeのリンクを有効にする補助機能を盛ること
+ ・埋め込みを一本化すること
+ ・再生開始機能を盛ること
 */
 
 (function(){
@@ -154,12 +159,12 @@
   // ethis: DOM Elementを指すthis
   // lthis: modFeWrapper
   // cthis: 一時使用用
-  
+
   window.toshakiii = window.toshakiii || {};
   window.toshakiii2 = window.toshakiii || {};
   var toshakiii = window.toshakiii;
   var toshakiii2 = window.toshakiii || {};
-  
+
   /*********
    * utils *
    *********/
@@ -169,27 +174,27 @@
     window.toshakiii.settings = window.toshakiii.settings || {};
     var toshakiii = window.toshakiii;
     var settings = window.toshakiii.settings;
-    
+
     var uthis = window.toshakiii.utils = window.toshakiii.utils || {};
     var utils = uthis;
-    
+
     uthis.CompulsoryProcessing = function( initFunc ) {
       this.initFunc = initFunc;
       /* mutationRecords を preProc したものを渡される関数のリスト */
       this.processes = [];
-      
+
       /* 名前要再考 */
       /* mutationRecords 1つにつき、1回だけ呼びだされる関数のリスト */
       this.processesAfter = [];
-      
+
       this.mutationObserver = undefined;
       this.observingElement = undefined;
       this.observingOptions = undefined;
       this.preProc = undefined;
-      
+
       this.funcEnumExistingTargets = undefined;
     };
-    
+
     uthis.CompulsoryProcessing.prototype.setObservingElement =
         function setObservingElement( element )
     {
@@ -236,7 +241,7 @@
         {
           return break_;
         };
-        
+
         proc( tlist[ idx ] );
         return continue_;
       } ).push( function(){
@@ -315,9 +320,9 @@
       {
         this.processesAfter[ pidx ]();
       };
-      
+
     };
-    
+
     uthis.CompulsoryProcessing.prototype.appendCP =
         function appendCP( func, noStartApply, noApplyToExistingTargets )
     {
@@ -384,7 +389,7 @@
       };
       return null;
     };
-    
+
     uthis.CompulsoryProcessing.prototype.preProc_enumAddedNodes =
         function preProc_enumAddedNodes( mutationRecords )
     {
@@ -399,14 +404,14 @@
       };
       return tlist;
     };
-    
-    
+
+
     uthis.endsWith =
         function endsWith( str, suffix )
     {
       return -1 !== str.indexOf(suffix, str.length - suffix.length);
     };
-    
+
     uthis.foreEachElementDescendants =
         function foreEachElementDescendants( element, func )
     {
@@ -427,7 +432,7 @@
       };
       return true;
     };
-    
+
     uthis.contains =
 	function( array, item )
     {
@@ -440,7 +445,7 @@
       };
       return false;
     };
-    
+
     uthis.getFirstLanguage =
         function()
     {
@@ -449,7 +454,7 @@
           window.navigator.userLanguage ||
           window.navigator.browserLanguage;
     };
-    
+
     uthis.getBodyBackgroundColor =
 	function()
     {
@@ -472,7 +477,7 @@
       };
       return foregroundColor;
     };
-    
+
     uthis.getScrollTop = function()
     {
       var v = document.documentElement.scrollTop;
@@ -491,7 +496,7 @@
       };
       return v;
     };
-    
+
     uthis.replaceItem = function( array, fromItem, toItem )
     {
       for( var idx = 0, len = array.length ; idx < len ; ++idx )
@@ -517,7 +522,7 @@
       };
       return char.repeat( n - str.length ) + str;
     };
-    
+
     uthis.removeIdAll =
         function removeIdAll( element )
     {
@@ -531,8 +536,8 @@
       };
       return element;
     };
-    
-    
+
+
     uthis.log01 =
         function()
     {
@@ -548,11 +553,11 @@
       {
 	str = str + arguments[idx]+" ";
       };
-      
+
       elt.appendChild( document.createTextNode(str) );
       elt.appendChild( document.createElement('BR') );
     };
-    
+
     uthis.removePostCells =
         function()
     {
@@ -563,7 +568,7 @@
       };
       window.lastReplyId = 0;
     };
-    
+
     uthis.differenceSet =
         function( lhs, rhs )
     {
@@ -577,7 +582,7 @@
       };
       return r;
     };
-    
+
     uthis.getYearMonthDateDayHoursMinutesSeconds =
 	function( dateObj , useUTC )
     {
@@ -612,7 +617,7 @@
     uthis.IntermittentLoops__ = function() {
       this.loopFuncList = [];
     };
-    
+
     uthis.IntermittentLoops__.prototype.push = function(f) {
       this.loopFuncList.push(f);
       return this;
@@ -626,7 +631,7 @@
       var loopFuncList = ilThis.loopFuncList;
       var wrappedLoopFuncList = new Array(loopFuncList.length);
       var index = loopFuncList.length - 1;
-        
+
       /* loop for prepare wrappedLoopFuncList */
       for(; -1 < index ; --index ) {
         function createWrappedLoopFunc() {
@@ -640,7 +645,7 @@
 
           function wrappedLoopFunc() {
             if(currentLoopFunc()) {
-              setTimeout( wrappedLoopFunc, 0 ); 
+              setTimeout( wrappedLoopFunc, 0 );
             } else {
               setTimeout( nextLoopFunc, 0 );
             };
@@ -655,14 +660,14 @@
 
     uthis.IntermittentLoops__.prototype.doNothing = function(){};
     /* } IntermittentLoops */
-  
+
     uthis.__Test_IntermittentLoops = function()
     {
       /*
         outputs: [1][2][3](A)(B)(C){_}{~}{=}
       */
       var ile = uthis.IntermittentLoops();
-      
+
       var sss1 = ["[1]","[2]","[3]"];
       var idx1 = 0;
       var len1 = sss1.length;
@@ -672,15 +677,15 @@
         ++idx1;
         return true;
       } );
-      
+
       var sss2 = ["(A)","(B)","(C)"];
       var idx2 = 0;
       var len2 = sss2.length;
-      
+
       var sss3 = ["{_}","{-}","{=}"];
       var idx3 = 0;
       var len3 = sss3.length;
-      
+
       ile
           .push( function(){
             if( idx2 >= len2 ) return false;
@@ -696,23 +701,23 @@
           } )
           .beginAsync();
     };
-    
+
     uthis.elementOfUid = {};
     uthis.uidCounter = 0;
     uthis.getElementUniqueId =
         function( element )
     {
       ++uthis.uidCounter;
-      
+
       var cdaName = "data-tsk-uid";
       var uid = element.getAttribute( cdaName );
-      
+
       if( null != uid &&
             uthis.elementOfUid[ uid ] === element )
       {
         return uid;
       };
-      
+
       uid = "tskuid" + uthis.uidCounter + "__";
       element.setAttribute( cdaName, uid );
       uthis.elementOfUid[ uid ] = element;
@@ -723,16 +728,16 @@
     {
       element.setAttribute( "data-tsk-discarded", "1" );
     };
-    
+
     uthis.trigger =
         function()
     {
       return;
     };
-    
+
     return uthis;
   };
-  
+
   /**********************************
    * settings                       *
    **********************************/
@@ -742,10 +747,10 @@
     window.toshakiii.settings = window.toshakiii.settings || {};
     var toshakiii = window.toshakiii;
     var settings = window.toshakiii.settings;
-    
+
     /*                         [<keynames>...] */
     settings.miniDataKeyList = [ 'ThreadAutoRefresh' ];
-    
+
     settings.getMiniDataIndex =
         function( keyname )
     {
@@ -759,7 +764,7 @@
       };
       return -1;
     };
-    
+
     settings.setMiniDataContainer =
         function( value )
     {
@@ -789,23 +794,23 @@
       };
       return miniData;
     };
-    
+
     settings.getMiniData =
         function( keyname )
     {
       var index = settings.getMiniDataIndex( keyname );
       var miniDataContainer = settings.getMiniDataContainer();
-      
+
       if( 0 > index )
       {
         return null;
       };
-      
+
       if( index < (miniDataContainer.length) )
       {
         return miniDataContainer[ index ];
       };
-      
+
       return null;
     };
     settings.setMiniData =
@@ -818,18 +823,18 @@
       };
       var miniDataContainer = settings.getMiniDataContainer();
       miniDataContainer[ index ] = value;
-      
+
       settings.setMiniDataContainer( miniDataContainer );
       return value;
     };
-    
+
     settings.trigger = function(){};
     settings.enable = function(){};
     settings.disable = function(){};
-    
+
     return settings;
   };
-  
+
   /**********************************
    * filePreview                    *
    **********************************/
@@ -839,25 +844,25 @@
     window.toshakiii.settings = window.toshakiii.settings || {};
     var toshakiii = window.toshakiii;
     var settings = window.toshakiii.settings;
-    
+
     var pthis = {};
     var lthis = window.toshakiii.feWrapper;
-    
+
     window.toshakiii.filePreview = pthis;
-    
+
     pthis.previewMaxWidth = "140px";
     pthis.previewMaxHeight = "140px";
-    
+
     pthis.PREVIEW_CLASSNAME = "toshakiPreviewCell";
     pthis.PREVIEWS_AREA_CLASSNAME = "toshakiPreviewsArea";
-    
+
     /*
      * endchan公式の $(".selectedCell") に設定する Custom Data Attribute名
      * selectedCell.getAttribute( POINTER_CDA_NAME ) が、ある previewCell の ClassName の
      * ひとつに対応する。
      */
     pthis.POINTER_CDA_NAME = "data-toshaki-preview-pointer";
-    
+
     pthis.insertPreviewElement =
         function( selectedCell, file, pointer )
     {
@@ -865,13 +870,13 @@
       {
         return true;
       };
-      
+
       var previewsArea = pthis.getPreviewsAreaElement( selectedCell );
       var span = document.createElement('SPAN');
       span.className = pthis.PREVIEW_CLASSNAME + " " + pointer;
       selectedCell.setAttribute( pthis.POINTER_CDA_NAME, pointer);
       previewsArea.appendChild( span );
-      
+
       if( ( 350 * 1024 * 1024 ) <= file.size )
       {
         return this.insertDummyElement( span, file, "OVER 350MiB");
@@ -885,10 +890,10 @@
       {
         return pthis.insertAudioVideoPreviewElement( span, file);
       };
-      
+
       return this.insertDummyElement( span, file);
     };
-    
+
     pthis.insertImagePreviewElement =
         function( destElt, file)
     {
@@ -905,7 +910,7 @@
       };
       fileReader.readAsDataURL( file );
     };
-    
+
     pthis.insertAudioVideoPreviewElement =
         function( destElt, file)
     {
@@ -923,7 +928,7 @@
       };
       fileReader.readAsDataURL( file );
     };
-    
+
     pthis.insertDummyElement =
         function( destElt, file, msg )
     {
@@ -935,20 +940,20 @@
         elt.appendChild( document.createElement('BR') );
         elt.appendChild( document.createTextNode( msg ) );
       };
-      
+
       elt.style.maxWidth = pthis.previewMaxWidth;
       elt.style.maxHeight = pthis.previewMaxHeight;
       elt.style.border = "1px dashed black";
       destElt.appendChild( elt );
     };
-    
+
     pthis.getPreviewsAreaElement =
         function( refSelectedCell )
     {
       return refSelectedCell.parentElement.parentElement
           .getElementsByClassName( pthis.PREVIEWS_AREA_CLASSNAME )[0];
     };
-    
+
     pthis.hasPreviewed =
         function( selectedCell )
     {
@@ -959,7 +964,7 @@
         return 0 < previewsArea.getElementsByClassName( pointer ).length;}
       */
     };
-    
+
     pthis.removeOldPreviews =
         function()
     {
@@ -990,7 +995,7 @@
           toRemoveElts.push( previewElt );
         };
       };
-      
+
       var treIdx = 0;
       var treLen = toRemoveElts.length;
       for( ; treIdx < treLen ; ++treIdx )
@@ -998,7 +1003,7 @@
         toRemoveElts[ treIdx ].parentElement.removeChild( toRemoveElts[ treIdx ] );
       };
     };
-    
+
     pthis.getAlivePointers =
         function()
     {
@@ -1017,7 +1022,7 @@
       };
       return a;
     };
-    
+
     pthis.selectedDivOnChange =
         function( mutationRecords, mutationObserver )
     {
@@ -1029,7 +1034,7 @@
       var mLen = Math.min( selectedCells.length, window.selectedFiles.length );
       var pointers = new Array( mLen );
       pthis.removeOldPreviews();
-      
+
       for( ; scIdx < mLen ; ++scIdx )
       {
         selectedCell = selectedCells[ scIdx ];
@@ -1045,7 +1050,7 @@
               pointers[ scIdx ] );
         };
       };
-      
+
       var quickReplyElt = document.getElementById("quick-reply");
       if( null != quickReplyElt )
       {
@@ -1058,13 +1063,13 @@
               pointers[ fIdx ] );
         };
       };
-      
+
       for( var shIdx in lthis.selectedDivOnChangeHandlers )
       {
 	lthis.selectedDivOnChangeHandlers[ shIdx ]();
       };
     };
-    
+
     pthis.quickReplyOnLoad =
         function( mutationRecords, mutationObserver )
     {
@@ -1087,14 +1092,14 @@
             {
               selectedCells[ scIdx ].removeAttribute( pthis.POINTER_CDA_NAME );
             };
-            
+
             pthis.insertPreviewsArea( document.getElementById("selectedDivQr") );
             pthis.selectedDivOnChange();
           };
         };
       };
     };
-    
+
     pthis.insertPreviewsArea =
         function( refSelectedDiv )
     {
@@ -1102,7 +1107,7 @@
       previewsArea.className = pthis.PREVIEWS_AREA_CLASSNAME;
       refSelectedDiv.parentElement.insertBefore( previewsArea, refSelectedDiv );
     };
-    
+
     pthis.stopSelectedDivObserver =
         function()
     {
@@ -1125,7 +1130,7 @@
       pthis.insertPreviewsArea( selectedDiv );
       pthis.sdMutationObserver.observe( selectedDiv, options );
     };
-    
+
     pthis.stopQuickReplyObserver =
         function()
     {
@@ -1146,13 +1151,13 @@
       pthis.qrMutationObserver = new MutationObserver( pthis.quickReplyOnLoad );
       pthis.qrMutationObserver.observe( document.body, qrOptions);
     };
-    
+
     pthis.trigger =
         function()
     {
       pthis.enable();
     };
-    
+
     pthis.enable =
         function()
     {
@@ -1165,7 +1170,7 @@
       pthis.startSelectedDivObserver();
       pthis.startQuickReplyObserver();
     };
-    
+
     pthis.disable =
         function()
     {
@@ -1177,11 +1182,11 @@
         elts[ idx ].parentElement.removeChild( elts[ idx ] );
       }
     };
-    
+
     return pthis;
   };
   /* end modFilePreview */
-  
+
   /**********************************
    * CatalogSorter                  *
    **********************************/
@@ -1191,23 +1196,23 @@
     window.toshakiii.settings = window.toshakiii.settings || {};
     var toshakiii = window.toshakiii;
     var settings = window.toshakiii.settings;
-    
+
     var sthis = {};
     var utils = window.toshakiii.utils;
 
     window.toshakiii.catalogSorter = sthis;
-    
+
     sthis.SPAN_ID = "toshakiiiCatalogSortSpan";
     /*sthis.LABEL_ID = "toshakiiiCatalogSortLabel";*/
     sthis.SELECT_ID = "toshakiiiCatalogSortSelect";
     sthis.SETTINGS_ID = "toshakiiiCatalogSortSettings";
     sthis.REFRESH_STATUS_ID = "toshakiiiCatalogSortRefreshStatus";
-    
+
     sthis.boardUri = document.location.pathname.replace(/\/([^\/]*).*/,"$1");
 
     sthis.catalogLastModified = new Date( document.lastModified );
     sthis.nowRefreshing = false;
-    
+
     sthis.cmpfBumpOrder =
       function(x,y)
     {
@@ -1223,7 +1228,7 @@
       var b = parseInt( sthis.getCatalogCellId( x ) );
       return a - b;
     };
-    
+
     sthis.cmpfReplyCount =
       function(x,y)
     {
@@ -1235,7 +1240,7 @@
       var b = f(x);
       return a - b;
     };
-    
+
     sthis.cmpfImageCount =
       function(x,y)
     {
@@ -1247,31 +1252,31 @@
       var b = f(x);
       return a - b;
     };
-    
+
     sthis.cmpfRevBumpOrder    = function(x,y){ return -sthis.cmpfBumpOrder   (x,y);};
     sthis.cmpfRevCreationData = function(x,y){ return -sthis.cmpfCreationData(x,y);};
     sthis.cmpfRevReplyCount   = function(x,y){ return -sthis.cmpfReplyCount  (x,y);};
     sthis.cmpfRevImageCount   = function(x,y){ return -sthis.cmpfImageCount  (x,y);};
-    
+
     sthis.shuffle =
       function( array )
     {
       var n = array.length;
       var t;
       var i;
-      
+
       while (n) {
         i = Math.floor(Math.random() * n--);
         t = array[n];
         array[n] = array[i];
         array[i] = t;
       };
-      
+
       return array;
     };
-    
+
     sthis.tableOrderType = undefined;
-    
+
     sthis.initTableOrderType =
       function()
     {
@@ -1291,9 +1296,9 @@
             , { name: "Image count(reverse)",   compareFunction: sthis.cmpfRevImageCount }
           ];
     };
-    
+
     sthis.bumpOrderOfId = {};
-    
+
     sthis.loadSettingsSageHidedThreads =
       function()
     {
@@ -1310,7 +1315,7 @@
       };
       return settings.sageHidedThreads;
     };
-    
+
     sthis.saveSettingsSageHidedThreads =
       function( value )
     {
@@ -1325,7 +1330,7 @@
         localStorage.setItem( 'toshakiii.settings.sageHidedThreads', "0");
       };
     };
-    
+
     /*
       元 HTML の catalogCell に id は設定されていない
     */
@@ -1342,7 +1347,7 @@
         return catalogCell.id = s.substring(0,i);
       return undefined;
     };
-    
+
     sthis.recordBumpOrder =
       function()
     {
@@ -1351,7 +1356,7 @@
       {
         return false;
       };
-      
+
       for( var idx = 0, len = divThreads.children.length; idx < len ; ++idx )
       {
         var id = sthis.getCatalogCellId( divThreads.children[idx] );
@@ -1362,7 +1367,7 @@
       };
       return true;
     };
-    
+
     sthis.recordBumpOrderFromJson =
       function( catalogJson )
     {
@@ -1375,7 +1380,7 @@
       };
       sthis.bumpOrderOfId = bumpOrderOfId;
     };
-    
+
     sthis.circulateOrderType =
       function()
     {
@@ -1395,12 +1400,12 @@
       /*
         うーｎ。直接 appendChild した場合と、DocumentFragment を使った場合。
         そもそも全体 Firefox の方が遅いから、DocumentFragment は不採用。
-        
+
         Google Chrome version 52.0.2743.116 (64-bit)
         direct[1025] fragment[ 995] diff[30] / count[816]
         direct[ 960] fragment[1038] diff[78] / count[699]
         direct[ 972] fragment[1028] diff[56] / count[651]
-        
+
         Firefox 48.0
         direct[883] fragment[1121] diff[238] / count[106]
         direct[871] fragment[1132] diff[261] / count[111]
@@ -1415,7 +1420,7 @@
         var time = (+new Date());
         sthis.sortCatalogCells( false );
         tottimed += (+new Date()) - time;
-        
+
         time = (+new Date());
         sthis.sortCatalogCells( true );
         tottimef += (+new Date()) - time;
@@ -1424,7 +1429,7 @@
       document.body.insertBefore( document.createTextNode( "direct["+tottimed+"]  fragment["+tottimef+"] diff[" + Math.abs( tottimed - tottimef ) + "] / count["+count+"]" ),
           document.body.firstChild );
     };
-    
+
     sthis.shuffleCatalogCells =
       function()
     {
@@ -1439,7 +1444,7 @@
         };
       };
     };
-    
+
     sthis.CatalogCell =
       (function()
           {
@@ -1476,7 +1481,7 @@
                 return catalogCell.id = s.substring(0,i);
               return undefined;
             };
-            
+
             ccthis.getLinkThumbElement = function( catalogCell )
             {
               return ref( catalogCell.getElementsByClassName("linkThumb"), 0, null );
@@ -1521,7 +1526,7 @@
             {
               return ref( catalogCell.getElementsByClassName("threadStats"), 0, null);
             };
-            
+
             ccthis.getRepliesStr = function( catalogCell )
             {
               return refInnerHTML( ccthis.getLabelRepliesElement( catalogCell ), null );
@@ -1550,7 +1555,7 @@
             {
               return ccthis.getBumpLockIndicatorElement( catalogCell );
             };
-            
+
             ccthis.changeURL = function( catalogCell, value )
             {
               ccthis.getLinkThumbElement( catalogCell ).href = value;
@@ -1590,7 +1595,7 @@
               ccthis.getDivMessageElement( catalogCell ).innerHTML
                   = value.replace(/\r/g,"").replace(/\n/g,"<br>");
             };
-            
+
             ccthis.changeRepliesNum = function( catalogCell, value )
             {
               if( undefined == value ) value = "0";
@@ -1606,7 +1611,7 @@
               if( undefined == value ) value = "0";
               ccthis.getLabelPageElement( catalogCell ).innerHTML = value;
             };
-            
+
             ccthis.changeIndicator = function( catalogCell, value,
                 getIndicatorFunction, createElementFunction )
             {
@@ -1661,7 +1666,7 @@
                   ccthis.getBumpLockIndicatorElement,
                   ccthis.makeBumpLockIndicatorElement );
             };
-            
+
             ccthis.makeIndicatorElement = function( classnames, title)
             {
               var elt = document.createElement("span");
@@ -1677,21 +1682,21 @@
             {
               return ccthis.makeIndicatorElement("pinIndicator","Sticky");
             };
-            
+
             ccthis.makeCyclicIndicatorElement = function()
             {
               return ccthis.makeIndicatorElement("cyclicIndicator","Cyclical Thread");
             };
-            
+
             ccthis.makeBumpLockIndicatorElement = function()
             {
               return ccthis.makeIndicatorElement("bumpLockIndicator","Bumplocked");
             };
-            
+
             return ccthis;
           })();
     /* end: sthis.CatalogCell = (function(){...}()) */
-    
+
     sthis.sortCatalogCells =
       function( useFragment )
     {
@@ -1719,11 +1724,11 @@
         };
       };
       children = undefined;
-      
+
       var selectElt = document.getElementById( sthis.SELECT_ID );
       var oIdx = parseInt(selectElt.value);
       localStorage.setItem( "toshakiii.settings.catalogOrderType", oIdx );
-      
+
       var funcType = sthis.tableOrderType[oIdx].funcType;
       if( 0 ==  funcType || undefined == funcType )
       {
@@ -1733,7 +1738,7 @@
       {
         catalogCells = sthis.tableOrderType[oIdx].sortFunction( catalogCells );
       };
-      
+
       var fragment;
       if( useFragment )
       {
@@ -1743,8 +1748,8 @@
       {
         fragment = parentElt;
       };
-      
-      
+
+
       var cookie = '; ' + document.cookie + "; ";
       var sageElts = [];
       for( var ccIdx = 0, ccLen = catalogCells.length; ccIdx < ccLen ; ++ccIdx )
@@ -1768,7 +1773,7 @@
           sageElts.push( catalogCell );
           continue;
         };
-        
+
         fragment.appendChild( catalogCell );
         /*parentElt.appendChild( catalogCells[idx] );*/
       };
@@ -1781,7 +1786,7 @@
         parentElt.appendChild( fragment );
       };
     };
-    
+
     sthis.getCatalogJsonUri =
       function()
     {
@@ -1791,7 +1796,7 @@
       };
       return sthis.CatalogJsonUri;
     };
-    
+
     sthis.showRefreshStatus =
       function( msg )
     {
@@ -1806,7 +1811,7 @@
         refreshStatus.appendChild( text );
       };
     };
-    
+
     sthis.refreshCatalogCells =
       function()
     {
@@ -1817,7 +1822,7 @@
       sthis.nowRefreshing = true;
       sthis.showRefreshStatus("loading");
       var uri = sthis.getCatalogJsonUri();
-      
+
       var loadingBody = false;
       var xhr = new XMLHttpRequest();
       xhr.onreadystatechange =
@@ -1858,14 +1863,14 @@
           sthis.showRefreshStatus("error(unknown)");
         };
       };
-      
+
       xhr.open('GET', uri);
       /*
         catalog.html の lastModified は catalog.json のそれより 1秒過去の場合がしばしば。
       */
       var ifModifiedSince = sthis.catalogLastModified.toUTCString();
       xhr.setRequestHeader('If-Modified-Since', ifModifiedSince);
-      
+
       var catalogCells = document.getElementsByClassName("catalogCell");
       if( 0 < catalogCells.length &&
             "" == catalogCells[0].id )
@@ -1877,7 +1882,7 @@
       };
       xhr.send(null);
     };
-    
+
     sthis.applyJsonToCatalog =
         function( jsontext, msgfunc )
     {
@@ -1892,10 +1897,10 @@
         sthis.nowRefreshing = false;
         return;
       };
-      
+
       var break_ = false;
       var iloops = utils.IntermittentLoops();
-      
+
       var threadCount = 0;
       var threadProcedCount = 0;
       iloops.push
@@ -1924,10 +1929,10 @@
           threadCount = 1;
         };
       } );
-      
+
       var newThreadIds = [];
       var beforeProgress = 0;
-      
+
       iloops.push
       (function()
           {
@@ -1945,7 +1950,7 @@
         sthis.sortCatalogCells();
         sthis.nowRefreshing = false;
       } );
-      
+
       if( undefined != window.enableHideThreadLink )
       {
         iloops.push( function(){
@@ -1963,10 +1968,10 @@
           return true;
         } );
       };
-      
+
       iloops.beginAsync();
     };
-    
+
     /*
       新しく catalogCell 全部を作るのではなく、
       わざわざ既存の DOM を変更するのは、
@@ -1977,7 +1982,7 @@
     {
       var break_ = false;
       var continue_ = true;
-      
+
       for( var id in catalogCellInfoOfId ){break;};
       if( undefined == id )
       {
@@ -1999,7 +2004,7 @@
       delete catalogCellInfoOfId[ id ];
       return continue_;
     };
-    
+
     sthis.applyInfoToCatalogCell =
         function( catalogCellInfo, catalogCell )
     {
@@ -2012,8 +2017,8 @@
       sthis.CatalogCell.changeCyclic    ( catalogCell, info.cyclic );
       sthis.CatalogCell.changeBumpLock  ( catalogCell, info.autoSage );
     };
-    
-    
+
+
     sthis.catalogCellTemplateHTML = '<div id="00" class="catalogCell"><a class="linkThumb" href="/"><img src="/"></a><p class="threadStats">R:<span class="labelReplies">00</span>/ I:<span class="labelImages">00</span>/ P:<span class="labelPage">00</span></p><p><span class="labelSubject">00</span></p><div class="divMessage">00</div></div>';
     sthis.catalogCellTemplateElement = undefined;
     sthis.makeCatalogCell =
@@ -2028,14 +2033,14 @@
       };
       var info = catalogCellInfo;
       var catalogCell = sthis.catalogCellTemplateElement.cloneNode(true);
-      
+
       catalogCell.id = catalogCellInfo.threadId;
-      
+
       sthis.CatalogCell.changeURL( catalogCell,
           "/" + sthis.boardUri + "/res/" + catalogCellInfo.threadId + ".html" );
       sthis.CatalogCell.changeThumb( catalogCell,
           catalogCellInfo.thumb );
-      
+
       sthis.CatalogCell.changeRepliesNum( catalogCell, info.postCount );
       sthis.CatalogCell.changeImagesNum ( catalogCell, info.fileCount );
       sthis.CatalogCell.changePageNum   ( catalogCell, info.page );
@@ -2043,21 +2048,21 @@
       sthis.CatalogCell.changePin       ( catalogCell, info.pinned );
       sthis.CatalogCell.changeCyclic    ( catalogCell, info.cyclic );
       sthis.CatalogCell.changeBumpLock  ( catalogCell, info.autoSage );
-      
+
       sthis.CatalogCell.changeSubject   ( catalogCell, info.subject );
       sthis.CatalogCell.changeMessage   ( catalogCell, info.message );
       /*catalogCell.getElementsByClassName("hideButton")[0].id =
         'hide' + sthis.boardUri + 'Thread' + info.threadID;*/
-      
+
       return catalogCell;
     };
-    
+
     sthis.makeSortElement =
         function()
     {
       var eltSpan = document.createElement('SPAN');
       eltSpan.id = sthis.SPAN_ID;
-      
+
       /* [So] [r] [t by:] */
       var eltASo = document.createElement('A');
       eltASo.appendChild( document.createTextNode("So") );
@@ -2065,15 +2070,15 @@
       eltAr.appendChild( document.createTextNode("r") );
       var eltAtby = document.createElement('A');
       eltAtby.appendChild( document.createTextNode("t by:") );
-      
+
       eltASo.addEventListener( 'click', sthis.circulateOrderType );
       eltAr.addEventListener( 'click', sthis.shuffleCatalogCells );
       eltAtby.addEventListener( 'click', sthis.circulateOrderType );
-      
+
       var eltSelect = document.createElement('SELECT');
       eltSelect.id = sthis.SELECT_ID;
       eltSelect.addEventListener( "change", sthis.sortCatalogCells );
-      
+
       var option;
       var optionText;
       for( var idx = 0, len = sthis.tableOrderType.length; idx < len ; ++idx )
@@ -2084,7 +2089,7 @@
         option.appendChild( optionText );
         eltSelect.appendChild( option );
       }
-      
+
       var eltLSB = document.createTextNode("[");
       var eltARefresh = document.createElement('A');
       /*eltARefresh.id = 'tskCatalogRefresh';
@@ -2092,29 +2097,29 @@
       eltARefresh.appendChild( document.createTextNode('Refresh') );
       eltARefresh.addEventListener('click', sthis.refreshCatalogCells);
       var eltRSB = document.createTextNode("]");
-      
+
       var eltConfig = document.createElement('A');
       eltConfig.appendChild( document.createTextNode("⚙") );
       eltConfig.addEventListener('click', sthis.showCloseDivSettings );
-      
+
       var eltStatus = document.createElement('SPAN');
       eltStatus.id = sthis.REFRESH_STATUS_ID;
-      
+
       eltSpan.appendChild( eltASo );
       eltSpan.appendChild( eltAr );
       eltSpan.appendChild( eltAtby );
       eltSpan.appendChild( eltSelect );
-      
+
       eltSpan.appendChild( eltLSB );
       eltSpan.appendChild( eltARefresh );
       eltSpan.appendChild( eltRSB );
-      
+
       eltSpan.appendChild( eltConfig );
-      
+
       eltSpan.appendChild( eltStatus );
       return eltSpan;
     };
-    
+
     sthis.closeDivSettings =
         function()
     {
@@ -2125,7 +2130,7 @@
       };
       divSettings.parentElement.removeChild( divSettings );
     };
-    
+
     sthis.showCloseDivSettings =
         function()
     {
@@ -2147,20 +2152,20 @@
       checkboxSageHidedThreads.type = 'checkbox';
       checkboxSageHidedThreads.value = 'sageHidedThreads';
       checkboxSageHidedThreads.checked = settings.sageHidedThreads;
-      
+
       var closeButton = document.createElement('INPUT');
       closeButton.type = 'button';
       closeButton.addEventListener('click', sthis.closeDivSettings );
       closeButton.value = "Close";
-      
+
       divSettings.appendChild( checkboxSageHidedThreads );
       divSettings.appendChild( document.createTextNode("Hideしたスレは下げる(ソート変更後に適用)") );
       divSettings.appendChild( document.createElement('BR') );
       divSettings.appendChild( closeButton );
-      
+
       document.getElementById( sthis.SPAN_ID ).appendChild( divSettings );
     };
-    
+
     sthis.loadSettings =
         function()
     {
@@ -2187,7 +2192,7 @@
         };
       };
     };
-    
+
     sthis.disable =
         function()
     {
@@ -2200,7 +2205,7 @@
         elt.parentElement.removeChild( elt );
       };
     };
-    
+
     sthis.isHereCatalogPage =
         function()
     {
@@ -2208,7 +2213,7 @@
       return null != divThreads &&
           0 < document.getElementsByClassName("catalogCell").length;
     };
-    
+
     sthis.trigger =
         function()
     {
@@ -2216,7 +2221,7 @@
       {
         return;
       };
-      
+
       if( ! sthis.recordBumpOrder() )
       {
         return;
@@ -2225,7 +2230,7 @@
       sthis.loadSettings();
       sthis.enable();
     };
-    
+
     sthis.enable =
         function()
     {
@@ -2239,9 +2244,9 @@
         return;
       };
       var elt = sthis.makeSortElement();
-      
+
       divThreads.parentElement.insertBefore( elt, divThreads );
-      
+
       if( undefined !== window.toshakiii.settings.catalogOrderType )
       {
         var selectElt = document.getElementById( sthis.SELECT_ID );
@@ -2250,14 +2255,14 @@
           window.toshakiii.settings.catalogOrderType = 0;
         };
         selectElt.value = window.toshakiii.settings.catalogOrderType;
-        
+
         sthis.sortCatalogCells();
       };
     };
-    
+
     return sthis;
   };
-  
+
   /**********************************
    * etCetera                       *
    **********************************/
@@ -2267,13 +2272,13 @@
     window.toshakiii.settings = window.toshakiii.settings || {};
     var toshakiii = window.toshakiii;
     var settings = window.toshakiii.settings;
-    
+
     var feWrapper = window.toshakiii.feWrapper;
     var utils = window.toshakiii.utils;
     var etcthis = {};
-    
+
     window.toshakiii.etCetera = etcthis;
-    
+
     etcthis.overrideEmbedYoutubeButton =
         function( youtube_wrapper )
     {
@@ -2293,7 +2298,7 @@
       youtube_wrapper.setAttribute("data-tsk-overrode","1");
       return 1;
     };
-    
+
     etcthis.overrideEmbedNiconicoButton =
         function( niconico_wrapper )
     {
@@ -2313,7 +2318,7 @@
       niconico_wrapper.setAttribute("data-tsk-overrode","1");
       return 1;
     };
-    
+
     etcthis.onYoutubeEmbedButtonClick =
         function( ev )
     {
@@ -2334,7 +2339,7 @@
         return false;
       };
       var youtubeUri = this.href.replace(/youtu.be\//,"www.youtube.com/watch?v=")
-          .replace(/watch\?v=/, 'embed/');
+          .replace(/watch\?v=/, 'embed/') + "?autoplay=1";
       if( "https:" == location.protocol )
       {
         youtubeUri = youtubeUri.replace(/^http:/,"https:");
@@ -2342,8 +2347,8 @@
       var iframe = document.createElement('IFRAME');
       iframe.width = 560;
       iframe.height = 315;
-      iframe.frameBorder = 0;
-      iframe.allowFullScreen = true;
+      iframe.frameborder = 0;
+      iframe.allowfullscreen = true;
       iframe.src = youtubeUri;
       this.parentElement.appendChild( document.createElement('BR') );
       this.parentElement.appendChild(iframe);
@@ -2351,7 +2356,7 @@
       ev.preventDefault();
       return false;
     };
-    
+
     etcthis.getAncestorPostCellId =
         function( elt )
     {
@@ -2365,11 +2370,11 @@
         {
           return elt.id;
         };
-        
+
       };
       return null;
     };
-    
+
     etcthis.onNiconicoEmbedButtonClick =
         function( ev )
     {
@@ -2390,18 +2395,18 @@
         {
           brs[brIdx].parentElement.removeChild( brs[brIdx] );
         };
-        
+
         this.replaceChild( document.createTextNode("embeD"), this.firstChild );
         ev.preventDefault();
         return false;
       };
-      
+
       if( "https:" == location.protocol )
       {
         var div = document.createElement('DIV');
         div.style.border = "1px solid red";
         var br = document.createElement('BR');
-        
+
         div.appendChild( document.createTextNode("https から http へはつなげられないから、" ) );
         div.appendChild( br );
         div.appendChild( document.createTextNode("ニコニコ動画の埋め込みはできません。") );
@@ -2412,9 +2417,9 @@
         div.appendChild( br.cloneNode() );
         div.appendChild( document.createTextNode("「安全でないスクリプトを読み込む」で表示できないこともありません。") );
         div.appendChild( br.cloneNode() );
-        
+
         this.parentElement.appendChild( div );
-        
+
         this.replaceChild( document.createTextNode("closE"), this.firstChild );
         /*ev.preventDefault();
           return false;*/
@@ -2422,11 +2427,11 @@
       var videoUri = this.href.replace(/nico.ms/,"embed.nicovideo.jp/watch")
           .replace(/www\.nicovideo/,"embed.nicovideo");
       var iframe = document.createElement('IFRAME');
-      
+
       iframe.width = 560;
       iframe.height = 315;
-      iframe.frameBorder = 0;
-      iframe.allowFullScreen = true;
+      iframe.frameborder = 0;
+      iframe.allowfullscreen = true;
       iframe.src = videoUri;
       this.parentElement.appendChild( document.createElement('BR') );
       this.parentElement.appendChild( iframe );
@@ -2434,7 +2439,7 @@
       ev.preventDefault();
       return false;
     };
-    
+
     etcthis.overrideWrapperAll =
         function()
     {
@@ -2445,7 +2450,7 @@
       var niconicoWrappers;
       var break_ = false;
       var continue_ = true;
-      
+
       iloops.push( function(){
         youtubeWrappers = document.getElementsByClassName('youtube_wrapper');
         idx = youtubeWrappers.length - 1;
@@ -2470,7 +2475,111 @@
         return continue_;
       } ).beginAsync();
     };
+
+    etcthis.defaultEmbedOpen = function( embedButton, playerWrapper, options ) {
+      var iframe = document.createElement('IFRAME');
+      iframe.width = options.width || 560;
+      iframe.height = options.height || 315;
+      iframe.src = options.src;
+      iframe.allowfullscreen = options.allowfullscreen || true;
+      iframe.frameborder = options.frameBorder || "no";
+      iframe.scrolling = options.scrolling || "no";
+      iframe.style.maxWidth = "100%";
+      playerWrapper.appendChild( iframe );
+    };
+
+    etcthis.appendEmbedControl = function(anchor, options ) {
+      var wrapper = document.createElement('SPAN');
+      var button = document.createElement('A');
+      var playerWrapper = document.createElement('SPAN');
+      button.href = anchor.href;
+      playerWrapper.style.display = 'none';
+      button.textContent = "embeD";
+      wrapper.appendChild( document.createTextNode(" [") );
+      wrapper.appendChild( button );
+      wrapper.appendChild( document.createTextNode("]") );
+      wrapper.appendChild( playerWrapper );
+
+      button.setAttribute('data-embeded', "false");
+      button.addEventListener("click", function(ev) {
+        ev.preventDefault();
+        var button = this;
+        if ("false" === button.getAttribute('data-embeded')) {
+          button.setAttribute('data-embeded', "true");
+          button.textContent = "closE";
+          etcthis.defaultEmbedOpen( button, playerWrapper, options );
+          playerWrapper.style.display = 'inline';
+          return;
+        };
+        button.textContent = "embeD";
+        button.setAttribute('data-embeded', "false");
+        if ( 'remove' === options.closeStyle ) {
+          while(playerWrapper.firstChild) {
+            playerWrapper.removeChild( playerWrapper.firstChild );
+          };
+        };
+        playerWrapper.style.display = 'none';
+        return;
+      } );
+
+      anchor.parentNode.insertBefore( wrapper, anchor.nextSibling );
+    };
     
+    etcthis.enableSoundcloudEmbed = function(anchor) {
+      if (  ( 0 !== anchor.href.lastIndexOf( "https://soundcloud.com/", 0 ) &&
+              0 !== anchor.href.lastIndexOf( "http://soundcloud.com/", 0 ) ) ||
+              anchor.href == "https://soundcloud.com/" ||
+            utils.endsWith( anchor.pathname, "/tracks" ) ||
+            3 >= anchor.href.toString().split("/").length ) {
+        return;
+      };
+      
+      var o = {}; /* ref. defaultEmbedOpen */
+      o.width = "100%";
+      o.height = "166";
+      o.scrolling = "no";
+      o.frameborder = "no";
+      o.src = "https://w.soundcloud.com/player/?url=" + encodeURIComponent(anchor.href) +
+          "&auto_play=true";
+      o.closeStyle = 'remove';
+
+      etcthis.appendEmbedControl(anchor, o );
+      return true;
+    };
+
+    etcthis.enableYoutubeEmbed = function(anchor) {
+      if (  0 !== anchor.href.lastIndexOf("https://youtu.be/", 0) &&
+            0 !== anchor.href.lastIndexOf("https://www.youtube.com/watch?") &&
+            0 !== anchor.href.lastIndexOf("http://youtu.be/", 0 ) &&
+            0 !== anchor.href.lastIndexOf("http://www.youtube.com/watch?") ) {
+        return false;
+      };
+
+      var uri = anchor.href.replace(/youtu.be\//,"www.youtube.com/watch?v=")
+          .replace(/watch\?v=/, 'embed/').replace(/(^[^&]*)&/, '$1?');
+          /* .replace(/([&?])t=/,'$1start='); */
+      if (0 <= uri.indexOf('?') ) {
+        uri = uri + '&autoplay=1';
+      } else {
+        uri = uri + '?autoplay=1';
+      };
+
+      if( "https:" == location.protocol ) {
+        uri = uri.replace(/^http:/,"https:");
+      };
+      var o = {}; /* ref. defaultEmbedOpen */
+      o.width = "560";
+      o.height = "315";
+      o.scrolling = "no";
+      o.frameborder = "no";
+      o.src = uri;
+      o.closeStyle = 'remove';
+      o.allowfullscreen = "true";
+      
+      etcthis.appendEmbedControl(anchor, o );
+      return true;
+    };
+      
     etcthis.insertFakeRefreshButton =
         function()
     {
@@ -2486,7 +2595,7 @@
             window.refreshPosts(true);
           } );
     };
-    
+
     etcthis.presetImageGeometry =
         function()
     {
@@ -2512,17 +2621,17 @@
         };
         imgLink.style.minWidth = 255;
         imgLink.style.minHeight = 255;
-        
+
         return true;
       } ).beginAsync();
-      
+
     };
 
     etcthis.jaDateFormat = function jaDateFormat(d) {
       /* 2016/12/31(Sat)13:59:59 形式 */
       var leftpad = utils.leftpad;
       var year, month, date, hours, minutes, seconds, day;
-      
+
       [ year, month, date, day, hours, minutes, seconds ] =
 	  utils.getYearMonthDateDayHoursMinutesSeconds( d );
 
@@ -2536,13 +2645,13 @@
           leftpad( seconds, 2, "0");
       return text;
     };
-    
+
     etcthis.firstLanguage =
         (window.navigator.languages && window.navigator.languages[0]) ||
         window.navigator.language ||
         window.navigator.userLanguage ||
         window.navigator.browserLanguage;
-    
+
     etcthis.dateFromStringForOverride = function dateFromStringForOverride(str) {
       var firstLanguage = etcthis.firstLanguage;
 
@@ -2564,7 +2673,7 @@
             ' ('+d.toLocaleString(firstLanguage, {weekday:"short"} )+')';
       };
     };
-    
+
     etcthis.overrideDateFromString = function overrideDateFromString() {
 
       if ( undefined === window.dateFromString ) {
@@ -2584,7 +2693,7 @@
         window.updateTimes();
       };
     };
-    
+
     etcthis.fixGoogleChromeMp3Mime =
 	function fixGoogleChromeMp3Mime()
     {
@@ -2602,7 +2711,7 @@
       {
 	return;
       };
-      
+
       var originalCheckExistance = window.checkExistance;
       window.checkExistance
           = function ymnccheckExistance()
@@ -2618,7 +2727,7 @@
 	};
 	return originalCheckExistance.apply( window, Array.prototype.slice.call( arguments ) );
       };
-      
+
       var fixMp3BlobMime = function( files )
       {
 	try
@@ -2646,14 +2755,14 @@
 	catch(e)
 	{};
       };
-      
+
       var originalSendReplyData = window.sendReplyData;
       window.sendReplyData = function ymncSendReplyData( files )
       {
         fixMp3BlobMime( files );
 	return originalSendReplyData.apply( window, Array.prototype.slice.call( arguments ) );
       };
-      
+
       var originalQRsendReplyData = window.QRsendReplyData;
       window.QRsendReplyData = function ymncQRsendReplyData( files )
       {
@@ -2661,11 +2770,11 @@
 	return originalQRsendReplyData.apply( window, Array.prototype.slice.call( arguments ) );
       };
     };
-    
+
     etcthis.addConsecutiveNumberStyle =
         function()
     {
-      
+
       var style = document.createElement('style');
       style.type = "text/css";
       style.id = "postsConsecutiveNumberStyle";
@@ -2673,7 +2782,7 @@
         このCSSルール部分のオリジナルは「大統領スレッド三枚」
         "http://endchan.xyz/librejp/res/5273.html#q8133"
         そのとちゃき。
-        
+
         その後の改変の下二つは自分(to_sha_ki_ii)だった(はず)。
         http://endchan.xyz/librejp/res/5273.html#q8156
         http://endchan.xyz/librejp/res/5273.html#q8166
@@ -2684,7 +2793,7 @@
           "div.divPosts div.postCell div.innerPost:before{content:counter(consecutiveNumber);}";
       document.head.appendChild( style );
     };
-    
+
     etcthis.isHiddenCDAName = 'data-is-hidden';
     etcthis.insertButtonShowHidePostingForm =
         function()
@@ -2699,14 +2808,14 @@
       var showHideAnchor = document.createElement('A');
       var showText = document.createTextNode('[Show hidden posting form]');
       showHideAnchor.appendChild( showText );
-      
+
       showHideAnchor.setAttribute( etcthis.isHiddenCDAName, '1' );
       showHideAnchor.addEventListener('click', etcthis.showHidePostingForm);
       postingForm.style.display = 'none';
-      
+
       topAnchorElement.parentElement.insertBefore( showHideAnchor, topAnchorElement.nextSibling );
     };
-    
+
     etcthis.showHidePostingForm =
         function()
     {
@@ -2727,7 +2836,7 @@
             showHideAnchor.firstChild );
       };
     };
-    
+
     etcthis.getContentActionElement =
         function()
     {
@@ -2741,7 +2850,7 @@
       };
       return reportFieldReason.parentElement.parentElement;
     };
-    
+
     etcthis.insertButtonShowHideContentAction =
         function()
     {
@@ -2754,11 +2863,11 @@
       showHideAnchor.appendChild( document.createTextNode('[Show hidden report and deletion form]') );
       showHideAnchor.setAttribute( etcthis.isHiddenCDAName, '1' );
       showHideAnchor.addEventListener('click', etcthis.showHideContentAction);
-      
+
       contentAction.parentElement.insertBefore( showHideAnchor, contentAction );
       contentAction.style.display = 'none';
     };
-    
+
     etcthis.showHideContentAction =
         function()
     {
@@ -2766,7 +2875,7 @@
       var target = etcthis.getContentActionElement();
       var toShowText = '[Show hidden report and deletion form]';
       var toHideText = '[Hide a report and delettion form]';
-      
+
       if( null == target )
       {
         return;
@@ -2786,7 +2895,7 @@
             showHideAnchor.firstChild );
       };
     };
-    
+
     etcthis.getAutoRefreshCheckboxElement =
         function()
     {
@@ -2795,11 +2904,11 @@
       {
         return null;
       };
-      
+
       var break_ = false;
       var continue_ = true;
       var target = null;
-      
+
       function f( descendant )
       {
         if( 'INPUT' === descendant.tagName &&
@@ -2816,10 +2925,10 @@
         return target;
       };
       utils.foreEachElementDescendants( labelRefresh.parentElement.parentElement, f );
-      
+
       return target;
     };
-    
+
     etcthis.autoRefreshCheckboxPersistent =
         function()
     {
@@ -2831,28 +2940,28 @@
       {
         return;
       };
-      
+
       if( false === window.autoRefresh )
       {
         /* サイト指定の初期値が false の場合は、この機能は動かさない */
         return;
       };
-      
+
       /* ブラウザがチェックボックスの状態を覚えていて、ページを開いた時に状態を反映する。
          autoRefresh の状態はチェックボックスに従わない。
          autoRefresh はチェックボックスが初期状態で、checked だと思っている。
          上記の理由で、autoRefreshCheckbox.dispatchEvent だけで対応することは不可能 */
-      
+
       if( autoRefreshCheckbox.checked !== window.autoRefresh )
       {
         window.changeRefresh();
       };
-      
+
       if( autoRefreshCheckbox.checked !==
             ( 0 !== settings.getMiniData('ThreadAutoRefresh') ) )
       {
         autoRefreshCheckbox.checked = !autoRefreshCheckbox.checked;
-        
+
         /*
           var evt = document.createEvent("HTMLEvents");
           evt.initEvent("change", true, true);
@@ -2862,7 +2971,7 @@
       };
       autoRefreshCheckbox.addEventListener('change', etcthis.autoRefreshCheckboxOnChange );
     };
-    
+
     etcthis.autoRefreshCheckboxOnChange =
         function()
     {
@@ -2876,7 +2985,7 @@
         settings.setMiniData('ThreadAutoRefresh', 0);
       };
     };
-    
+
     etcthis.enableDelButtonAndHideButton =
         function( postCell )
     {
@@ -2892,7 +3001,7 @@
         delPostButton.appendChild( document.createTextNode('del') );
         delPostButton.href = '#bottom';
         delPostButton.onclick = (function(){return window.delPost(this);});
-        
+
         var panelBacklinksList = postCell.getElementsByClassName( 'panelBacklinks' );
         if( 0 < panelBacklinksList.length )
         {
@@ -2901,7 +3010,7 @@
         };
       };
     };
-    
+
     etcthis.titleNewReplysCountReg = /^([(]\d*[)] ).*$/;
     etcthis.procTitle = function procTitle()
     {
@@ -2923,7 +3032,7 @@
         document.title = newReplys + title.substring( prefix.length ) + ' - /' + boardUri + '/';
       };
     };
-    
+
     /* override と言いつつ、新規設置も行う。
        引数は、postCell でなくてもかまわない */
     etcthis.overrideInlinePlayers =
@@ -2942,7 +3051,7 @@
         return continue_;
       } ).beginAsync();
     };
-    
+
     etcthis.addHookToAudioInlinePlayer =
         function addHookToAudioInlinePlayer( uploadCell )
     {
@@ -2953,23 +3062,24 @@
       {
         return;
       };
-      
+
       var img = imgList[0];
       img.addEventListener('click', function(){ this.style.display = 'inline'; } );
     };
-    
+
     etcthis.addQuote = function addQuote()
     {
       var postIdToQuote = this.hash.substring(2);
-      
+
       if (typeof window.add_quick_reply_quote != "undefined") {
         window.add_quick_reply_quote( postIdToQuote );
       }
-      
+
       document.getElementById('fieldMessage').value += '>>' + postIdToQuote + '\n';
     };
 
-    
+
+
     etcthis.disable = function disable()
     {
       var style = document.getElementById("postsConsecutiveNumberStyle");
@@ -2978,19 +3088,23 @@
         style.parentElement.removeChild( style );
       };
     };
-    
+
     etcthis.enable = function enable()
     {
       feWrapper.postCellCP.appendAfterCP( etcthis.overrideWrapperAll );
+
+      feWrapper.messageUriHandlers.push( etcthis.enableSoundcloudEmbed );
+      feWrapper.messageUriHandlers.push( etcthis.enableYoutubeEmbed );
+
       feWrapper.postCellCP.appendCP( etcthis.overrideInlinePlayers );
-      
+
       feWrapper.titleCP.appendAfterCP( etcthis.procTitle );
-      
+
       setTimeout( etcthis.insertButtonShowHidePostingForm, 0 );
       setTimeout( etcthis.insertButtonShowHideContentAction, 0 );
-      
+
       setTimeout( etcthis.fixGoogleChromeMp3Mime, 0 );
-      
+
       setTimeout( etcthis.autoRefreshCheckboxPersistent, 0 );
 
       setTimeout( etcthis.overrideDateFromString, 0 );
@@ -2999,21 +3113,21 @@
       {
         feWrapper.postCellCP.appendCP( etcthis.enableDelButtonAndHideButton, false, true );
       };
-      
+
       if( 0 <= document.location.href.indexOf("/res/") )
       {
 	setTimeout( etcthis.addConsecutiveNumberStyle, 0 );
       };
-      
+
     };
-    
+
     etcthis.trigger = function()
     {
       etcthis.enable();
     };
     return etcthis;
   };
-  
+
   /**********************************
    * MultiPopup                    *
    **********************************/
@@ -3027,10 +3141,10 @@
     var mthis = window.toshakiii.multiPopup;
     var feWrapper = window.toshakiii.feWrapper;
     var utils = window.toshakiii.utils;
-    
+
     window.toshakiii.multiPopup = mthis;
     var etCetera = window.toshakiii.etCetera;
-    
+
     mthis.Popup =
         function(){};
     mthis.popups = {};
@@ -3057,7 +3171,7 @@
       'timeToClosePopup': 350/*ms*/ };
     mthis.panelBacklinksObservers = {};
     mthis.mouseClientPos = {x:0,y:0};
-    
+
     mthis.preparePopupInfo =
 	function( popups, arg2 )
     {
@@ -3072,12 +3186,12 @@
 	uid = utils.getElementUniqueId( quoteAnchor );
       };
       arg2 = undefined;
-      
+
       if( undefined != popups[ uid ] )
       {
 	return popups[ uid ];
       };
-      popups[ uid ] = 
+      popups[ uid ] =
 	  { 'brothers'      : [],
 	    'children'      : [],
 	    'closeTimer'    : undefined,
@@ -3090,7 +3204,7 @@
 	    'uid'           : uid };
       return popups[ uid ];
     };
-    
+
     mthis.setUidOfPopupParent =
 	function( element, parentUid )
     {
@@ -3099,7 +3213,7 @@
       element.setAttribute( cdaName, parentUid );
       return true;
     };
-    
+
     mthis.getUidOfPopupParent =
 	function( element )
     {
@@ -3111,7 +3225,7 @@
       };
       return parentUid;
     };
-    
+
     mthis.getSettings =
         function( name )
     {
@@ -3121,7 +3235,7 @@
       };
       return settings[ name ];
     };
-    
+
     mthis.startCountdownForClosePopup =
 	function( popupInfo )
     {
@@ -3141,12 +3255,12 @@
     {
       var quoteLink = popupInfo['quoteAnchor'];
       var uid = popupInfo['uid'];
-      
+
       if( mthis.POPUP_PHASE.DO_NOTHING != popupInfo['phase'] )
       {
 	return false;
       };
-      
+
       if( undefined != popupInfo['showTimer'] )
       {
 	return true;
@@ -3159,12 +3273,12 @@
 	      , timeToPopup );
       return true;
     };
-    
+
     mthis.extendExpirationDate =
 	function extendExpirationDate( popupInfo )
     {
       var timeToClosePopup = mthis.getSettings('timeToClosePopup');
-      
+
       if( mthis.POPUP_PHASE.COUNTDOWN_FOR_CLOSE_POPUP != popupInfo['phase'] )
       {
 	return false;
@@ -3176,12 +3290,12 @@
       };
       popupInfo['closeTimer'] = undefined;
       popupInfo['phase'] = mthis.POPUP_PHASE.NOW_SHOWING;
-      
+
       if( undefined == popupInfo['parent'] )
       {
 	return true;
       }
-      
+
       var parentPopupInfo = mthis.popups[ popupInfo['parent'] ];
       if( undefined == parentPopupInfo )
       {
@@ -3193,13 +3307,13 @@
       };
       return true;
     };
-    
+
     mthis.touchElement =
         function( event )
     {
       var quoteLink = event.target;
       var popupInfo = mthis.preparePopupInfo( mthis.popups, quoteLink );
-      
+
       var PP = mthis.POPUP_PHASE;
       var rect;
       switch( popupInfo['phase'] ){
@@ -3220,13 +3334,13 @@
       };
       return true;
     };
-    
+
     mthis.untouchElement =
         function( event )
     {
       var quoteLink = event.target;
       var popupInfo = mthis.preparePopupInfo( mthis.popups, quoteLink );
-      
+
       var PP = mthis.POPUP_PHASE;
       if( PP.COUNTDOWN_FOR_SHOW_POPUP == popupInfo['phase'] )
       {
@@ -3245,8 +3359,8 @@
       };
       return true;
     };
-    
-    
+
+
     mthis.getRelatedPostCell =
 	function getAncientPostCell( element )
     {
@@ -3264,7 +3378,7 @@
       };
       return getAncientPostCell( element.parentElement );
     };
-    
+
     mthis.getRelatedDivMessage =
 	function( element )
     {
@@ -3279,9 +3393,9 @@
 	return divMessageList[0];
       };
       return null;
-      
+
     };
-    
+
     mthis.downloadPostCell =
 	function( popupInfo, callback )
     {
@@ -3292,13 +3406,13 @@
 	callback( popupInfo, null, msg );
 	return;
       };
-      
+
       if( 0 > quoteAnchor.pathname.indexOf("/res/") )
       {
 	callback( popupInfo, null, "unexpected uri:" + quoteAnchor );
 	return;
       };
-      
+
       var pathname = quoteAnchor.pathname;
       var hash = quoteAnchor.hash;
       var uri = "";
@@ -3316,7 +3430,7 @@
       };
       uri = "//" + quoteAnchor.host + uri;
       /* ex. "//yamanu.org/chan/preview/123.html" */
-      
+
       if( undefined != mthis.cache[ uri ] )
       {
         var postCell = mthis.cache[ uri ]['element'];
@@ -3327,9 +3441,9 @@
         callback( popupInfo, postCell, mthis.cache[ uri ]['message'] );
         return;
       };
-      
+
       callback( popupInfo, null, "now loading" );
-      
+
       var xhr = new XMLHttpRequest();
       var fullUri = location.protocol + uri; /* for message */
       xhr.onreadystatechange = function()
@@ -3351,11 +3465,11 @@
 	      callback( popupInfo, null, msg );
 	      return;
 	    };
-            
+
 	    /*
 	      freech: #panelContent は空。body 直下に .postCell がある
 	    */
-            
+
 	    var postCellList = this.response.getElementsByClassName('postCell');
 	    if( 0 >= postCellList.length )
 	    {
@@ -3381,10 +3495,10 @@
       xhr.responseType = 'document';
       xhr.open('GET', uri);
       xhr.send(null);
-      
+
       return;
     };
-    
+
     mthis.lookForPostCellFromDocument =
         function( popupInfo, callback )
     {
@@ -3414,7 +3528,7 @@
         return callback( popupInfo, null, "no such post:No." + localNo );
       };
       postCell = postCell.cloneNode(true);
-      
+
       var divPostsList = postCell.getElementsByClassName("divPosts");
       for( var dpIdx = divPostsList.length - 1; -1 < dpIdx ; --dpIdx )
       {
@@ -3423,7 +3537,7 @@
       postCell = utils.removeIdAll( postCell );
       return callback( popupInfo, postCell );
     };
-    
+
     mthis.lookForPostCell =
         function( popupInfo, callback )
     {
@@ -3440,7 +3554,7 @@
       };
       return mthis.downloadPostCell( popupInfo, callback );
     };
-    
+
     mthis.showPopup =
         function( popupInfo, postCell, errorMessage )
     {
@@ -3460,7 +3574,7 @@
       {
 	originElement = quoteLink;
       };
-      
+
       var quoteblock;
       if( undefined != popupInfo['element'] )
       {
@@ -3479,7 +3593,7 @@
 	quoteblock = document.createElement('DIV');
 	quoteblock.appendChild( postCell );
       };
-      
+
       quoteblock.className = "tskQuoteblock";
       var uid = popupInfo['uid'];
       mthis.processPostCell( postCell );
@@ -3487,18 +3601,18 @@
 	  function( e ){
 	    mthis.setUidOfPopupParent( e, uid );
 	  } );
-      
+
       quoteblock.addEventListener("mouseout" , function(){
 	mthis.startCountdownForClosePopup( popupInfo ); } );
-      
+
       quoteblock.addEventListener("mousemove", function(){
 	mthis.extendExpirationDate( popupInfo );
 	return true; } );
-      
+
       quoteblock.addEventListener("click",     function(){
 	mthis.extendExpirationDate( popupInfo );
 	return true; } );
-      
+
       quoteblock.style.position = "absolute";
       quoteblock.style.paddingTop = "2px";
       quoteblock.style.paddingLeft = "2px";
@@ -3506,19 +3620,19 @@
       quoteblock.style.paddingBottom = "2px";
       quoteblock.style.border = "1px solid " + utils.getBodyForegroundColor();
       quoteblock.style.backgroundColor = utils.getBodyBackgroundColor();
-      
+
       var scrollLeft   = utils.getScrollLeft();
       var scrollRight  = scrollLeft + window.innerWidth;
       var scrollTop    = utils.getScrollTop();
       var scrollBottom = scrollTop + window.innerHeight;
-      
+
       var divThreads = document.getElementById("divThreads");
       /* css rule のために divThreads に入れる */
-      
+
       divThreads.appendChild( quoteblock );
       var height    = quoteblock.offsetHeight;
       var width     = quoteblock.offsetWidth;
-      
+
       var targetPosition = popupInfo['targetPosition'];
       var rect      = originElement.getBoundingClientRect();
       var left    = rect.left + rect.height + scrollLeft;
@@ -3530,7 +3644,7 @@
       };
       var tmpRight  = left + width;
       var tmpBottom = top  + height;
-      
+
       if( scrollRight < tmpRight )
       {
         left = scrollRight - width;
@@ -3539,10 +3653,10 @@
       {
         top = scrollBottom - height;
       };
-      
+
       quoteblock.style.top  = top + "px";
       quoteblock.style.left = left + "px";
-      
+
       var parentUid = mthis.getUidOfPopupParent( quoteLink );
       if( undefined != parentUid )
       {
@@ -3555,14 +3669,14 @@
       };
       popupInfo['phase']   = mthis.POPUP_PHASE.NOW_SHOWING;
       popupInfo['element'] = quoteblock;
-      
+
       /* parent の期限を伸ばす: */
       mthis.extendExpirationDate( popupInfo );
-      
+
       return;
     };
     /* end mthis.showPopup */
-    
+
     mthis.PopupHasExpired =
 	function( popupInfo, deletep )
     {
@@ -3580,7 +3694,7 @@
       };
       mthis.closePopup( popupInfo, deletep );
     };
-    
+
     mthis.closePopup =
 	function( popupInfo, deletep )
     {
@@ -3603,13 +3717,13 @@
 	utils.toMarkElementDiscarded( element );
       };
       popupInfo['phase'] = mthis.POPUP_PHASE.DO_NOTHING;
-      
+
       if( deletep )
       {
 	delete mthis.popups[ popupInfo['uid'] ];
       };
     };
-    
+
     mthis.DateToLastCheckMouseIsIn = 0;
     mthis.onBodyMouseMove =
 	function( event )
@@ -3621,16 +3735,16 @@
 	mthis.checkMouseIsIn( event );
 	mthis.DateToLastCheckMouseIsIn = now;
       };
-      
+
       mthis.mouseClientPos = {x:event.clientX, y:event.clientY};
       return;
     };
-    
+
     mthis.checkMouseIsIn =
 	function( event )
     {
       mthis.mouseClientPos = {x:event.clientX, y:event.clientY};
-      
+
       var uidsToClosePopup = [];
       var popupInfo;
       for( var key in mthis.popups )
@@ -3640,7 +3754,7 @@
 	{
 	  continue;
 	};
-        
+
 	var rect2 = popupInfo['quoteAnchor'].getBoundingClientRect();
 	var rect = popupInfo['element'].getBoundingClientRect();
 	var mcx = mthis.mouseClientPos.x;
@@ -3682,14 +3796,14 @@
 	};
       };
     };
-    
+
     mthis.disableQuotePopup =
 	function( anchor )
     {
       anchor.removeEventListener("mousemove", mthis.touchElement );
       anchor.removeEventListener("mouseout" , mthis.untouchElement );
     };
-    
+
     mthis.removeOriginalPopupFeature =
 	function( quoteLink )
     {
@@ -3697,7 +3811,7 @@
       quoteLink.onmouseenter = null;
       quoteLink.onmouseout = null;
     };
-    
+
     mthis.enableQuotePopup =
 	function( anchor )
     {
@@ -3705,7 +3819,7 @@
       anchor.addEventListener("mousemove", mthis.touchElement );
       anchor.addEventListener("mouseout" , mthis.untouchElement );
     };
-    
+
     mthis.processPostCell =
 	function( postCell )
     {
@@ -3729,32 +3843,32 @@
         };
         };*/
     };
-    
+
     mthis.sharpQRegexp = new RegExp("^#q[0-9]*");
     mthis.add_reply_quote = function()
     {
       var linkQuote = this;
-      
+
       if( ! mthis.sharpQRegexp.test( linkQuote.hash ) )
       {
 	return true;
       };
       var toQuote = linkQuote.hash.substring(2);
-      
+
       if( undefined !== window.add_quick_reply_quote )
       {
 	window.add_quick_reply_quote( toQuote );
       };
-      
+
       var fieldMessage = document.getElementById('fieldMessage');
       if( null != fieldMessage )
       {
 	fieldMessage.value += '>>' + toQuote + '\n';
       };
-      
+
       return true;
     };
-    
+
     mthis.overridePostCellQuotePopups =
 	function( postCell, hook  )
     {
@@ -3773,7 +3887,7 @@
 	mthis.overrideChildrenQuotePopup( panelBacklinksList[ pbIdx ], hook );
       };
     };
-    
+
     mthis.overrideChildrenQuotePopup =
 	function( panelBacklinks, hook )
     {
@@ -3792,7 +3906,7 @@
 	};
       };
     };
-    
+
     mthis.popupDescendants =
 	function popupDescendants( obj, descList )
     {
@@ -3816,7 +3930,7 @@
       };
       return descList;
     };
-    
+
     mthis.addBodyEvents =
 	function()
     {
@@ -3830,14 +3944,14 @@
       document.body.removeEventListener("click"    , mthis.checkMouseIsIn );
       document.body.removeEventListener("mousemove", mthis.onBodyMouseMove );
     };
-    
+
     mthis.overrideQuotePopup =
 	function( quoteLink )
     {
       mthis.removeOriginalPopupFeature( quoteLink );
       mthis.enableQuotePopup( quoteLink );
     };
-    
+
     mthis.startObservePanelBacklinks =
 	function( panelBacklinks )
     {
@@ -3869,27 +3983,27 @@
       panelBacklinks.setAttribute( cdaName, "0" );
       return;
     };
-    
+
     mthis.trigger = function()
     {
       mthis.enable();
     };
-    
+
     mthis.enable = function()
     {
       mthis.addBodyEvents();
       /* etCetera の監視対象は .divPosts。Popup の挿入場所は .divPosts の親の親の中。
        * だから Popup 挿入時に冗長呼び出しにはならない */
-      
+
       feWrapper.postCellCP.appendCP( mthis.overridePostCellQuotePopups );
-      
+
       var iloops = utils.IntermittentLoops();
       var links;
       var idx = 0;
       var break_ = false;
       var continue_ = true;
       var quoteblockList;
-      
+
       iloops.push( function(){
 	links = document.getElementsByClassName('quoteLink');
 	idx = links.length - 1;
@@ -3926,10 +4040,10 @@
     {
       mthis.removeBodyEvents();
     };
-    
+
     return mthis;
   };
-  
+
   /**********************************
    * LynxChan Front-End Wrapper               *
    **********************************/
@@ -3940,12 +4054,19 @@
     var toshakiii = window.toshakiii;
     var settings = window.toshakiii.settings;
     var utils = window.toshakiii.utils;
-    
+
     var fewrapper = {};
     window.toshakiii.feWrapper = fewrapper;
-    
+
     fewrapper.selectedDivOnChangeHandlers = [];
-    
+
+    /*
+     * 投稿内のURIアンカーを引数に渡される関数のリスト。
+     * あるアンカーに対して、あるハンドラーが true を返した場合は、
+     * 他のハンドラーを呼ばない
+     */
+    fewrapper.messageUriHandlers = [];
+
     fewrapper.postCellCPInit =
         function postCellCPInit( postCellCP )
     {
@@ -3954,7 +4075,7 @@
       {
         return;
       };
-      
+
       postCellCP.setObservingElement( divPostsList[0] );
       postCellCP.setObservingOptions( { childList: true } );
       postCellCP.setFuncEnumExistingTargets( function(){
@@ -3964,6 +4085,33 @@
     };
     fewrapper.postCellCP = undefined;
     
+    fewrapper.callMessageUriHandlers = function( anchor ) {
+      for (var hndIdx = 0, hndLen = fewrapper.messageUriHandlers.length;
+           hndIdx < hndLen ; ++hndIdx ) {
+        if (fewrapper.messageUriHandlers[hndIdx]( anchor ) ) {
+          /* like stopImmediatePropagation */
+          return true;
+        };
+      };
+      return false;
+    };
+
+    fewrapper.callMessageUriHandlersWithMessageUri = function( postCell ) {
+      var divMessageList = postCell.getElementsByClassName('divMessage');
+      for (var idx = 0, len = divMessageList.length; idx < len ; ++idx ) {
+        var divMessage = divMessageList[idx];
+        var anchorList = divMessage.getElementsByTagName('A');
+        for (var ancIdx = anchorList.length - 1; -1 < ancIdx ; --ancIdx ) {
+          var anchor = anchorList[ ancIdx ];
+          /* レスアンカーとか他で処理されたリンクを除外する
+           * いい加減すぎるような、十分であるような。*/
+          if (anchor.textContent === anchor.href) {
+            fewrapper.callMessageUriHandlers( anchor );
+          };
+        };
+      };
+    };
+
     fewrapper.titleCPInit = function( titleCP )
     {
       titleCP.setObservingElement( document.head.getElementsByTagName('TITLE')[0] );
@@ -3971,15 +4119,16 @@
       titleCP.setFuncEnumExistingTargets( function(){ return [titleCP.observingElement]; } );
     };
     fewrapper.titleCP = undefined;
-    
+
     fewrapper.postCellOverrides = undefined;
-    
+
     fewrapper.enable = function()
     {
       fewrapper.titleCP = new utils.CompulsoryProcessing( fewrapper.titleCPInit );
       fewrapper.postCellCP = new utils.CompulsoryProcessing( fewrapper.postCellCPInit );
+      fewrapper.postCellCP.appendCP( fewrapper.callMessageUriHandlersWithMessageUri );
     };
-    
+
     fewrapper.getBoardUri = function()
     {
       /* /b/ の "b" とか、 /librejp/ の "librejp" とかを返す */
@@ -3987,15 +4136,15 @@
       {
         return window.boardUri;
       };
-      return document.location.pathname.replace(/\/([^\/]*).*/,"$1");            
+      return document.location.pathname.replace(/\/([^\/]*).*/,"$1");
     };
-    
+
     fewrapper.disable = function(){};
     fewrapper.trigger = function(){ fewrapper.enable(); };
-    
+
     return fewrapper;
   };
-  
+
   /*****************************
    * odcl : OnDomContentLoaded *
    *****************************/
@@ -4019,13 +4168,13 @@
     toshakiii2['spanInsteadOfYoutubeIframeList'] = spanList;
   };
   toshakiii2['odclRemoveYoutubeIframes'] = odclRemoveYoutubeIframes;
-  
+
   function odclEnable()
   {
     return odclRemoveYoutubeIframes();
   };
   toshakiii2['odclEnable'] = odclEnable;
-  
+
   /*****************************
    * olod *
    *****************************/
@@ -4038,7 +4187,7 @@
     var IntermittentLoops = window.toshakiii.utils.IntermittentLoops;
     var break_ = false;
     var continue_ = true;
-    
+
     var iloops = IntermittentLoops();
     iloops.push( function(){
       --idx;
@@ -4047,7 +4196,7 @@
         return break_;
       };
       var url = urlList[idx];
-      
+
       url = url.replace(/^http:/,'https:')
           .replace(/^https:\/\/www\.youtube\.com\/embed\//,'https://youtube.com/watch?v=');
       var span = spanList[ idx ];
@@ -4064,46 +4213,43 @@
         .beginAsync();
   };
   toshakiii2['olodInsertLinkInsteadOfYoutubeIframes'] = olodInsertLinkInsteadOfYoutubeIframes;
-  
+
   function olodEnable()
   {
     setTimeout( olodInsertLinkInsteadOfYoutubeIframes, 0 );
   };
   toshakiii2['olodEnable'] = olodEnable;
-  
+
   function mainEnable()
   {
     olodEnable();
     odclEnable();
   };
   toshakiii2['enable'] = mainEnable;
-  
+
   /**********************************
    * main                           *
    **********************************/
-  function main()
-  {
-    if( 0 <= window.navigator.userAgent.toLowerCase().indexOf("chrome") )
+  function main() {
+    if ( 0 <= window.navigator.userAgent.toLowerCase().indexOf("chrome") )
     {
       var script = document.createElement('SCRIPT');
       script.innerText =
-          "var toshakiii_errors = [];" +
-	  "try{("+modUtils        .toString() +")().trigger();}catch(e){toshakiii_errors.push(e);};" +
-	  "try{("+modSettings     .toString() +")().trigger();}catch(e){toshakiii_errors.push(e);};" +
-	  "try{("+modFeWrapper    .toString() +")().trigger();}catch(e){toshakiii_errors.push(e);};" +
-	  "try{("+modEtCetera     .toString() +")().trigger();}catch(e){toshakiii_errors.push(e);};" +
-	  "try{("+modCatalogSorter.toString() +")().trigger();}catch(e){toshakiii_errors.push(e);};" +
-	  "try{("+modFilePreview  .toString() +")().trigger();}catch(e){toshakiii_errors.push(e);};" +
-	  "try{("+modMultiPopup   .toString() +")().trigger();}catch(e){toshakiii_errors.push(e);};" +
-          /*
-            "try{(window.toshakiii2 = ("+toshakiii2.toString() + "))['enable']();}catch(e){ toshakiii_errors.push(e); };" +
-          */
-      "if( 0 != toshakiii_errors.length ){ alert( toshakiii_errors ); };" +
-          "";
+        "var toshakiii_errors = [];" +
+	      "try{("+modUtils        .toString() +")().trigger();}catch(e){toshakiii_errors.push(e);};" +
+	      "try{("+modSettings     .toString() +")().trigger();}catch(e){toshakiii_errors.push(e);};" +
+	      "try{("+modFeWrapper    .toString() +")().trigger();}catch(e){toshakiii_errors.push(e);};" +
+	      "try{("+modEtCetera     .toString() +")().trigger();}catch(e){toshakiii_errors.push(e);};" +
+	      "try{("+modCatalogSorter.toString() +")().trigger();}catch(e){toshakiii_errors.push(e);};" +
+	      "try{("+modFilePreview  .toString() +")().trigger();}catch(e){toshakiii_errors.push(e);};" +
+	      "try{("+modMultiPopup   .toString() +")().trigger();}catch(e){toshakiii_errors.push(e);};" +
+        /*
+         "try{(window.toshakiii2 = ("+toshakiii2.toString() + "))['enable']();}catch(e){ toshakiii_errors.push(e); };" +
+         */
+        "if( 0 != toshakiii_errors.length ){ alert( toshakiii_errors ); };" +
+        "";
       document.head.appendChild( script );
-    }
-    else
-    {
+    } else {
       modUtils().trigger();
       modSettings().trigger();
       modFeWrapper().trigger();
@@ -4114,7 +4260,9 @@
       /*toshakiii2['enable']();*/
     };
   };
+
   main();
+
 })();
 
 
