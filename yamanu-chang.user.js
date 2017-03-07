@@ -25,8 +25,8 @@
 // @include    /https?://waifuchan\.moe/.*$/
 // @include    /https?://waifuchan\.moe/.*$/
 //
-// @version      2.04
-// @description v2.04: endchan: catalog sorter, preview upload files, recursive quote popup
+// @version      2.05
+// @description v2.05: endchan: catalog sorter, preview upload files, recursive quote popup
 // @grant       none
 // ==/UserScript==
 
@@ -42,6 +42,8 @@
 
 /*
  yamanu-chang(山ぬちゃん)です
+・(v2.05 2017.03.08 07:44 JST)
+  ・endchan公式に入ったため、delと[X]を設置する補助機能を削除
 ・(v2.04 2017.02.26 JST)
   ・Youtube埋め込みをautoplyに
   ・soundcloudの埋め込み対応
@@ -2986,31 +2988,6 @@
       };
     };
 
-    etcthis.enableDelButtonAndHideButton =
-        function( postCell )
-    {
-      if( undefined !== window.enableHidePostLink )
-      {
-        /* [X] の設置 */
-        window.enableHidePostLink(postCell);
-      };
-      if( undefined !== window.delPost )
-      {
-        /* del の設置 */
-        var delPostButton = document.createElement('A');
-        delPostButton.appendChild( document.createTextNode('del') );
-        delPostButton.href = '#bottom';
-        delPostButton.onclick = (function(){return window.delPost(this);});
-
-        var panelBacklinksList = postCell.getElementsByClassName( 'panelBacklinks' );
-        if( 0 < panelBacklinksList.length )
-        {
-          var panelBackLinks = panelBacklinksList[0];
-          panelBackLinks.parentElement.insertBefore( delPostButton, panelBackLinks );
-        };
-      };
-    };
-
     etcthis.titleNewReplysCountReg = /^([(]\d*[)] ).*$/;
     etcthis.procTitle = function procTitle()
     {
@@ -3108,11 +3085,6 @@
       setTimeout( etcthis.autoRefreshCheckboxPersistent, 0 );
 
       setTimeout( etcthis.overrideDateFromString, 0 );
-      if( undefined !== window.enableHidePostLink ||
-            undefined !== window.delPost )
-      {
-        feWrapper.postCellCP.appendCP( etcthis.enableDelButtonAndHideButton, false, true );
-      };
 
       if( 0 <= document.location.href.indexOf("/res/") )
       {
