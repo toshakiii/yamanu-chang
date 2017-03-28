@@ -3,8 +3,13 @@
 // @author      to_sha_ki_ii
 // @namespace   to_sha_ki_ii
 //
-// @include    /https?://endchan\.xyz/.*$/
-// @include    /https?://endchan\.net/.*$/
+// @include    http://endchan.xyz*
+// @include    https://endchan.xyz*
+// @include    http://endchan.net*
+// @include    https://endchan.net*
+// @include    http://infinow.net*
+// @include    https://infinow.net*
+//
 // @include    /https?://endchan5doxvprs5\.onion/.*$/
 // @include    /https?://s6424n4x4bsmqs27\.onion/.*$/
 // @include    /https?://endchan5doxvprs5\.onion.to/.*$/
@@ -14,9 +19,7 @@
 // @include    /https?://32ch\.org/.*$/
 // @include    /https?://bunkerchan\.xyz/.*$/
 //
-// @include    /https?://infinow\.net.*$/
 // @include    /https?://freech\.net/.*$/
-// @include    /https?://infinow\.net/.*$/
 // @include    /https?://keksec\.com/.*$/
 // @include    /https?://lynxhub\.com/.*$/
 // @include    /https?://spacechan\.xyz/.*$/
@@ -436,14 +439,14 @@
     };
 
     uthis.contains =
-	function( array, item )
+        function( array, item )
     {
       for( var arIdx in array )
       {
-	if( item != array[ arIdx ] )
-	{
-	  return true;
-	};
+        if( item != array[ arIdx ] )
+        {
+          return true;
+        };
       };
       return false;
     };
@@ -458,24 +461,24 @@
     };
 
     uthis.getBodyBackgroundColor =
-	function()
+        function()
     {
       var cssProperties = window.getComputedStyle(document.body);
       var backgroundColor = cssProperties["background-color"];
       if( backgroundColor == null )
       {
-	return "rgb(255,255,255)";
+        return "rgb(255,255,255)";
       };
       return backgroundColor;
     };
     uthis.getBodyForegroundColor =
-	function()
+        function()
     {
       var cssProperties = window.getComputedStyle(document.body);
       var foregroundColor = cssProperties["color"];
       if( foregroundColor == null )
       {
-	return "rgb(0,0,0)";
+        return "rgb(0,0,0)";
       };
       return foregroundColor;
     };
@@ -485,7 +488,7 @@
       var v = document.documentElement.scrollTop;
       if( 0 == v )
       {
-	return document.body.scrollTop;
+        return document.body.scrollTop;
       };
       return v;
     };
@@ -494,7 +497,7 @@
       var v = document.documentElement.scrollLeft;
       if( 0 == v )
       {
-	return document.body.scrollLeft;
+        return document.body.scrollLeft;
       };
       return v;
     };
@@ -503,10 +506,10 @@
     {
       for( var idx = 0, len = array.length ; idx < len ; ++idx )
       {
-	if( array[ idx ] === fromItem )
-	{
-	  array[ idx ] = toItem;
-	};
+        if( array[ idx ] === fromItem )
+        {
+          array[ idx ] = toItem;
+        };
       };
       return array;
     };
@@ -531,10 +534,10 @@
       element.id = "";
       for( var i in element.children )
       {
-	if( undefined != element.children )
-	{
-	  removeIdAll( element.children[ i ] );
-	};
+        if( undefined != element.children )
+        {
+          removeIdAll( element.children[ i ] );
+        };
       };
       return element;
     };
@@ -553,7 +556,7 @@
       var str = "";
       for( var idx = 0, len = arguments.length; idx < len ; ++idx )
       {
-	str = str + arguments[idx]+" ";
+        str = str + arguments[idx]+" ";
       };
 
       elt.appendChild( document.createTextNode(str) );
@@ -586,28 +589,28 @@
     };
 
     uthis.getYearMonthDateDayHoursMinutesSeconds =
-	function( dateObj , useUTC )
+        function( dateObj , useUTC )
     {
       /* return type: int array */
       /* return value: [ year, month, date, day, hours, minutes, seconds] */
       /*   month: 0 origin */
       if( useUTC )
       {
-	return [ dateObj.getUTCFullYear(),
-	  dateObj.getUTCMonth(),
-	  dateObj.getUTCDate(),
-	  dateObj.getUTCDay(),
-	  dateObj.getUTCHours(),
-	  dateObj.getUTCMinutes(),
-	  dateObj.getUTCSeconds() ];
+        return [ dateObj.getUTCFullYear(),
+          dateObj.getUTCMonth(),
+          dateObj.getUTCDate(),
+          dateObj.getUTCDay(),
+          dateObj.getUTCHours(),
+          dateObj.getUTCMinutes(),
+          dateObj.getUTCSeconds() ];
       };
       return [ dateObj.getFullYear(),
-	dateObj.getMonth(),
-	dateObj.getDate(),
-	dateObj.getDay(),
-	dateObj.getHours(),
-	dateObj.getMinutes(),
-	dateObj.getSeconds() ];
+        dateObj.getMonth(),
+        dateObj.getDate(),
+        dateObj.getDay(),
+        dateObj.getHours(),
+        dateObj.getMinutes(),
+        dateObj.getSeconds() ];
     };
 
     /* IntermittentLoops { */
@@ -726,7 +729,7 @@
       return uid;
     };
     uthis.toMarkElementDiscarded =
-	function( element )
+        function( element )
     {
       element.setAttribute( "data-tsk-discarded", "1" );
     };
@@ -1068,7 +1071,7 @@
 
       for( var shIdx in lthis.selectedDivOnChangeHandlers )
       {
-	lthis.selectedDivOnChangeHandlers[ shIdx ]();
+        lthis.selectedDivOnChangeHandlers[ shIdx ]();
       };
     };
 
@@ -1712,10 +1715,10 @@
       var n = "";
       for( idx = 0, len = children.length ; idx < len ; ++idx )
       {
-	var child = children[idx];
-	if( null != child.firstChild &&
-	      'A' === child.firstChild.tagName &&
-	      0 === child.firstChild.innerHTML.lastIndexOf("[Show hidden thread ",0) )
+        var child = children[idx];
+        if( null != child.firstChild &&
+              'A' === child.firstChild.tagName &&
+              0 === child.firstChild.innerHTML.lastIndexOf("[Show hidden thread ",0) )
         {
           n = child.id.replace( /[^0-9]/g, "");
           showButtonElts[ n ] = child;
@@ -2526,7 +2529,7 @@
 
       anchor.parentNode.insertBefore( wrapper, anchor.nextSibling );
     };
-    
+
     etcthis.enableSoundcloudEmbed = function(anchor) {
       if (  ( 0 !== anchor.href.lastIndexOf( "https://soundcloud.com/", 0 ) &&
               0 !== anchor.href.lastIndexOf( "http://soundcloud.com/", 0 ) ) ||
@@ -2535,7 +2538,7 @@
             3 >= anchor.href.toString().split("/").length ) {
         return;
       };
-      
+
       var o = {}; /* ref. defaultEmbedOpen */
       o.width = "100%";
       o.height = "166";
@@ -2577,11 +2580,11 @@
       o.src = uri;
       o.closeStyle = 'remove';
       o.allowfullscreen = "true";
-      
+
       etcthis.appendEmbedControl(anchor, o );
       return true;
     };
-      
+
     etcthis.insertFakeRefreshButton =
         function()
     {
@@ -2635,7 +2638,7 @@
       var year, month, date, hours, minutes, seconds, day;
 
       [ year, month, date, day, hours, minutes, seconds ] =
-	  utils.getYearMonthDateDayHoursMinutesSeconds( d );
+          utils.getYearMonthDateDayHoursMinutesSeconds( d );
 
       var text =
           year + "/"
@@ -2697,79 +2700,79 @@
     };
 
     etcthis.fixGoogleChromeMp3Mime =
-	function fixGoogleChromeMp3Mime()
+        function fixGoogleChromeMp3Mime()
     {
       if( undefined === window.sendReplyData )
       {
-	if( 'complete' === document.readyState )
-	{
-	  return;
-	};
-	setTimeout( fixGoogleChromeMp3Mime, 0 );
-	return;
+        if( 'complete' === document.readyState )
+        {
+          return;
+        };
+        setTimeout( fixGoogleChromeMp3Mime, 0 );
+        return;
       };
       if( 'function' !== typeof( window.sendReplyData ) ||
             'function' !== typeof( window.checkExistance ) )
       {
-	return;
+        return;
       };
 
       var originalCheckExistance = window.checkExistance;
       window.checkExistance
           = function ymnccheckExistance()
       {
-	if( 'audio/mp3' === arguments[0].type )
-	{
+        if( 'audio/mp3' === arguments[0].type )
+        {
           arguments[0].type = 'audio/mpeg';
-	  Object.defineProperty( arguments[0], "type",
-	      { enumerable: false,
-		configurable: false,
-		writable: true,
-		value: 'audio/mpeg' } );
-	};
-	return originalCheckExistance.apply( window, Array.prototype.slice.call( arguments ) );
+          Object.defineProperty( arguments[0], "type",
+              { enumerable: false,
+                configurable: false,
+                writable: true,
+                value: 'audio/mpeg' } );
+        };
+        return originalCheckExistance.apply( window, Array.prototype.slice.call( arguments ) );
       };
 
       var fixMp3BlobMime = function( files )
       {
-	try
-	{
-	  var data_audio_mpeg = 'data:audio/mpeg;';
-	  var data_audio_mp3 = 'data:audio/mp3;';
-	  var IANA_mp3_mime = 'audio/mpeg';
-	  var Chrome_mp3_mime = 'audio/mp3';
-	  for( var i in files )
-	  {
-	    var file = files[ i ];
-	    if( 0 == file.content.indexOf( data_audio_mp3 ) )
-	    {
-	      file.mime = IANA_mp3_mime;
-	      file.content = data_audio_mpeg
-		  + file.content.substring( data_audio_mp3.length );
-	    };
-	  };
-	  i = undefined;
-	  file = undefined;
-	  data_audio_mpeg = undefined;
-	  data_audio_mp3 = undefined;
-	  IANA_mp3_mime = undefined;
-	}
-	catch(e)
-	{};
+        try
+        {
+          var data_audio_mpeg = 'data:audio/mpeg;';
+          var data_audio_mp3 = 'data:audio/mp3;';
+          var IANA_mp3_mime = 'audio/mpeg';
+          var Chrome_mp3_mime = 'audio/mp3';
+          for( var i in files )
+          {
+            var file = files[ i ];
+            if( 0 == file.content.indexOf( data_audio_mp3 ) )
+            {
+              file.mime = IANA_mp3_mime;
+              file.content = data_audio_mpeg
+                  + file.content.substring( data_audio_mp3.length );
+            };
+          };
+          i = undefined;
+          file = undefined;
+          data_audio_mpeg = undefined;
+          data_audio_mp3 = undefined;
+          IANA_mp3_mime = undefined;
+        }
+        catch(e)
+        {};
       };
 
       var originalSendReplyData = window.sendReplyData;
       window.sendReplyData = function ymncSendReplyData( files )
       {
         fixMp3BlobMime( files );
-	return originalSendReplyData.apply( window, Array.prototype.slice.call( arguments ) );
+        return originalSendReplyData.apply( window, Array.prototype.slice.call( arguments ) );
       };
 
       var originalQRsendReplyData = window.QRsendReplyData;
       window.QRsendReplyData = function ymncQRsendReplyData( files )
       {
         fixMp3BlobMime( files );
-	return originalQRsendReplyData.apply( window, Array.prototype.slice.call( arguments ) );
+        return originalQRsendReplyData.apply( window, Array.prototype.slice.call( arguments ) );
       };
     };
 
@@ -3088,7 +3091,7 @@
 
       if( 0 <= document.location.href.indexOf("/res/") )
       {
-	setTimeout( etcthis.addConsecutiveNumberStyle, 0 );
+        setTimeout( etcthis.addConsecutiveNumberStyle, 0 );
       };
 
     };
@@ -3133,10 +3136,10 @@
        brothers: (reseved)[ <ElementUniqueId>, ... ],
        }... } */
     mthis.POPUP_PHASE =
-	{   DO_NOTHING               : 0,
-	  COUNTDOWN_FOR_SHOW_POPUP : 1,
-	  NOW_SHOWING              : 2,
-	  COUNTDOWN_FOR_CLOSE_POPUP: 3 };
+        {   DO_NOTHING               : 0,
+          COUNTDOWN_FOR_SHOW_POPUP : 1,
+          NOW_SHOWING              : 2,
+          COUNTDOWN_FOR_CLOSE_POPUP: 3 };
     mthis.cache = {};
     /* { <URI> : { element: <HTMLElement>, message: <string> } } */
     mthis.defaultSettings = { 'timeToPopup': 250/*ms*/,
@@ -3145,40 +3148,40 @@
     mthis.mouseClientPos = {x:0,y:0};
 
     mthis.preparePopupInfo =
-	function( popups, arg2 )
+        function( popups, arg2 )
     {
       var uid, quoteAnchor;
       if( "string" == typeof(arg2) )
       {
-	uid = arg2;
+        uid = arg2;
       }
       else
       {
-	quoteAnchor = arg2;
-	uid = utils.getElementUniqueId( quoteAnchor );
+        quoteAnchor = arg2;
+        uid = utils.getElementUniqueId( quoteAnchor );
       };
       arg2 = undefined;
 
       if( undefined != popups[ uid ] )
       {
-	return popups[ uid ];
+        return popups[ uid ];
       };
       popups[ uid ] =
-	  { 'brothers'      : [],
-	    'children'      : [],
-	    'closeTimer'    : undefined,
-	    'element'       : undefined,
-	    'parent'        : undefined,
-	    'phase'         : mthis.POPUP_PHASE.DO_NOTHING,
-	    'quoteAnchor'   : quoteAnchor,
-	    'showTimer'     : undefined,
-	    'targetPosition': undefined,
-	    'uid'           : uid };
+          { 'brothers'      : [],
+            'children'      : [],
+            'closeTimer'    : undefined,
+            'element'       : undefined,
+            'parent'        : undefined,
+            'phase'         : mthis.POPUP_PHASE.DO_NOTHING,
+            'quoteAnchor'   : quoteAnchor,
+            'showTimer'     : undefined,
+            'targetPosition': undefined,
+            'uid'           : uid };
       return popups[ uid ];
     };
 
     mthis.setUidOfPopupParent =
-	function( element, parentUid )
+        function( element, parentUid )
     {
       /* no parent‐child relation of DOM. parent-child relation of popups. */
       var cdaName = 'data-tsk-parent-popup-uid';
@@ -3187,13 +3190,13 @@
     };
 
     mthis.getUidOfPopupParent =
-	function( element )
+        function( element )
     {
       var cdaName = 'data-tsk-parent-popup-uid';
       var parentUid = element.getAttribute( cdaName );
       if( undefined == parentUid )
       {
-	return parentUid;
+        return parentUid;
       };
       return parentUid;
     };
@@ -3209,73 +3212,73 @@
     };
 
     mthis.startCountdownForClosePopup =
-	function( popupInfo )
+        function( popupInfo )
     {
       if( mthis.POPUP_PHASE.NOW_SHOWING != popupInfo['phase'] )
       {
-	return false;
+        return false;
       };
       var timeToClosePopup = mthis.getSettings('timeToClosePopup');
       popupInfo['phase'] = mthis.POPUP_PHASE.COUNTDOWN_FOR_CLOSE_POPUP;
       popupInfo['closeTimer'] =
-	  setTimeout( function(){ mthis.PopupHasExpired( popupInfo, true ); },
-	      timeToClosePopup );
+          setTimeout( function(){ mthis.PopupHasExpired( popupInfo, true ); },
+              timeToClosePopup );
       return true;
     };
     mthis.startCountdownForShowPopup =
-	function( popupInfo )
+        function( popupInfo )
     {
       var quoteLink = popupInfo['quoteAnchor'];
       var uid = popupInfo['uid'];
 
       if( mthis.POPUP_PHASE.DO_NOTHING != popupInfo['phase'] )
       {
-	return false;
+        return false;
       };
 
       if( undefined != popupInfo['showTimer'] )
       {
-	return true;
+        return true;
       };
       popupInfo['phase'] = mthis.POPUP_PHASE.COUNTDOWN_FOR_SHOW_POPUP;
       var timeToPopup = mthis.getSettings( 'timeToPopup' );
       popupInfo['showTimer'] =
           setTimeout( function(){ popupInfo['showTimer'] = undefined;
-	    mthis.showPopup( popupInfo ); }
-	      , timeToPopup );
+            mthis.showPopup( popupInfo ); }
+              , timeToPopup );
       return true;
     };
 
     mthis.extendExpirationDate =
-	function extendExpirationDate( popupInfo )
+        function extendExpirationDate( popupInfo )
     {
       var timeToClosePopup = mthis.getSettings('timeToClosePopup');
 
       if( mthis.POPUP_PHASE.COUNTDOWN_FOR_CLOSE_POPUP != popupInfo['phase'] )
       {
-	return false;
+        return false;
       };
       var timer = popupInfo['closeTimer'];
       if( undefined != timer )
       {
-	clearTimeout( popupInfo['closeTimer'] );
+        clearTimeout( popupInfo['closeTimer'] );
       };
       popupInfo['closeTimer'] = undefined;
       popupInfo['phase'] = mthis.POPUP_PHASE.NOW_SHOWING;
 
       if( undefined == popupInfo['parent'] )
       {
-	return true;
+        return true;
       }
 
       var parentPopupInfo = mthis.popups[ popupInfo['parent'] ];
       if( undefined == parentPopupInfo )
       {
-	popupInfo['parent'] = undefined;
+        popupInfo['parent'] = undefined;
       }
       else
       {
-	extendExpirationDate( parentPopupInfo );
+        extendExpirationDate( parentPopupInfo );
       };
       return true;
     };
@@ -3316,73 +3319,73 @@
       var PP = mthis.POPUP_PHASE;
       if( PP.COUNTDOWN_FOR_SHOW_POPUP == popupInfo['phase'] )
       {
-	var timer = popupInfo['showTimer'];
-	if( undefined != timer )
-	{
+        var timer = popupInfo['showTimer'];
+        if( undefined != timer )
+        {
           clearTimeout( timer );
-	  popupInfo['showTimer'] = undefined;
-	};
-	popupInfo['phase'] = PP.DO_NOTHING;
-	return true;
+          popupInfo['showTimer'] = undefined;
+        };
+        popupInfo['phase'] = PP.DO_NOTHING;
+        return true;
       }
       else if( PP.NOW_SHOWING == popupInfo['phase'] )
       {
-	mthis.startCountdownForClosePopup( popupInfo );
+        mthis.startCountdownForClosePopup( popupInfo );
       };
       return true;
     };
 
 
     mthis.getRelatedPostCell =
-	function getAncientPostCell( element )
+        function getAncientPostCell( element )
     {
       if( null == element )
       {
-	return null;
+        return null;
       };
       if( document.body == element )
       {
-	return null;
+        return null;
       }
       if( 0 <= element.className.indexOf("postCell") )
       {
-	return element;
+        return element;
       };
       return getAncientPostCell( element.parentElement );
     };
 
     mthis.getRelatedDivMessage =
-	function( element )
+        function( element )
     {
       var postCell = mthis.getRelatedPostCell( element );
       if( null == postCell )
       {
-	return null;
+        return null;
       };
       var divMessageList = postCell.getElementsByClassName("divMessage");
       if( 0 < divMessageList.length )
       {
-	return divMessageList[0];
+        return divMessageList[0];
       };
       return null;
 
     };
 
     mthis.downloadPostCell =
-	function( popupInfo, callback )
+        function( popupInfo, callback )
     {
       var quoteAnchor = popupInfo['quoteAnchor'];
       var msg;
       if( quoteAnchor.host != location.host )
       {
-	callback( popupInfo, null, msg );
-	return;
+        callback( popupInfo, null, msg );
+        return;
       };
 
       if( 0 > quoteAnchor.pathname.indexOf("/res/") )
       {
-	callback( popupInfo, null, "unexpected uri:" + quoteAnchor );
-	return;
+        callback( popupInfo, null, "unexpected uri:" + quoteAnchor );
+        return;
       };
 
       var pathname = quoteAnchor.pathname;
@@ -3390,11 +3393,11 @@
       var uri = "";
       if( 0 == hash.length )
       {
-	uri = pathname.replace("/res/","/preview/");
+        uri = pathname.replace("/res/","/preview/");
       }
       else if( 0 == hash.indexOf("#q") )
       {
-	uri = pathname.replace(/\/res\/[^\/]*/,"/preview/") + hash.substring(2) + ".html";
+        uri = pathname.replace(/\/res\/[^\/]*/,"/preview/") + hash.substring(2) + ".html";
       }
       else
       {
@@ -3428,41 +3431,41 @@
           return;
           case 4:
           if( 200 <= this.status &&
-	        300 >  this.status )
+                300 >  this.status )
           {
-	    if( 'document' != this.responseType )
-	    {
-	      msg = "unknown response contents(1): + " + this.responseType;
-	      mthis.cache[ uri ] = { 'message': msg };
-	      callback( popupInfo, null, msg );
-	      return;
-	    };
+            if( 'document' != this.responseType )
+            {
+              msg = "unknown response contents(1): + " + this.responseType;
+              mthis.cache[ uri ] = { 'message': msg };
+              callback( popupInfo, null, msg );
+              return;
+            };
 
-	    /*
-	      freech: #panelContent は空。body 直下に .postCell がある
-	    */
+            /*
+              freech: #panelContent は空。body 直下に .postCell がある
+            */
 
-	    var postCellList = this.response.getElementsByClassName('postCell');
-	    if( 0 >= postCellList.length )
-	    {
-	      msg = "unknown response contents: postCell not found: " + fullUri;
-	      mthis.cache[ uri ] = { 'message': msg };
-	      window.lastPanelContent = this.response;
-	      callback( popupInfo, null, msg );
-	      /*callback( popupInfo, null, msg );*/
-	      return;
-	    };
-	    var postCell = postCellList[0];
-	    postCell = utils.removeIdAll( document.importNode( postCell, true ) );
-	    mthis.cache[ uri ] = { 'element': postCell };
-	    callback( popupInfo, postCell );
-	    return;
-	  };
-	  msg = 'not found(HTTP ' + this.status + '): ' + fullUri;
-	  mthis.cache[ uri ] = { 'message': msg };
-	  callback( popupInfo, null, msg );
-	  return;
-	};
+            var postCellList = this.response.getElementsByClassName('postCell');
+            if( 0 >= postCellList.length )
+            {
+              msg = "unknown response contents: postCell not found: " + fullUri;
+              mthis.cache[ uri ] = { 'message': msg };
+              window.lastPanelContent = this.response;
+              callback( popupInfo, null, msg );
+              /*callback( popupInfo, null, msg );*/
+              return;
+            };
+            var postCell = postCellList[0];
+            postCell = utils.removeIdAll( document.importNode( postCell, true ) );
+            mthis.cache[ uri ] = { 'element': postCell };
+            callback( popupInfo, postCell );
+            return;
+          };
+          msg = 'not found(HTTP ' + this.status + '): ' + fullUri;
+          mthis.cache[ uri ] = { 'message': msg };
+          callback( popupInfo, null, msg );
+          return;
+        };
       };
       xhr.responseType = 'document';
       xhr.open('GET', uri);
@@ -3504,7 +3507,7 @@
       var divPostsList = postCell.getElementsByClassName("divPosts");
       for( var dpIdx = divPostsList.length - 1; -1 < dpIdx ; --dpIdx )
       {
-	divPostsList[ dpIdx ].parentElement.removeChild( divPostsList[ dpIdx ] );
+        divPostsList[ dpIdx ].parentElement.removeChild( divPostsList[ dpIdx ] );
       };
       postCell = utils.removeIdAll( postCell );
       return callback( popupInfo, postCell );
@@ -3514,7 +3517,7 @@
         function( popupInfo, callback )
     {
       /* TODO:"//yamanu.org/chang/index.html" とかのスレが複数あるページで、
-	 通信なしに取得できないか試行すること */
+         通信なしに取得できないか試行すること */
       var here = location;
       var target = popupInfo['quoteAnchor'];
       var postCell;
@@ -3522,7 +3525,7 @@
             here.port     == target.port    &&
             here.pathname == target.pathname  )
       {
-	return mthis.lookForPostCellFromDocument( popupInfo, callback);
+        return mthis.lookForPostCellFromDocument( popupInfo, callback);
       };
       return mthis.downloadPostCell( popupInfo, callback );
     };
@@ -3544,46 +3547,46 @@
       var originElement = mthis.getRelatedDivMessage( quoteLink );
       if( null == originElement )
       {
-	originElement = quoteLink;
+        originElement = quoteLink;
       };
 
       var quoteblock;
       if( undefined != popupInfo['element'] )
       {
-	if( null == popupInfo['element'].firstChild )
-	{
-	  popupInfo['element'].appendChild( postCell );
-	}
-	else
-	{
-	  popupInfo['element'].replaceChild( postCell, popupInfo['element'].firstChild );
-	};
-	quoteblock = popupInfo['element'];
+        if( null == popupInfo['element'].firstChild )
+        {
+          popupInfo['element'].appendChild( postCell );
+        }
+        else
+        {
+          popupInfo['element'].replaceChild( postCell, popupInfo['element'].firstChild );
+        };
+        quoteblock = popupInfo['element'];
       }
       else
       {
-	quoteblock = document.createElement('DIV');
-	quoteblock.appendChild( postCell );
+        quoteblock = document.createElement('DIV');
+        quoteblock.appendChild( postCell );
       };
 
       quoteblock.className = "tskQuoteblock";
       var uid = popupInfo['uid'];
       mthis.processPostCell( postCell );
       mthis.overridePostCellQuotePopups( postCell,
-	  function( e ){
-	    mthis.setUidOfPopupParent( e, uid );
-	  } );
+          function( e ){
+            mthis.setUidOfPopupParent( e, uid );
+          } );
 
       quoteblock.addEventListener("mouseout" , function(){
-	mthis.startCountdownForClosePopup( popupInfo ); } );
+        mthis.startCountdownForClosePopup( popupInfo ); } );
 
       quoteblock.addEventListener("mousemove", function(){
-	mthis.extendExpirationDate( popupInfo );
-	return true; } );
+        mthis.extendExpirationDate( popupInfo );
+        return true; } );
 
       quoteblock.addEventListener("click",     function(){
-	mthis.extendExpirationDate( popupInfo );
-	return true; } );
+        mthis.extendExpirationDate( popupInfo );
+        return true; } );
 
       quoteblock.style.position = "absolute";
       quoteblock.style.paddingTop = "2px";
@@ -3611,8 +3614,8 @@
       var top     = rect.top  + rect.height + scrollTop;
       if( undefined != targetPosition )
       {
-	left = targetPosition.x;
-	top  = targetPosition.y;
+        left = targetPosition.x;
+        top  = targetPosition.y;
       };
       var tmpRight  = left + width;
       var tmpBottom = top  + height;
@@ -3632,12 +3635,12 @@
       var parentUid = mthis.getUidOfPopupParent( quoteLink );
       if( undefined != parentUid )
       {
-	popupInfo['parent']  = parentUid;
-	var parentPopupInfo = mthis.popups[ parentUid ];
-	if( undefined != parentPopupInfo )
-	{
-	  parentPopupInfo['children'].push( popupInfo['uid'] );
-	};
+        popupInfo['parent']  = parentUid;
+        var parentPopupInfo = mthis.popups[ parentUid ];
+        if( undefined != parentPopupInfo )
+        {
+          parentPopupInfo['children'].push( popupInfo['uid'] );
+        };
       };
       popupInfo['phase']   = mthis.POPUP_PHASE.NOW_SHOWING;
       popupInfo['element'] = quoteblock;
@@ -3650,62 +3653,62 @@
     /* end mthis.showPopup */
 
     mthis.PopupHasExpired =
-	function( popupInfo, deletep )
+        function( popupInfo, deletep )
     {
       var rect = popupInfo['element'].getBoundingClientRect();
       var mcx = mthis.mouseClientPos.x;
       var mcy = mthis.mouseClientPos.y;
       if( rect.left   <= mcx &&
-	    rect.right  >  mcx &&
-	    rect.top    <= mcy &&
-	    rect.bottom >  mcy   )
+            rect.right  >  mcx &&
+            rect.top    <= mcy &&
+            rect.bottom >  mcy   )
       {
-	popupInfo['closeTimer'] = undefined;
-	popupInfo['phase'] = mthis.POPUP_PHASE.NOW_SHOWING;
-	return;
+        popupInfo['closeTimer'] = undefined;
+        popupInfo['phase'] = mthis.POPUP_PHASE.NOW_SHOWING;
+        return;
       };
       mthis.closePopup( popupInfo, deletep );
     };
 
     mthis.closePopup =
-	function( popupInfo, deletep )
+        function( popupInfo, deletep )
     {
       for( var childIdx in popupInfo['children'] )
       {
-	var childUid = popupInfo['children'][ childIdx ];
-	var child = mthis.popups[ childUid ];
-	if( undefined != child )
-	{
-	  mthis.closePopup( child );
-	};
+        var childUid = popupInfo['children'][ childIdx ];
+        var child = mthis.popups[ childUid ];
+        if( undefined != child )
+        {
+          mthis.closePopup( child );
+        };
       };
       var element = popupInfo['element'];
       if( undefined != element )
       {
-	if( undefined != element.parentElement )
-	{
-	  element.parentElement.removeChild( element );
-	};
-	utils.toMarkElementDiscarded( element );
+        if( undefined != element.parentElement )
+        {
+          element.parentElement.removeChild( element );
+        };
+        utils.toMarkElementDiscarded( element );
       };
       popupInfo['phase'] = mthis.POPUP_PHASE.DO_NOTHING;
 
       if( deletep )
       {
-	delete mthis.popups[ popupInfo['uid'] ];
+        delete mthis.popups[ popupInfo['uid'] ];
       };
     };
 
     mthis.DateToLastCheckMouseIsIn = 0;
     mthis.onBodyMouseMove =
-	function( event )
+        function( event )
     {
       var now = (+new Date());
       var intervalToCheck = 100;
       if( now > ( intervalToCheck + mthis.DateToLastCheckMouseIsIn ) )
       {
-	mthis.checkMouseIsIn( event );
-	mthis.DateToLastCheckMouseIsIn = now;
+        mthis.checkMouseIsIn( event );
+        mthis.DateToLastCheckMouseIsIn = now;
       };
 
       mthis.mouseClientPos = {x:event.clientX, y:event.clientY};
@@ -3713,7 +3716,7 @@
     };
 
     mthis.checkMouseIsIn =
-	function( event )
+        function( event )
     {
       mthis.mouseClientPos = {x:event.clientX, y:event.clientY};
 
@@ -3721,63 +3724,63 @@
       var popupInfo;
       for( var key in mthis.popups )
       {
-	popupInfo = mthis.popups[ key ];
-	if( mthis.POPUP_PHASE.NOW_SHOWING != popupInfo['phase'] )
-	{
-	  continue;
-	};
+        popupInfo = mthis.popups[ key ];
+        if( mthis.POPUP_PHASE.NOW_SHOWING != popupInfo['phase'] )
+        {
+          continue;
+        };
 
-	var rect2 = popupInfo['quoteAnchor'].getBoundingClientRect();
-	var rect = popupInfo['element'].getBoundingClientRect();
-	var mcx = mthis.mouseClientPos.x;
-	var mcy = mthis.mouseClientPos.y;
-	if( ( rect.left   <= mcx &&
-	      rect.right  >  mcx &&
-	      rect.top    <= mcy &&
-	      rect.bottom >  mcy   ) ||
-	      (     rect2.left   <= mcx &&
-		    rect2.right  >  mcx &&
-		    rect2.top    <= mcy &&
-		    rect2.bottom >  mcy   )   )
-	{
-	  continue;
-	};
-	uidsToClosePopup.push( key );
+        var rect2 = popupInfo['quoteAnchor'].getBoundingClientRect();
+        var rect = popupInfo['element'].getBoundingClientRect();
+        var mcx = mthis.mouseClientPos.x;
+        var mcy = mthis.mouseClientPos.y;
+        if( ( rect.left   <= mcx &&
+              rect.right  >  mcx &&
+              rect.top    <= mcy &&
+              rect.bottom >  mcy   ) ||
+              (     rect2.left   <= mcx &&
+                    rect2.right  >  mcx &&
+                    rect2.top    <= mcy &&
+                    rect2.bottom >  mcy   )   )
+        {
+          continue;
+        };
+        uidsToClosePopup.push( key );
       };
       for( var idx in uidsToClosePopup )
       {
-	key = uidsToClosePopup[ idx ];
-	popupInfo = mthis.popups[ key ];
-	if( undefined == popupInfo )
-	{
-	  continue;
-	};
-	var descList = mthis.popupDescendants( popupInfo );
-	var noClose = false;
-	for( var dlIdx in descList )
-	{
-	  if( mthis.POPUP_PHASE.NOW_SHOWING == descList[ dlIdx ]['phase'] )
-	  {
-	    noClose = true;
-	    break;
-	  };
-	};
-	if( ! noClose )
-	{
-	  mthis.closePopup( popupInfo, true );
-	};
+        key = uidsToClosePopup[ idx ];
+        popupInfo = mthis.popups[ key ];
+        if( undefined == popupInfo )
+        {
+          continue;
+        };
+        var descList = mthis.popupDescendants( popupInfo );
+        var noClose = false;
+        for( var dlIdx in descList )
+        {
+          if( mthis.POPUP_PHASE.NOW_SHOWING == descList[ dlIdx ]['phase'] )
+          {
+            noClose = true;
+            break;
+          };
+        };
+        if( ! noClose )
+        {
+          mthis.closePopup( popupInfo, true );
+        };
       };
     };
 
     mthis.disableQuotePopup =
-	function( anchor )
+        function( anchor )
     {
       anchor.removeEventListener("mousemove", mthis.touchElement );
       anchor.removeEventListener("mouseout" , mthis.untouchElement );
     };
 
     mthis.removeOriginalPopupFeature =
-	function( quoteLink )
+        function( quoteLink )
     {
       /* click でその場所に飛ぶのは残す */
       quoteLink.onmouseenter = null;
@@ -3785,7 +3788,7 @@
     };
 
     mthis.enableQuotePopup =
-	function( anchor )
+        function( anchor )
     {
       mthis.disableQuotePopup( anchor );
       anchor.addEventListener("mousemove", mthis.touchElement );
@@ -3793,15 +3796,15 @@
     };
 
     mthis.processPostCell =
-	function( postCell )
+        function( postCell )
     {
       var linkQuoteList = postCell.getElementsByClassName('linkQuote');
       for( var lqIdx = linkQuoteList.length - 1; -1 < lqIdx ; --lqIdx )
       {
-	var linkQuote = linkQuoteList[ lqIdx ];
-	linkQuote.removeEventListener( "click", mthis.add_reply_quote );
-	linkQuote.onclick = null;
-	linkQuote.addEventListener( "click", mthis.add_reply_quote );
+        var linkQuote = linkQuoteList[ lqIdx ];
+        linkQuote.removeEventListener( "click", mthis.add_reply_quote );
+        linkQuote.onclick = null;
+        linkQuote.addEventListener( "click", mthis.add_reply_quote );
       };
       /*
         var panelUploadsList = postCell.getElementsByClassName('panelUploads');
@@ -3823,109 +3826,109 @@
 
       if( ! mthis.sharpQRegexp.test( linkQuote.hash ) )
       {
-	return true;
+        return true;
       };
       var toQuote = linkQuote.hash.substring(2);
 
       if( undefined !== window.add_quick_reply_quote )
       {
-	window.add_quick_reply_quote( toQuote );
+        window.add_quick_reply_quote( toQuote );
       };
 
       var fieldMessage = document.getElementById('fieldMessage');
       if( null != fieldMessage )
       {
-	fieldMessage.value += '>>' + toQuote + '\n';
+        fieldMessage.value += '>>' + toQuote + '\n';
       };
 
       return true;
     };
 
     mthis.overridePostCellQuotePopups =
-	function( postCell, hook  )
+        function( postCell, hook  )
     {
       var quoteLinks = postCell.getElementsByClassName('quoteLink');
       for( var qlIdx = 0, qlLen = quoteLinks.length; qlIdx < qlLen ; ++qlIdx )
       {
-	mthis.overrideQuotePopup( quoteLinks[ qlIdx ] );
-	if( hook != undefined )
-	{
-	  hook( quoteLinks[ qlIdx ] );
-	};
+        mthis.overrideQuotePopup( quoteLinks[ qlIdx ] );
+        if( hook != undefined )
+        {
+          hook( quoteLinks[ qlIdx ] );
+        };
       };
       var panelBacklinksList = postCell.getElementsByClassName('panelBacklinks');
       for( var pbIdx = 0, pbLen = panelBacklinksList.length; pbIdx < pbLen ; ++pbIdx )
       {
-	mthis.overrideChildrenQuotePopup( panelBacklinksList[ pbIdx ], hook );
+        mthis.overrideChildrenQuotePopup( panelBacklinksList[ pbIdx ], hook );
       };
     };
 
     mthis.overrideChildrenQuotePopup =
-	function( panelBacklinks, hook )
+        function( panelBacklinks, hook )
     {
       if( undefined == panelBacklinks.children )
       {
-	return;
+        return;
       };
       for( var anIdx = 0, anLen = panelBacklinks.children.length; anIdx < anLen ; ++anIdx )
       {
-	var child = panelBacklinks.children[ anIdx ];
-	mthis.removeOriginalPopupFeature( child );
-	mthis.enableQuotePopup( child );
-	if( hook != undefined )
-	{
-	  hook( child );
-	};
+        var child = panelBacklinks.children[ anIdx ];
+        mthis.removeOriginalPopupFeature( child );
+        mthis.enableQuotePopup( child );
+        if( hook != undefined )
+        {
+          hook( child );
+        };
       };
     };
 
     mthis.popupDescendants =
-	function popupDescendants( obj, descList )
+        function popupDescendants( obj, descList )
     {
       if( undefined == descList )
       {
-	descList = [];
+        descList = [];
       };
       if( undefined == obj.children )
       {
-	return descList;
+        return descList;
       };
       for( var i in obj.children )
       {
-	var child = mthis.popups[ obj.children[ i ] ];
-	if( undefined == child )
-	{
-	  continue;
-	};
-	descList.push( child );
-	popupDescendants( child, descList );
+        var child = mthis.popups[ obj.children[ i ] ];
+        if( undefined == child )
+        {
+          continue;
+        };
+        descList.push( child );
+        popupDescendants( child, descList );
       };
       return descList;
     };
 
     mthis.addBodyEvents =
-	function()
+        function()
     {
       mthis.removeBodyEvents();
       document.body.addEventListener("click"    , mthis.checkMouseIsIn );
       document.body.addEventListener("mousemove", mthis.onBodyMouseMove );
     };
     mthis.removeBodyEvents =
-	function()
+        function()
     {
       document.body.removeEventListener("click"    , mthis.checkMouseIsIn );
       document.body.removeEventListener("mousemove", mthis.onBodyMouseMove );
     };
 
     mthis.overrideQuotePopup =
-	function( quoteLink )
+        function( quoteLink )
     {
       mthis.removeOriginalPopupFeature( quoteLink );
       mthis.enableQuotePopup( quoteLink );
     };
 
     mthis.startObservePanelBacklinks =
-	function( panelBacklinks )
+        function( panelBacklinks )
     {
       var cdaName = "data-tsk-observing";
       var nid = utils.getElementUniqueId( panelBacklinks );
@@ -3933,24 +3936,24 @@
       var opts = { childList: true };
       if( undefined == mo )
       {
-	mo = new MutationObserver( mthis.overrideChildrenQuotePopup );
-	mthis.panelBacklinksObservers[ nid ] = mo;
-	mo.observe( panelBacklinks, { childList: true } );
+        mo = new MutationObserver( mthis.overrideChildrenQuotePopup );
+        mthis.panelBacklinksObservers[ nid ] = mo;
+        mo.observe( panelBacklinks, { childList: true } );
       };
       mo.observe( panelBacklinks, opts );
       panelBacklinks.setAttribute( cdaName, "1" );
       return;
     };
     mthis.stopObservePanelBacklinks =
-	function( panelBacklinks )
+        function( panelBacklinks )
     {
       var cdaName = "data-tsk-observing";
       var nid = utils.getElementUniqueId( panelBacklinks );
       var mo = mthis.panelBacklinksObservers[ nid ];
       if( undefined != mo )
       {
-	mo.disconnect();
-	delete mthis.panelBacklinksObservers[ nid ];
+        mo.disconnect();
+        delete mthis.panelBacklinksObservers[ nid ];
       };
       panelBacklinks.setAttribute( cdaName, "0" );
       return;
@@ -3977,35 +3980,35 @@
       var quoteblockList;
 
       iloops.push( function(){
-	links = document.getElementsByClassName('quoteLink');
-	idx = links.length - 1;
+        links = document.getElementsByClassName('quoteLink');
+        idx = links.length - 1;
       } ).push( function(){
-	if( -1 >= idx ){ return break_; };
-	mthis.overrideQuotePopup( links[ idx ] );
-	--idx;
-	return continue_;
+        if( -1 >= idx ){ return break_; };
+        mthis.overrideQuotePopup( links[ idx ] );
+        --idx;
+        return continue_;
       } ).push( function(){
-	links = document.getElementsByClassName('panelBacklinks');
-	idx = links.length - 1;
+        links = document.getElementsByClassName('panelBacklinks');
+        idx = links.length - 1;
       } ).push( function(){
-	if( -1 >= idx ){ return break_; };
-	var panelBacklinks = links[ idx ];
-	mthis.overrideChildrenQuotePopup( panelBacklinks );
-	mthis.startObservePanelBacklinks( panelBacklinks );
-	--idx;
-	return continue_;
+        if( -1 >= idx ){ return break_; };
+        var panelBacklinks = links[ idx ];
+        mthis.overrideChildrenQuotePopup( panelBacklinks );
+        mthis.startObservePanelBacklinks( panelBacklinks );
+        --idx;
+        return continue_;
       } ).push( function(){
-	quoteblockList = document.getElementsByClassName('quoteblock');
-	idx = quoteblockList.length - 1;
+        quoteblockList = document.getElementsByClassName('quoteblock');
+        idx = quoteblockList.length - 1;
       } ).push( function(){
-	if( -1 >= idx ){ return break_; };
-	var quoteblock = quoteblockList[ idx ];
-	if( quoteblock.style.display != 'none' )
-	{
-	  quoteblock.style.display = 'none';
-	};
-	--idx;
-	return continue_;
+        if( -1 >= idx ){ return break_; };
+        var quoteblock = quoteblockList[ idx ];
+        if( quoteblock.style.display != 'none' )
+        {
+          quoteblock.style.display = 'none';
+        };
+        --idx;
+        return continue_;
       } ).beginAsync();
     };
     mthis.disable = function()
@@ -4056,7 +4059,7 @@
       postCellCP.setPreProc( utils.CompulsoryProcessing.prototype.preProc_enumAddedNodes );
     };
     fewrapper.postCellCP = undefined;
-    
+
     fewrapper.callMessageUriHandlers = function( anchor ) {
       for (var hndIdx = 0, hndLen = fewrapper.messageUriHandlers.length;
            hndIdx < hndLen ; ++hndIdx ) {
@@ -4117,88 +4120,6 @@
     return fewrapper;
   };
 
-  /*****************************
-   * odcl : OnDomContentLoaded *
-   *****************************/
-  function odclRemoveYoutubeIframes()
-  {
-    var iframeList = document.getElementsByTagName('IFRAME');
-    var urlList = Array( iframeList.length );
-    var spanList = Array( iframeList.length );
-    var idx = iframeList.length - 1;
-    for(; -1 < idx ; --idx )
-    {
-      if( 0 === iframeList[idx].src.lastIndexOf('https://www.youtube.com/embed/', 0) )
-      {
-        urlList[idx] = iframeList[idx].src;
-        spanList[ idx ] = document.createElement('SPAN');
-        iframeList[idx].parentElement.replaceChild( spanList[idx],
-            iframeList[idx]  );
-      };
-    };
-    toshakiii2['removedYoutubeUrls'] = urlList;
-    toshakiii2['spanInsteadOfYoutubeIframeList'] = spanList;
-  };
-  toshakiii2['odclRemoveYoutubeIframes'] = odclRemoveYoutubeIframes;
-
-  function odclEnable()
-  {
-    return odclRemoveYoutubeIframes();
-  };
-  toshakiii2['odclEnable'] = odclEnable;
-
-  /*****************************
-   * olod *
-   *****************************/
-  function olodInsertLinkInsteadOfYoutubeIframes()
-  {
-    var urlList = toshakiii2['removedYoutubeUrls'];
-    var idx = urlList.length;
-    var spanList = toshakiii2['spanInsteadOfYoutubeIframeList'];
-    var etCetera = window.toshakiii.etCetera;
-    var IntermittentLoops = window.toshakiii.utils.IntermittentLoops;
-    var break_ = false;
-    var continue_ = true;
-
-    var iloops = IntermittentLoops();
-    iloops.push( function(){
-      --idx;
-      if( -1 >= idx )
-      {
-        return break_;
-      };
-      var url = urlList[idx];
-
-      url = url.replace(/^http:/,'https:')
-          .replace(/^https:\/\/www\.youtube\.com\/embed\//,'https://youtube.com/watch?v=');
-      var span = spanList[ idx ];
-      span.className = 'youtube_wrapper';
-      var embedButton = document.createElement('A');
-      embedButton.href = url;
-      embedButton.appendChild( document.createTextNode('embeD') );
-      span.appendChild( document.createTextNode( url + '[') );
-      span.appendChild( embedButton );
-      span.appendChild( document.createTextNode(']') );
-      etCetera.overrideEmbedYoutubeButton( embedButton );
-      return continue_;
-    } )
-        .beginAsync();
-  };
-  toshakiii2['olodInsertLinkInsteadOfYoutubeIframes'] = olodInsertLinkInsteadOfYoutubeIframes;
-
-  function olodEnable()
-  {
-    setTimeout( olodInsertLinkInsteadOfYoutubeIframes, 0 );
-  };
-  toshakiii2['olodEnable'] = olodEnable;
-
-  function mainEnable()
-  {
-    olodEnable();
-    odclEnable();
-  };
-  toshakiii2['enable'] = mainEnable;
-
   /**********************************
    * main                           *
    **********************************/
@@ -4207,19 +4128,16 @@
     {
       var script = document.createElement('SCRIPT');
       script.innerText =
-        "var toshakiii_errors = [];" +
-	      "try{("+modUtils        .toString() +")().trigger();}catch(e){toshakiii_errors.push(e);};" +
-	      "try{("+modSettings     .toString() +")().trigger();}catch(e){toshakiii_errors.push(e);};" +
-	      "try{("+modFeWrapper    .toString() +")().trigger();}catch(e){toshakiii_errors.push(e);};" +
-	      "try{("+modEtCetera     .toString() +")().trigger();}catch(e){toshakiii_errors.push(e);};" +
-	      "try{("+modCatalogSorter.toString() +")().trigger();}catch(e){toshakiii_errors.push(e);};" +
-	      "try{("+modFilePreview  .toString() +")().trigger();}catch(e){toshakiii_errors.push(e);};" +
-	      "try{("+modMultiPopup   .toString() +")().trigger();}catch(e){toshakiii_errors.push(e);};" +
-        /*
-         "try{(window.toshakiii2 = ("+toshakiii2.toString() + "))['enable']();}catch(e){ toshakiii_errors.push(e); };" +
-         */
-        "if( 0 != toshakiii_errors.length ){ alert( toshakiii_errors ); };" +
-        "";
+          "var toshakiii_errors = [];" +
+          "try{("+modUtils        .toString() +")().trigger();}catch(e){toshakiii_errors.push(e);};" +
+          "try{("+modSettings     .toString() +")().trigger();}catch(e){toshakiii_errors.push(e);};" +
+          "try{("+modFeWrapper    .toString() +")().trigger();}catch(e){toshakiii_errors.push(e);};" +
+          "try{("+modEtCetera     .toString() +")().trigger();}catch(e){toshakiii_errors.push(e);};" +
+          "try{("+modCatalogSorter.toString() +")().trigger();}catch(e){toshakiii_errors.push(e);};" +
+          "try{("+modFilePreview  .toString() +")().trigger();}catch(e){toshakiii_errors.push(e);};" +
+          "try{("+modMultiPopup   .toString() +")().trigger();}catch(e){toshakiii_errors.push(e);};" +
+          "if( 0 != toshakiii_errors.length ){ alert( toshakiii_errors ); };" +
+          "";
       document.head.appendChild( script );
     } else {
       modUtils().trigger();
@@ -4229,7 +4147,6 @@
       modFilePreview().trigger();
       modCatalogSorter().trigger();
       modMultiPopup().trigger();
-      /*toshakiii2['enable']();*/
     };
   };
 
