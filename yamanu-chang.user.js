@@ -28,8 +28,8 @@
 // @include    /https?://waifuchan\.moe/.*$/
 // @include    /https?://waifuchan\.moe/.*$/
 //
-// @version      2.05
-// @description v2.05: endchan: catalog sorter, preview upload files, recursive quote popup
+// @version      2.06
+// @description v2.06: endchan: catalog sorter, preview upload files, recursive quote popup
 // @grant       none
 // ==/UserScript==
 
@@ -45,6 +45,9 @@
 
 /*
  yamanu-chang(山ぬちゃん)です
+・(v2.06 2017.04.02 14:43 JST)
+  ・endchan公式でカタログリフレッシュが導入され、公式のカタhideが動いていない。
+    カタログhideを有効にする補助機能を追加
 ・(v2.05 2017.03.08 07:44 JST)
   ・endchan公式に入ったため、delと[X]を設置する補助機能を削除
 ・(v2.04 2017.02.26 JST)
@@ -1703,7 +1706,7 @@
     /* end: sthis.CatalogCell = (function(){...}()) */
 
     sthis.sortCatalogCells =
-      function( useFragment )
+      function()
     {
       var time = (+new Date());
       var parentElt = document.getElementById("divThreads");
@@ -1744,17 +1747,6 @@
         catalogCells = sthis.tableOrderType[oIdx].sortFunction( catalogCells );
       };
 
-      var fragment;
-      if( useFragment )
-      {
-        fragment = document.createDocumentFragment();
-      }
-      else
-      {
-        fragment = parentElt;
-      };
-
-
       var cookie = '; ' + document.cookie + "; ";
       var sageElts = [];
       for( var ccIdx = 0, ccLen = catalogCells.length; ccIdx < ccLen ; ++ccIdx )
@@ -1769,8 +1761,7 @@
             sageElts.push( catalogCell );
             continue;
           }
-          fragment.appendChild( showButtonElts[ catalogCell.id ] );
-          /*parentElt.appendChild( showButtonElts[ catalogCells[idx].id ] );*/
+          parentElt.appendChild( showButtonElts[ catalogCell.id ] );
         }
         else if( settings.sageHidedThreads &&
               0 <= cookie.indexOf( '; hide' + sthis.boardUri + 'Thread' + catalogCell.id + "=true;" ) )
@@ -1779,16 +1770,11 @@
           continue;
         };
 
-        fragment.appendChild( catalogCell );
-        /*parentElt.appendChild( catalogCells[idx] );*/
+        parentElt.appendChild( catalogCell );
       };
       for( var seIdx = 0, seLen = sageElts.length; seIdx < seLen ; ++seIdx )
       {
-        fragment.appendChild( sageElts[ seIdx ] );
-      };
-      if( useFragment )
-      {
-        parentElt.appendChild( fragment );
+        parentElt.appendChild( sageElts[ seIdx ] );
       };
     };
 
@@ -1818,7 +1804,7 @@
     };
 
     sthis.refreshCatalogCells =
-      function()
+      function( callback )
     {
       if( sthis.nowRefreshing )
       {
@@ -1853,19 +1839,23 @@
           case 304:
             sthis.showRefreshStatus("not modified");
             sthis.nowRefreshing = false;
+            if (callback) callback( false );
             return;
           case 200:
             sthis.showRefreshStatus("applying");
             sthis.catalogLastModified = new Date( this.getResponseHeader("Last-Modified") );
-            sthis.applyJsonToCatalog( this.responseText, sthis.showRefreshStatus );
+            sthis.applyJsonToCatalog( this.responseText, sthis.showRefreshStatus,
+                function(){ if (callback) callback( true ); } );
             return;
           default:
             sthis.showRefreshStatus("error(HTTP "+this.status+")");
             sthis.nowRefreshing = false;
+            if (callback) callback( false );
           };
         default:
           sthis.nowRefreshing = false;
           sthis.showRefreshStatus("error(unknown)");
+          if (callback) callback( false );
         };
       };
 
@@ -1889,12 +1879,13 @@
     };
 
     sthis.applyJsonToCatalog =
-        function( jsontext, msgfunc )
+        function( jsontext, msgfunc, callback )
     {
       var json = undefined;
       try
       {
         json = JSON.parse( jsontext );
+        window.catalogThreads = json;
       }
       catch(o)
       {
@@ -1972,6 +1963,10 @@
           window.enableHideThreadLink( catalogCell );
           return true;
         } );
+      };
+
+      if(callback) {
+        iloops.push( callback );
       };
 
       iloops.beginAsync();
@@ -2095,13 +2090,13 @@
         eltSelect.appendChild( option );
       }
 
+      /*
       var eltLSB = document.createTextNode("[");
       var eltARefresh = document.createElement('A');
-      /*eltARefresh.id = 'tskCatalogRefresh';
-        eltARefresh.href = '#tskCatalogRefresh';*/
       eltARefresh.appendChild( document.createTextNode('Refresh') );
       eltARefresh.addEventListener('click', sthis.refreshCatalogCells);
       var eltRSB = document.createTextNode("]");
+      */
 
       var eltConfig = document.createElement('A');
       eltConfig.appendChild( document.createTextNode("⚙") );
@@ -2115,9 +2110,9 @@
       eltSpan.appendChild( eltAtby );
       eltSpan.appendChild( eltSelect );
 
-      eltSpan.appendChild( eltLSB );
+      /* eltSpan.appendChild( eltLSB );
       eltSpan.appendChild( eltARefresh );
-      eltSpan.appendChild( eltRSB );
+      eltSpan.appendChild( eltRSB ); */
 
       eltSpan.appendChild( eltConfig );
 
@@ -2198,6 +2193,112 @@
       };
     };
 
+    sthis.override = function override() {
+      if ( undefined === window.refreshCatalog ) {
+        if ( 'complete' === document.readyState ) {
+          return;
+        };
+        setTimeout( override, 0 );
+      };
+
+      sthis.overrideRefreshCatalog();
+      sthis.overrideSetCell();
+    };
+    
+    sthis.overrideRefreshCatalog = function overrideRefreshCatalog() {
+      if ( 'function' !== typeof( window.refreshCatalog ) ) {
+        return;
+      };
+      window.refreshCatalog = function ymncRefreshCatalog(manual) {
+        
+        if ( window.autoRefresh ) {
+          clearInterval( window.refreshTimer );
+        };
+        
+        sthis.refreshCatalogCells( function done(changed) {
+          if (window.autoRefresh) {
+            window.startTimer(manual || changed ? 5 : window.lastRefresh * 2);
+          };
+          if (!changed) {
+            return;
+          };
+          
+          var assoc = {};
+          var dest = [];
+          for ( var idx = 0, len = window.catalogThreads.length;
+              idx < len ; ++idx ) {
+              assoc[ window.catalogThreads[idx].threadId ] = window.catalogThreads[idx];
+            };
+            var divThreads = document.getElementById( "divThreads" );
+            for ( var dtIdx = 0, dtLen = divThreads.children.length ;
+                dtIdx < dtLen ; ++dtIdx ) {
+              if ( "" !== divThreads.children[ dtIdx ].id &&
+                    undefined !== assoc[ divThreads.children[ dtIdx ].id ] )
+              {
+                dest.push( assoc[ divThreads.children[ dtIdx ].id ] );
+                delete assoc[ divThreads.children[ dtIdx ].id ];
+              };
+            };
+            window.catalogThreads = dest;
+            window.search();
+        } );
+
+      };
+    };
+
+    sthis.overrideSetCell = function overrideSetCell() {
+      if ( 'function' !== typeof( window.setCell ) ||
+            'function' !== typeof( window.enableHideThreadLink ) ) {
+        return;
+      };
+
+      var originalSetCell = window.setCell;
+      window.setCell = function ymncSetCell(thread) {
+        var element = originalSetCell(thread);
+        element.id = thread.threadId;
+        element.catalog = true;
+        window.enableHideThreadLink(element);
+
+        var cookie = '; ' + document.cookie + "; ";
+        if ( 0 <= cookie.indexOf( '; hide' + sthis.boardUri + 'Thread' + element.id + "=true;" ) ) {
+          element.style.display = "none";
+          var fragment = document.createDocumentFragment();
+          fragment.appendChild( createShowThreadLink( element ) );
+          fragment.appendChild( element );
+          return fragment;
+        };
+        return element;
+      };
+      
+    };
+
+    function getShowThreadLink(threadElem) {
+      return document.getElementById('Show'+sthis.boardUri+'Thread'+threadElem.id);
+    };
+    
+    function createShowThreadLink(threadElem) {
+      var threadID = threadElem.id;
+
+      var opHeadElem = threadElem.querySelector('.opHead');
+      // add show thread link if we don't already have one
+
+      var div = document.createElement(threadElem.catalog?'span':'div');
+      div.id = 'Show'+sthis.boardUri+'Thread'+threadID;
+      var link = document.createElement('a');
+      link.textContent = '[Show hidden thread '+threadID+'] ';
+      link.href = '#';
+      link.onclick = function() {
+        console.log('showing thread', threadID);
+        threadElem.style.display = threadElem.catalog ? 'inline-block' : 'block';
+        window.deleteCookie('hide'+sthis.boardUri+'Thread'+threadID);
+        div.style.display = 'none';
+        window.enableHideThreadLink(threadElem);
+        return false;
+      };
+      div.appendChild(link);
+      return div;
+    };
+    
     sthis.disable =
         function()
     {
@@ -2243,6 +2344,9 @@
       {
         return;
       };
+
+      sthis.override();
+      
       var divThreads = document.getElementById("divThreads");
       if( null == divThreads )
       {
@@ -2662,7 +2766,7 @@
 
       var m = str.match(/(\d+)\/(\d+)\/(\d+)\s+\([A-Za-z]+\)\s+(\d+):(\d+):(\d+)/);
       if (m) {
-        d = new Date();
+        var d = new Date();
         d.setUTCFullYear(+m[3]);
         d.setUTCMonth(+m[1]-1);
         d.setUTCDate(+m[2]);
@@ -2677,6 +2781,7 @@
         return d.toLocaleString(firstLanguage) +
             ' ('+d.toLocaleString(firstLanguage, {weekday:"short"} )+')';
       };
+      return undefined;
     };
 
     etcthis.overrideDateFromString = function overrideDateFromString() {
