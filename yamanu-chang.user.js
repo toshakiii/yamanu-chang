@@ -28,8 +28,8 @@
 // @include    /https?://waifuchan\.moe/.*$/
 // @include    /https?://waifuchan\.moe/.*$/
 //
-// @version      2.06
-// @description v2.06: endchan: catalog sorter, preview upload files, recursive quote popup
+// @version      2.07
+// @description v2.07: endchan: catalog sorter, preview upload files, recursive quote popup
 // @grant       none
 // ==/UserScript==
 
@@ -45,6 +45,8 @@
 
 /*
  yamanu-chang(山ぬちゃん)です
+・(v2.07)
+  ・ミス修正
 ・(v2.06 2017.04.02 14:43 JST)
   ・endchan公式でカタログリフレッシュが導入され、公式のカタhideが動いていない。
     カタログhideを有効にする補助機能を追加
@@ -2280,7 +2282,7 @@
       var threadID = threadElem.id;
 
       var opHeadElem = threadElem.querySelector('.opHead');
-      // add show thread link if we don't already have one
+      /* add show thread link if we don't already have one */
 
       var div = document.createElement(threadElem.catalog?'span':'div');
       div.id = 'Show'+sthis.boardUri+'Thread'+threadID;
