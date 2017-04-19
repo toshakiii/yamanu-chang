@@ -28,8 +28,8 @@
 // @include    /https?://waifuchan\.moe/.*$/
 // @include    /https?://waifuchan\.moe/.*$/
 //
-// @version      2.07
-// @description v2.07: endchan: catalog sorter, preview upload files, recursive quote popup
+// @version      2.08
+// @description v2.08: endchan: catalog sorter, preview upload files, recursive quote popup
 // @grant       none
 // ==/UserScript==
 
@@ -45,6 +45,8 @@
 
 /*
  yamanu-chang(山ぬちゃん)です
+・(v2.08)
+  ・hideの仕様を公式にあわせる
 ・(v2.07)
   ・ミス修正
 ・(v2.06 2017.04.02 14:43 JST)
@@ -1749,7 +1751,7 @@
         catalogCells = sthis.tableOrderType[oIdx].sortFunction( catalogCells );
       };
 
-      var cookie = '; ' + document.cookie + "; ";
+      /* var cookie = '; ' + document.cookie + "; "; */
       var sageElts = [];
       for( var ccIdx = 0, ccLen = catalogCells.length; ccIdx < ccLen ; ++ccIdx )
       {
@@ -1766,7 +1768,8 @@
           parentElt.appendChild( showButtonElts[ catalogCell.id ] );
         }
         else if( settings.sageHidedThreads &&
-              0 <= cookie.indexOf( '; hide' + sthis.boardUri + 'Thread' + catalogCell.id + "=true;" ) )
+              window.getSetting !== undefined &&
+              window.getSetting( 'hide' + sthis.boardUri + 'Thread' + catalogCell.id ) )
         {
           sageElts.push( catalogCell );
           continue;
@@ -2261,8 +2264,8 @@
         element.catalog = true;
         window.enableHideThreadLink(element);
 
-        var cookie = '; ' + document.cookie + "; ";
-        if ( 0 <= cookie.indexOf( '; hide' + sthis.boardUri + 'Thread' + element.id + "=true;" ) ) {
+        /* var cookie = '; ' + document.cookie + "; "; */
+        if ( window.getSetting('hide' + sthis.boardUri + 'Thread' + element.id) ) {
           element.style.display = "none";
           var fragment = document.createDocumentFragment();
           fragment.appendChild( createShowThreadLink( element ) );
@@ -2292,7 +2295,9 @@
       link.onclick = function() {
         console.log('showing thread', threadID);
         threadElem.style.display = threadElem.catalog ? 'inline-block' : 'block';
-        window.deleteCookie('hide'+sthis.boardUri+'Thread'+threadID);
+        if( window.deleteSetting ) {
+          window.deleteSetting('hide'+sthis.boardUri+'Thread'+threadID);
+        };
         div.style.display = 'none';
         window.enableHideThreadLink(threadElem);
         return false;
@@ -3187,7 +3192,7 @@
 
       feWrapper.titleCP.appendAfterCP( etcthis.procTitle );
 
-      setTimeout( etcthis.insertButtonShowHidePostingForm, 0 );
+      /* setTimeout( etcthis.insertButtonShowHidePostingForm, 0 ); */
       setTimeout( etcthis.insertButtonShowHideContentAction, 0 );
 
       setTimeout( etcthis.fixGoogleChromeMp3Mime, 0 );
