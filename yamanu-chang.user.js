@@ -28,8 +28,8 @@
 // @include    /https?://waifuchan\.moe/.*$/
 // @include    /https?://waifuchan\.moe/.*$/
 //
-// @version      2.09
-// @description v2.09: endchan: catalog sorter, preview upload files, recursive quote popup
+// @version      2.10
+// @description v2.10: endchan: catalog sorter, preview upload files, recursive quote popup
 // @grant       none
 // ==/UserScript==
 
@@ -45,6 +45,9 @@
 
 /*
  yamanu-chang(山ぬちゃん)です
+・(v2.10)
+  ・v2.10の修正
+    スクリプトを実行させる方法の選択を、「Firefox と Edge または、それ以外」という風に変更
 ・(v2.09)
   ・スクリプトを実行させる方法の選択を、「Firefox または、それ以外」という風に変更(MS Edge対応用)
 ・(v2.08)
@@ -4238,7 +4241,9 @@
    * main                           *
    **********************************/
   function main() {
-    if ( 0 <= window.navigator.userAgent.toLowerCase().indexOf("firefox") )
+    var lowerCaseUA = window.navigator.userAgent.toLowerCase();
+    if ( 0 <= lowerCaseUA.indexOf("gecko") ||
+          0 <= lowerCaseUA.indexOf("edge") )
     {
       modUtils().trigger();
       modSettings().trigger();
