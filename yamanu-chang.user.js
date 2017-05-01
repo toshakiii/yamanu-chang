@@ -28,8 +28,8 @@
 // @include    /https?://waifuchan\.moe/.*$/
 // @include    /https?://waifuchan\.moe/.*$/
 //
-// @version      2.08
-// @description v2.08: endchan: catalog sorter, preview upload files, recursive quote popup
+// @version      2.09
+// @description v2.09: endchan: catalog sorter, preview upload files, recursive quote popup
 // @grant       none
 // ==/UserScript==
 
@@ -45,6 +45,8 @@
 
 /*
  yamanu-chang(山ぬちゃん)です
+・(v2.09)
+  ・スクリプトを実行させる方法の選択を、「Firefox または、それ以外」という風に変更(MS Edge対応用)
 ・(v2.08)
   ・hideの仕様を公式にあわせる
 ・(v2.07)
@@ -4236,8 +4238,16 @@
    * main                           *
    **********************************/
   function main() {
-    if ( 0 <= window.navigator.userAgent.toLowerCase().indexOf("chrome") )
+    if ( 0 <= window.navigator.userAgent.toLowerCase().indexOf("firefox") )
     {
+      modUtils().trigger();
+      modSettings().trigger();
+      modFeWrapper().trigger();
+      modEtCetera().trigger();
+      modFilePreview().trigger();
+      modCatalogSorter().trigger();
+      modMultiPopup().trigger();
+    } else {
       var script = document.createElement('SCRIPT');
       script.innerText =
           "var toshakiii_errors = [];" +
@@ -4251,14 +4261,6 @@
           "if( 0 != toshakiii_errors.length ){ alert( toshakiii_errors ); };" +
           "";
       document.head.appendChild( script );
-    } else {
-      modUtils().trigger();
-      modSettings().trigger();
-      modFeWrapper().trigger();
-      modEtCetera().trigger();
-      modFilePreview().trigger();
-      modCatalogSorter().trigger();
-      modMultiPopup().trigger();
     };
   };
 
