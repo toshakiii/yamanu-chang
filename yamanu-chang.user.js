@@ -28,8 +28,8 @@
 // @include    /https?://waifuchan\.moe/.*$/
 // @include    /https?://waifuchan\.moe/.*$/
 //
-// @version      2.10
-// @description v2.10: endchan: catalog sorter, preview upload files, recursive quote popup
+// @version      2.11
+// @description v2.11: endchan: catalog sorter, preview upload files, recursive quote popup
 // @grant       none
 // ==/UserScript==
 
@@ -45,6 +45,8 @@
 
 /*
  yamanu-chang(山ぬちゃん)です
+・(v2.11)
+  ・補助機能:「400 Bad Request」ページにクッキー削除ボタンを設置
 ・(v2.10)
   ・v2.10の修正
     スクリプトを実行させる方法の選択を、「Firefox と Edge または、それ以外」という風に変更
@@ -2652,7 +2654,7 @@
               anchor.href == "https://soundcloud.com/" ||
             utils.endsWith( anchor.pathname, "/tracks" ) ||
             3 >= anchor.href.toString().split("/").length ) {
-        return;
+        return false;
       };
 
       var o = {}; /* ref. defaultEmbedOpen */
@@ -3175,7 +3177,32 @@
       document.getElementById('fieldMessage').value += '>>' + postIdToQuote + '\n';
     };
 
-
+    etcthis.insertDeleteCookiesButton = function insertDeleteCookiesButton()
+    {
+      if (document.title.toLowerCase() == "400 request header or cookie too large")
+      {
+        var ButtonDeleteCookies = document.createElement("button");
+        ButtonDeleteCookies.type = "button";
+        ButtonDeleteCookies.innerHTML = "delete all cookies on this site(" + document.domain+ ")"
+            + "<br> cookie length: " + document.cookie.length +"bytes";
+            
+        function deleteCookie( name ) {
+          document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+        };
+        ButtonDeleteCookies.onclick = function deleteAllCookies(){
+          var cookies = document.cookie.split("; ");
+          for ( var idx = 0, len = cookies.length; idx < len ; ++idx ) {
+            var eqpos = cookies[ idx ].indexOf( "=" );
+            if ( 0 > eqpos ) {
+              continue;
+            };
+            document.cookie = cookies[idx].substring(0, eqpos) + '=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/;';
+          };
+          ButtonDeleteCookies.innerHTML = ButtonDeleteCookies.innerHTML + "<br> cookie length: " + document.cookie.length + "bytes";
+        };
+        document.body.appendChild( ButtonDeleteCookies );
+      };
+    };
 
     etcthis.disable = function disable()
     {
@@ -3211,6 +3238,7 @@
         setTimeout( etcthis.addConsecutiveNumberStyle, 0 );
       };
 
+      etcthis.insertDeleteCookiesButton();
     };
 
     etcthis.trigger = function()
