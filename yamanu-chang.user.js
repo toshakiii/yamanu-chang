@@ -28,8 +28,8 @@
 // @include    /https?://waifuchan\.moe/.*$/
 // @include    /https?://waifuchan\.moe/.*$/
 //
-// @version      2.11
-// @description v2.11: endchan: catalog sorter, preview upload files, recursive quote popup
+// @version      2.12
+// @description v2.12: endchan: catalog sorter, preview upload files, recursive quote popup
 // @grant       none
 // ==/UserScript==
 
@@ -45,6 +45,8 @@
 
 /*
  yamanu-chang(山ぬちゃん)です
+・(v2.12)
+  ・通し番号CSSを調整。
 ・(v2.11)
   ・補助機能:「400 Bad Request」ページにクッキー削除ボタンを設置
 ・(v2.10)
@@ -2912,9 +2914,9 @@
         http://endchan.xyz/librejp/res/5273.html#q8166
       */
       style.innerHTML =
-          "div.divPosts div.postCell{counter-increment:consecutiveNumber;}" +
-          "div.divPosts div.postCell div.markedPost:before{content:counter(consecutiveNumber);}" +
-          "div.divPosts div.postCell div.innerPost:before{content:counter(consecutiveNumber);}";
+          "#divThreads .opCell:only-child .divPosts .postCell{counter-increment:consecutiveNumber;}" +
+          "#divThreads .opCell:only-child .divPosts .postCell .markedPost:before{content:counter(consecutiveNumber);}" +
+          "#divThreads .opCell:only-child .divPosts .postCell .innerPost:before{content:counter(consecutiveNumber);}";
       document.head.appendChild( style );
     };
 
