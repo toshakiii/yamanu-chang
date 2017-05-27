@@ -28,8 +28,8 @@
 // @include    /https?://waifuchan\.moe/.*$/
 // @include    /https?://waifuchan\.moe/.*$/
 //
-// @version      2.12
-// @description v2.12: endchan: catalog sorter, preview upload files, recursive quote popup
+// @version      2.13
+// @description v2.13: endchan: catalog sorter, preview upload files, recursive quote popup
 // @grant       none
 // ==/UserScript==
 
@@ -45,6 +45,8 @@
 
 /*
  yamanu-chang(山ぬちゃん)です
+・(v2.13)
+  ・通し番号CSSを調整。(v2.12は余計な対処だった)
 ・(v2.12)
   ・通し番号CSSを調整。
 ・(v2.11)
@@ -2216,7 +2218,7 @@
       };
 
       sthis.overrideRefreshCatalog();
-      sthis.overrideSetCell();
+      /* sthis.overrideSetCell(); */
     };
     
     sthis.overrideRefreshCatalog = function overrideRefreshCatalog() {
@@ -2914,9 +2916,9 @@
         http://endchan.xyz/librejp/res/5273.html#q8166
       */
       style.innerHTML =
-          "#divThreads .opCell:only-child .divPosts .postCell{counter-increment:consecutiveNumber;}" +
-          "#divThreads .opCell:only-child .divPosts .postCell .markedPost:before{content:counter(consecutiveNumber);}" +
-          "#divThreads .opCell:only-child .divPosts .postCell .innerPost:before{content:counter(consecutiveNumber);}";
+          "#divThreads .opCell .divPosts .postCell{counter-increment:consecutiveNumber;}" +
+          "#divThreads .opCell .divPosts .postCell .markedPost:before{content:counter(consecutiveNumber);}" +
+          "#divThreads .opCell .divPosts .postCell .innerPost:before{content:counter(consecutiveNumber);}";
       document.head.appendChild( style );
     };
 
@@ -3776,8 +3778,8 @@
         top = scrollBottom - height;
       };
 
-      quoteblock.style.top  = top + "px";
-      quoteblock.style.left = left + "px";
+      quoteblock.style.top  = ( top + 5 ) + "px";
+      quoteblock.style.left = ( left + 5 ) + "px";
 
       var parentUid = mthis.getUidOfPopupParent( quoteLink );
       if( undefined != parentUid )
