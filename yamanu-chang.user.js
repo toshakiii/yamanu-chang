@@ -28,8 +28,8 @@
 // @include    /https?://waifuchan\.moe/.*$/
 // @include    /https?://waifuchan\.moe/.*$/
 //
-// @version      2.13
-// @description v2.13: endchan: catalog sorter, preview upload files, recursive quote popup
+// @version      2.14
+// @description v2.14: endchan: catalog sorter, preview upload files, recursive quote popup
 // @grant       none
 // ==/UserScript==
 
@@ -45,6 +45,8 @@
 
 /*
  yamanu-chang(山ぬちゃん)です
+・(v2.14)
+  ・動画ループ補助機能
 ・(v2.13)
   ・通し番号CSSを調整。(v2.12は余計な対処だった)
 ・(v2.12)
@@ -2406,6 +2408,84 @@
 
     window.toshakiii.etCetera = etcthis;
 
+    etcthis.ymncSetPlayer = function setPlayer(link, mime) {
+
+      var videoTypes = [ 'video/webm', 'video/mp4', 'video/ogg' ];
+      var path = link.href;
+      var parent = link.parentNode;
+
+      var src = document.createElement('source');
+      src.setAttribute('src', link.href);
+      src.setAttribute('type', mime);
+
+      var video = document.createElement(videoTypes.indexOf(mime) > -1 ? 'video'
+            : 'audio');
+      video.setAttribute('controls', true);
+      video.setAttribute('loop', true);
+      video.style.display = 'none';
+
+      var videoContainer = document.createElement('span');
+
+      var hideLink = document.createElement('a');
+      hideLink.innerHTML = '[ - ]';
+      hideLink.style.cursor = 'pointer';
+      hideLink.style.display = 'none';
+      hideLink.setAttribute('class', 'hideLink');
+      hideLink.onclick = function() {
+        newThumb.style.display = 'inline';
+        video.style.display = 'none';
+        hideLink.style.display = 'none';
+        video.pause();
+      };
+
+      var newThumb = document.createElement('img');
+      newThumb.src = link.childNodes[0].src;
+      newThumb.width = link.childNodes[0].width;
+      newThumb.height = link.childNodes[0].height;
+      newThumb.onclick = function() {
+        if (!video.childNodes.count) {
+          video.appendChild(src);
+        };
+        
+        newThumb.style.display = 'none';
+        video.style.display = 'inline';
+        hideLink.style.display = 'inline';
+        video.play();
+      };
+      newThumb.style.cursor = 'pointer';
+
+      videoContainer.appendChild(hideLink);
+      videoContainer.appendChild(video);
+      videoContainer.appendChild(newThumb);
+      
+      parent.replaceChild(videoContainer, link);
+
+    };
+    
+    etcthis.overrideSetPlayer = function overrideSetPlayer() {
+
+      if ( undefined === window.setPlayer ) {
+        if ( 'complete' === document.readyState ) {
+          return;
+        };
+        setTimeout( overrideSetPlayer, 0 );
+        return;
+      };
+
+      if ( 'function' === typeof( window.setPlayer ) ) {
+        window.setPlayer = etcthis.ymncSetPlayer;
+      };
+
+    };
+
+    etcthis.setVideosLoopMode = function() {
+      var videos = document.getElementsByTagName('VIDEO');
+
+      for (var idx = 0, len = videos.length; idx < len ; ++idx ) {
+        videos[idx].setAttribute('loop', true);
+      };
+    };
+    
     etcthis.overrideEmbedYoutubeButton =
         function( youtube_wrapper )
     {
@@ -3243,6 +3323,9 @@
       };
 
       etcthis.insertDeleteCookiesButton();
+
+      setTimeout( etcthis.overrideSetPlayer, 0 );
+      setTimeout( etcthis.setVideosLoopMode, 0 );
     };
 
     etcthis.trigger = function()
