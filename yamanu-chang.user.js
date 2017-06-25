@@ -28,8 +28,8 @@
 // @include    /https?://waifuchan\.moe/.*$/
 // @include    /https?://waifuchan\.moe/.*$/
 //
-// @version      2.14
-// @description v2.14: endchan: catalog sorter, preview upload files, recursive quote popup
+// @version      2.15
+// @description v2.15: endchan: catalog sorter, preview upload files, recursive quote popup
 // @grant       none
 // ==/UserScript==
 
@@ -45,6 +45,8 @@
 
 /*
  yamanu-chang(山ぬちゃん)です
+・(v2.15)
+  ・引用ポップアップの大きさ調整
 ・(v2.14)
   ・動画ループ補助機能
 ・(v2.13)
@@ -3827,6 +3829,8 @@
       quoteblock.style.paddingBottom = "2px";
       quoteblock.style.border = "1px solid " + utils.getBodyForegroundColor();
       quoteblock.style.backgroundColor = utils.getBodyBackgroundColor();
+      quoteblock.style.maxWidth = "90%";
+      quoteblock.style.maxHeight = "90%";
 
       var scrollLeft   = utils.getScrollLeft();
       var scrollRight  = scrollLeft + window.innerWidth;
