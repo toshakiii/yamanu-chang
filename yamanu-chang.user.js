@@ -28,8 +28,8 @@
 // @include    /https?://waifuchan\.moe/.*$/
 // @include    /https?://waifuchan\.moe/.*$/
 //
-// @version      2.16
-// @description v2.16: endchan: catalog sorter, preview upload files, recursive quote popup
+// @version      2.17
+// @description v2.17: endchan: catalog sorter, preview upload files, recursive quote popup
 // @grant       none
 // ==/UserScript==
 
@@ -45,6 +45,8 @@
 
 /*
  yamanu-chang(山ぬちゃん)です
+・(v2.17 2017.06.28)
+  ・微調整
 ・(v2.16)
   ・ファイル名をランダムな名前に変更するオプションを追加。
 ・(v2.15)
@@ -2429,13 +2431,20 @@
       label.style.display = 'inline';
       label.appendChild( input );
       label.appendChild( document.createTextNode('常に投稿ファイル名をマスクする') );
-      
-      var origin = document.querySelector('select[name=switchcolorcontrol]');
-      if ( null !== origin ) {
+
+      var origin;
+      origin = document.getElementById('postBox');
+      if ( origin ) {
+        origin.parentElement.insertBefore( label, origin );
+        return;
+      };
+
+      origin = document.querySelector('select[name=switchcolorcontrol]');
+      if ( origin ) {
         origin = origin.parentElement;
       } else {
         origin = document.body;
-      };
+      }
       
       origin.appendChild( label );
 
@@ -3484,10 +3493,13 @@
       setTimeout( etcthis.overrideSetPlayer, 0 );
       setTimeout( etcthis.setVideosLoopMode, 0 );
 
-      etcthis.setCheckboxOfMaskFilenameMode();
 
-      feWrapper.selectedDivOnChangeHandlers.push(
-          etcthis.updateMaskFilenameMode );
+      if ( 0 > document.location.href.indexOf("/catalog.html") ) {
+        etcthis.setCheckboxOfMaskFilenameMode();
+
+        feWrapper.selectedDivOnChangeHandlers.push(
+            etcthis.updateMaskFilenameMode );
+      };
     };
 
     etcthis.trigger = function()
