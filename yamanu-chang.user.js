@@ -28,8 +28,8 @@
 // @include    /https?://waifuchan\.moe/.*$/
 // @include    /https?://waifuchan\.moe/.*$/
 //
-// @version      2.15
-// @description v2.15: endchan: catalog sorter, preview upload files, recursive quote popup
+// @version      2.16
+// @description v2.16: endchan: catalog sorter, preview upload files, recursive quote popup
 // @grant       none
 // ==/UserScript==
 
@@ -45,6 +45,8 @@
 
 /*
  yamanu-chang(山ぬちゃん)です
+・(v2.16)
+  ・ファイル名をランダムな名前に変更するオプションを追加。
 ・(v2.15)
   ・引用ポップアップの大きさ調整
 ・(v2.14)
@@ -2410,6 +2412,159 @@
 
     window.toshakiii.etCetera = etcthis;
 
+    etcthis.maskFilename = false;
+
+    etcthis.setCheckboxOfMaskFilenameMode = function() {
+
+      etcthis.maskFilename =
+          'true' === window.getSetting('ymncMaskFilename');
+      
+      var input = document.createElement('INPUT');
+      input.type = 'checkbox';
+      input.id = 'myForceCookie';
+      input.onclick = etcthis.updateMaskFilenameMode;
+      input.checked = etcthis.maskFilename;
+      
+      var label = document.createElement('LABEL');
+      label.style.display = 'inline';
+      label.appendChild( input );
+      label.appendChild( document.createTextNode('常に投稿ファイル名をマスクする') );
+      
+      var origin = document.querySelector('select[name=switchcolorcontrol]');
+      if ( null !== origin ) {
+        origin = origin.parentElement;
+      } else {
+        origin = document.body;
+      };
+      
+      origin.appendChild( label );
+
+    };
+
+    etcthis.updateMaskFilenameMode = function( ev ) {
+
+      if ( ev ) {
+        etcthis.maskFilename = ev.target.checked;
+        window.setSetting('ymncMaskFilename', etcthis.maskFilename );
+      };
+
+      etcthis.maskAllFilename( etcthis.maskFilename );
+    };
+
+    /* filename から拡張子を得る。
+     * 拡張子の長さが"."を含めずにmaxExtLen以上の長さの場合は、拡張子とみなさず空白を返す。
+     * maxExtLen: 省略時は4
+     */
+    etcthis.getFilenameExtension = function( filename, maxExtLen ) {
+
+      if ( ! maxExtLen ) {
+        maxExtLen = 4;
+      };
+
+      var dotpos = filename.lastIndexOf(".");
+
+      if ( 0 > dotpos ) {
+        return "";
+      };
+
+      var lastPart = filename.substring( dotpos );
+      
+      if ( 1 + maxExtLen < lastPart.length ) {
+        return "";
+      };
+
+      return lastPart;
+    };
+
+    etcthis.defineProperty = function( obj, propertyName, propertyValue ) {
+
+          Object.defineProperty( obj, propertyName,
+              { enumerable: false,
+                configurable: false,
+                writable: true,
+                value: propertyValue } );
+    };
+
+    /* 設定によりFile名を自動的に設定する時の関数 */
+    etcthis.maskAllFilename = function( doMaskIfTrue ) {
+      
+      if ( null == window.selectedFiles) {
+        return;
+      };
+
+      var randomNum = (+new Date());
+      
+      for ( var idx = 0, len = window.selectedFiles.length; idx < len ; ++idx ) {
+
+        var file = window.selectedFiles[idx];
+
+        /* file.ymncFilenameMaskMode は
+         *     undefined: 元のファイル名のまま
+         *      "random": プログラムが指定したランダムな名前
+         *   "specified": ユーザーが指定した名前
+         * この関数では doMaskIfTrue が false の場合でも、"specified" のマスクは外さない
+         */
+        
+        if ( doMaskIfTrue && file.ymncFilenameMaskMode === undefined ) {
+          /* マスク要求、現在マスクしていないからマスクする */
+          file.ymncOriginalName = file.name.toString(); /* cloneがわりのtoString() */
+          etcthis.defineProperty( file, 'name',
+              randomNum.toString() + etcthis.getFilenameExtension( file.name ) );
+          file.ymncFilenameMaskMode = "random";
+
+        } else if ( doMaskIfTrue && file.ymncFilenameMaskMode !== undefined ) {
+          /* マスク要求だが、現在マスク済だからなにもしない */
+        } else if ( ! doMaskIfTrue && file.ymncFilenameMaskMode === undefined ) {
+          /* マスク外し要求だが、現在マスクしていないのでなにもしない */
+        } else if ( ! doMaskIfTrue && file.ymncFilenameMaskMode === "specified" ) {
+          /* マスク外し要求だが、現在ユーザー指定だから外さない */
+
+        } else if ( ! doMaskIfTrue && file.ymncFilenameMaskMode === "random" ) {
+          /* マスク外し要求、その通り外す */
+          etcthis.defineProperty( file, 'name', file.ymncOriginalName );
+          file.ymncFilenameMaskMode = undefined;
+        } else {
+          document.body.appendChild( document.createTextNode(
+              "yamanu-changにバグ(etcthis.maskAllFilename)" ) );
+        };
+
+        ++randomNum;
+      };
+
+      etcthis.updateSelectedFilenameLabels();
+      
+    };
+
+    etcthis.updateSelectedFilenameLabels = function() {
+
+      var nameLabelList = document.getElementsByClassName("nameLabel");
+
+      var formCount = 1;
+      var quickReplyElt = document.getElementById("quick-reply");
+
+      if ( quickReplyElt ) {
+        ++formCount;
+      };
+
+      var nlIdx = 0;
+      /* var nlLen = nameLabelList.length; */
+
+      for ( ; 0 < formCount ; --formCount ) {
+
+        for ( var sfIdx = 0, sfLen = window.selectedFiles.length; sfIdx < sfLen ;
+            ++sfIdx, ++nlIdx ) {
+          
+          var nameLabel = nameLabelList[nlIdx];
+          while ( nameLabel.firstChild ) {
+            nameLabel.removeChild( nameLabel.firstChild );
+          };
+
+          nameLabel.appendChild(
+              document.createTextNode( window.selectedFiles[sfIdx].name ) );
+        };
+      };
+    };
+    
     etcthis.ymncSetPlayer = function setPlayer(link, mime) {
 
       var videoTypes = [ 'video/webm', 'video/mp4', 'video/ogg' ];
@@ -3328,6 +3483,11 @@
 
       setTimeout( etcthis.overrideSetPlayer, 0 );
       setTimeout( etcthis.setVideosLoopMode, 0 );
+
+      etcthis.setCheckboxOfMaskFilenameMode();
+
+      feWrapper.selectedDivOnChangeHandlers.push(
+          etcthis.updateMaskFilenameMode );
     };
 
     etcthis.trigger = function()
