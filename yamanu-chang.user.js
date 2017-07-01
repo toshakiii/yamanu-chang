@@ -28,8 +28,8 @@
 // @include    /https?://waifuchan\.moe/.*$/
 // @include    /https?://waifuchan\.moe/.*$/
 //
-// @version      2.17
-// @description v2.17: endchan: catalog sorter, preview upload files, recursive quote popup
+// @version      2.18
+// @description v2.18: endchan: catalog sorter, preview upload files, recursive quote popup
 // @grant       none
 // ==/UserScript==
 
@@ -45,6 +45,8 @@
 
 /*
  yamanu-chang(山ぬちゃん)です
+・(v2.18 2017.07.02)
+  ・ファイル名を自由に変更できる機能を追加
 ・(v2.17 2017.06.28)
   ・微調整
 ・(v2.16)
@@ -2228,17 +2230,17 @@
       sthis.overrideRefreshCatalog();
       /* sthis.overrideSetCell(); */
     };
-    
+
     sthis.overrideRefreshCatalog = function overrideRefreshCatalog() {
       if ( 'function' !== typeof( window.refreshCatalog ) ) {
         return;
       };
       window.refreshCatalog = function ymncRefreshCatalog(manual) {
-        
+
         if ( window.autoRefresh ) {
           clearInterval( window.refreshTimer );
         };
-        
+
         sthis.refreshCatalogCells( function done(changed) {
           if (window.autoRefresh) {
             window.startTimer(manual || changed ? 5 : window.lastRefresh * 2);
@@ -2246,7 +2248,7 @@
           if (!changed) {
             return;
           };
-          
+
           var assoc = {};
           var dest = [];
           for ( var idx = 0, len = window.catalogThreads.length;
@@ -2293,13 +2295,13 @@
         };
         return element;
       };
-      
+
     };
 
     function getShowThreadLink(threadElem) {
       return document.getElementById('Show'+sthis.boardUri+'Thread'+threadElem.id);
     };
-    
+
     function createShowThreadLink(threadElem) {
       var threadID = threadElem.id;
 
@@ -2324,7 +2326,7 @@
       div.appendChild(link);
       return div;
     };
-    
+
     sthis.disable =
         function()
     {
@@ -2372,7 +2374,7 @@
       };
 
       sthis.override();
-      
+
       var divThreads = document.getElementById("divThreads");
       if( null == divThreads )
       {
@@ -2420,13 +2422,13 @@
 
       etcthis.maskFilename =
           'true' === window.getSetting('ymncMaskFilename');
-      
+
       var input = document.createElement('INPUT');
       input.type = 'checkbox';
       input.id = 'myForceCookie';
       input.onclick = etcthis.updateMaskFilenameMode;
       input.checked = etcthis.maskFilename;
-      
+
       var label = document.createElement('LABEL');
       label.style.display = 'inline';
       label.appendChild( input );
@@ -2439,14 +2441,16 @@
         return;
       };
 
+      /*
       origin = document.querySelector('select[name=switchcolorcontrol]');
       if ( origin ) {
         origin = origin.parentElement;
       } else {
         origin = document.body;
       }
-      
+
       origin.appendChild( label );
+      */
 
     };
 
@@ -2477,7 +2481,7 @@
       };
 
       var lastPart = filename.substring( dotpos );
-      
+
       if ( 1 + maxExtLen < lastPart.length ) {
         return "";
       };
@@ -2496,27 +2500,27 @@
 
     /* 設定によりFile名を自動的に設定する時の関数 */
     etcthis.maskAllFilename = function( doMaskIfTrue ) {
-      
+
       if ( null == window.selectedFiles) {
         return;
       };
 
       var randomNum = (+new Date());
-      
+
       for ( var idx = 0, len = window.selectedFiles.length; idx < len ; ++idx ) {
 
         var file = window.selectedFiles[idx];
 
         /* file.ymncFilenameMaskMode は
-         *     undefined: 元のファイル名のまま
-         *      "random": プログラムが指定したランダムな名前
-         *   "specified": ユーザーが指定した名前
-         * この関数では doMaskIfTrue が false の場合でも、"specified" のマスクは外さない
+         *  undefined: 元のファイル名のまま
+         *   "random": プログラムが指定したランダムな名前
+         *     "user": ユーザーが指定した名前
+         * この関数では doMaskIfTrue が false の場合でも、"user" のマスクは外さない
          */
-        
+
         if ( doMaskIfTrue && file.ymncFilenameMaskMode === undefined ) {
           /* マスク要求、現在マスクしていないからマスクする */
-          file.ymncOriginalName = file.name.toString(); /* cloneがわりのtoString() */
+          file.ymncOriginalName = file.name.toString(); /* cloneがわりのtoString */
           etcthis.defineProperty( file, 'name',
               randomNum.toString() + etcthis.getFilenameExtension( file.name ) );
           file.ymncFilenameMaskMode = "random";
@@ -2525,7 +2529,7 @@
           /* マスク要求だが、現在マスク済だからなにもしない */
         } else if ( ! doMaskIfTrue && file.ymncFilenameMaskMode === undefined ) {
           /* マスク外し要求だが、現在マスクしていないのでなにもしない */
-        } else if ( ! doMaskIfTrue && file.ymncFilenameMaskMode === "specified" ) {
+        } else if ( ! doMaskIfTrue && file.ymncFilenameMaskMode === "user" ) {
           /* マスク外し要求だが、現在ユーザー指定だから外さない */
 
         } else if ( ! doMaskIfTrue && file.ymncFilenameMaskMode === "random" ) {
@@ -2541,14 +2545,14 @@
       };
 
       etcthis.updateSelectedFilenameLabels();
-      
+
     };
 
-    etcthis.updateSelectedFilenameLabels = function() {
+    etcthis.updateSelectedFilenameLabels = function updateSelectedFilenameLabels() {
 
       var nameLabelList = document.getElementsByClassName("nameLabel");
 
-      var formCount = 1;
+      var formCount = 1; /* メインフォームの分の1 */
       var quickReplyElt = document.getElementById("quick-reply");
 
       if ( quickReplyElt ) {
@@ -2562,18 +2566,87 @@
 
         for ( var sfIdx = 0, sfLen = window.selectedFiles.length; sfIdx < sfLen ;
             ++sfIdx, ++nlIdx ) {
-          
+
           var nameLabel = nameLabelList[nlIdx];
           while ( nameLabel.firstChild ) {
             nameLabel.removeChild( nameLabel.firstChild );
           };
 
-          nameLabel.appendChild(
-              document.createTextNode( window.selectedFiles[sfIdx].name ) );
+          var nameInput = document.createElement("INPUT");
+          nameInput.value = window.selectedFiles[sfIdx].name;
+          nameInput.style.width = "80%";
+
+          var setFilenameFunc = (function() {
+            var index = sfIdx;
+            return function ( ev ) {
+              if ( window.selectedFiles[ index ].name === ev.target.value ) {
+                return true;
+              };
+              if ( undefined === window.selectedFiles[ index ].ymncFilenameMaskMode ) {
+                /* cloneがわりのtoString */
+                window.selectedFiles[ index ].ymncOriginalName =
+                    window.selectedFiles[ index ].name.toString();
+              };
+              window.selectedFiles[ index ].ymncFilenameMaskMode = "user";
+              etcthis.defineProperty( window.selectedFiles[ index ],
+                  "name", ev.target.value );
+              return true;
+            };
+          } )();
+          nameInput.addEventListener("blur", setFilenameFunc );
+          /* nameInput.addEventListener("keyup", setFilenameFunc ); */
+
+          var modosuButton = document.createElement("SPAN");
+          modosuButton.appendChild( document.createTextNode("元") );
+          modosuButton.title = "元のファイル名に戻します(" + window.selectedFiles[ sfIdx ].ymncOriginalName + ")";
+          var setOriginalFilenameFunc = (function(){
+            var index = sfIdx;
+            return function ( ev ) {
+              if ( undefined !== window.selectedFiles[ index ].ymncOriginalName ) {
+                etcthis.defineProperty( window.selectedFiles[ index ],
+                    "name", window.selectedFiles[ index ].ymncOriginalName );
+                window.selectedFiles[ index ].ymncFilenameMaskMode = undefined;
+              };
+              updateSelectedFilenameLabels();
+              return true;
+            };
+          } )();
+          modosuButton.addEventListener("click", setOriginalFilenameFunc );
+
+          var randomizeButton = document.createElement("SPAN");
+          randomizeButton.appendChild( document.createTextNode("乱") );
+          randomizeButton.title = "ファイル名をランダムにします";
+          var setRandomFilenameFunc = (function(){
+            var index = sfIdx;
+            return function ( ev ) {
+              if ( undefined === window.selectedFiles[ index ].ymncOriginalName ) {
+                window.selectedFiles[ index ].ymncOriginalName =
+                    window.selectedFiles[ index ].name.toString();
+              };
+              etcthis.defineProperty( window.selectedFiles[ index ],
+                  "name", (+new Date()).toString()
+                    + etcthis.getFilenameExtension(
+                        window.selectedFiles[ index ].ymncOriginalName ) );
+              window.selectedFiles[ index ].ymncFilenameMaskMode = "random";
+
+              updateSelectedFilenameLabels();
+              return true;
+            };
+          } )();
+          randomizeButton.addEventListener("click", setRandomFilenameFunc );
+
+          modosuButton.style.cursor = 'pointer';
+          randomizeButton.style.cursor = 'pointer';
+
+          nameLabel.appendChild( nameInput );
+          nameLabel.appendChild( modosuButton );
+          nameLabel.appendChild( document.createTextNode(" ") );
+          nameLabel.appendChild( randomizeButton );
+
         };
       };
     };
-    
+
     etcthis.ymncSetPlayer = function setPlayer(link, mime) {
 
       var videoTypes = [ 'video/webm', 'video/mp4', 'video/ogg' ];
@@ -2612,7 +2685,7 @@
         if (!video.childNodes.count) {
           video.appendChild(src);
         };
-        
+
         newThumb.style.display = 'none';
         video.style.display = 'inline';
         hideLink.style.display = 'inline';
@@ -2623,11 +2696,11 @@
       videoContainer.appendChild(hideLink);
       videoContainer.appendChild(video);
       videoContainer.appendChild(newThumb);
-      
+
       parent.replaceChild(videoContainer, link);
 
     };
-    
+
     etcthis.overrideSetPlayer = function overrideSetPlayer() {
 
       if ( undefined === window.setPlayer ) {
@@ -2651,7 +2724,7 @@
         videos[idx].setAttribute('loop', true);
       };
     };
-    
+
     etcthis.overrideEmbedYoutubeButton =
         function( youtube_wrapper )
     {
@@ -3435,7 +3508,7 @@
         ButtonDeleteCookies.type = "button";
         ButtonDeleteCookies.innerHTML = "delete all cookies on this site(" + document.domain+ ")"
             + "<br> cookie length: " + document.cookie.length +"bytes";
-            
+
         function deleteCookie( name ) {
           document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
         };
@@ -3454,6 +3527,16 @@
       };
     };
 
+    etcthis.removeNonJsSendButton = function removeNonJsSendButton() {
+      /* エンターキーで送信暴発しちゃうのを防ぐために */
+      var formButton = document.getElementById('formButton');
+
+      if ('none' === formButton.style.display) {
+        formButton.parentElement.removeChild( formButton );
+      };
+
+    };
+
     etcthis.disable = function disable()
     {
       var style = document.getElementById("postsConsecutiveNumberStyle");
@@ -3462,6 +3545,7 @@
         style.parentElement.removeChild( style );
       };
     };
+
 
     etcthis.enable = function enable()
     {
@@ -3500,6 +3584,8 @@
         feWrapper.selectedDivOnChangeHandlers.push(
             etcthis.updateMaskFilenameMode );
       };
+
+      etcthis.removeNonJsSendButton();
     };
 
     etcthis.trigger = function()
