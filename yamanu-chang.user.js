@@ -28,8 +28,8 @@
 // @include    /https?://waifuchan\.moe/.*$/
 // @include    /https?://waifuchan\.moe/.*$/
 //
-// @version      2.18
-// @description v2.18: endchan: catalog sorter, preview upload files, recursive quote popup
+// @version      2.19
+// @description v2.19: endchan: catalog sorter, preview upload files, recursive quote popup
 // @grant       none
 // ==/UserScript==
 
@@ -45,6 +45,8 @@
 
 /*
  yamanu-chang(山ぬちゃん)です
+・(v2.19 2017.07.09)
+  ・機能追加: 右下ダンスを非表示にする機能
 ・(v2.18 2017.07.02)
   ・ファイル名を自由に変更できる機能を追加
 ・(v2.17 2017.06.28)
@@ -2417,7 +2419,65 @@
     window.toshakiii.etCetera = etcthis;
 
     etcthis.maskFilename = false;
+    etcthis.hideLibrejpBottomLeftMascot = false;
 
+    etcthis.setCheckboxOfDancingMascot = function() {
+
+      etcthis.hideLibrejpBottomLeftMascot =
+          'true' === window.getSetting('ymncLibrejpBottomLeftMascot');
+
+      var input = document.createElement('INPUT');
+      input.type = 'checkbox';
+      input.id = 'myHideLibrejpBottomLeftMascot';
+      input.onclick = etcthis.updateShowHideLibrejpBottomLeftMascot;
+      input.checked = etcthis.hideLibrejpBottomLeftMascot;
+      
+      var label = document.createElement('LABEL');
+      label.style.display = 'inline';
+      label.appendChild( input );
+      label.appendChild( document.createTextNode( "右下マスコット非表示" ) );
+
+      var origin = document.querySelector('select[name=switchcolorcontrol]');
+
+      if ( origin ) {
+        origin.parentElement.appendChild( label );
+      };
+
+      etcthis.updateShowHideLibrejpBottomLeftMascot();
+    };
+
+    etcthis.updateShowHideLibrejpBottomLeftMascot = function(ev) {
+
+      var style_id = "styleHideLibrejpBottomLeftMascot";
+      
+      if ( ev ) {
+        etcthis.hideLibrejpBottomLeftMascot = ev.target.checked;
+        window.setSetting('ymncLibrejpBottomLeftMascot', etcthis.hideLibrejpBottomLeftMascot );
+      };
+
+      var style = document.getElementById( style_id );
+
+      if ( etcthis.hideLibrejpBottomLeftMascot ) {
+
+        if ( null === style ) {
+          style = document.createElement('STYLE');
+          style.type = "text/css";
+          style.id = style_id;
+          style.innerHTML =
+              "body:after, body:before { content: none !important; }"
+              + "body:before { content: none !important; }";
+          document.head.appendChild( style );
+        };
+        
+      } else {
+
+        if ( null !== style ) {
+          style.parentElement.removeChild( style );
+        };
+
+      };
+    };
+    
     etcthis.setCheckboxOfMaskFilenameMode = function() {
 
       etcthis.maskFilename =
@@ -2442,7 +2502,7 @@
       };
 
       /*
-      origin = document.querySelector('select[name=switchcolorcontrol]');
+
       if ( origin ) {
         origin = origin.parentElement;
       } else {
@@ -2574,7 +2634,7 @@
 
           var nameInput = document.createElement("INPUT");
           nameInput.value = window.selectedFiles[sfIdx].name;
-          nameInput.style.width = "80%";
+          nameInput.style.width = "75%";
 
           var setFilenameFunc = (function() {
             var index = sfIdx;
@@ -3529,9 +3589,10 @@
 
     etcthis.removeNonJsSendButton = function removeNonJsSendButton() {
       /* エンターキーで送信暴発しちゃうのを防ぐために */
+      
       var formButton = document.getElementById('formButton');
 
-      if ('none' === formButton.style.display) {
+      if ( formButton !== null && 'none' === formButton.style.display) {
         formButton.parentElement.removeChild( formButton );
       };
 
@@ -3586,6 +3647,11 @@
       };
 
       etcthis.removeNonJsSendButton();
+
+      if ( 0 <= document.location.href.indexOf("/librejp/") ) {
+        etcthis.setCheckboxOfDancingMascot();
+      };
+      
     };
 
     etcthis.trigger = function()
