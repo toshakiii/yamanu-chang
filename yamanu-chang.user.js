@@ -28,8 +28,8 @@
 // @include    /https?://waifuchan\.moe/.*$/
 // @include    /https?://waifuchan\.moe/.*$/
 //
-// @version      2.19
-// @description v2.19: endchan: catalog sorter, preview upload files, recursive quote popup
+// @version      2.20
+// @description v2.20: endchan: catalog sorter, preview upload files, recursive quote popup
 // @grant       none
 // ==/UserScript==
 
@@ -45,6 +45,9 @@
 
 /*
  yamanu-chang(山ぬちゃん)です
+・(v2.20 2017.07.10)
+  ・ポップアップが縦幅100%でクリップされるのを撤廃
+  ・縦に大きなポップアップの場合の出現位置を調整
 ・(v2.19 2017.07.09)
   ・機能追加: 右下ダンスを非表示にする機能
 ・(v2.18 2017.07.02)
@@ -4154,7 +4157,7 @@
       quoteblock.style.border = "1px solid " + utils.getBodyForegroundColor();
       quoteblock.style.backgroundColor = utils.getBodyBackgroundColor();
       quoteblock.style.maxWidth = "90%";
-      quoteblock.style.maxHeight = "90%";
+      quoteblock.style.zIndex = 2;
 
       var scrollLeft   = utils.getScrollLeft();
       var scrollRight  = scrollLeft + window.innerWidth;
@@ -4186,7 +4189,11 @@
       };
       if( scrollBottom < tmpBottom )
       {
-        top = scrollBottom - height;
+        if ( height > window.innerHeight ) {
+          top = scrollTop;
+        } else {
+          top = scrollBottom - height;
+        };
       };
 
       quoteblock.style.top  = ( top + 5 ) + "px";
