@@ -28,8 +28,8 @@
 // @include    /https?://waifuchan\.moe/.*$/
 // @include    /https?://waifuchan\.moe/.*$/
 //
-// @version      2.20
-// @description v2.20: endchan: catalog sorter, preview upload files, recursive quote popup
+// @version      2.21
+// @description v2.21: endchan: catalog sorter, preview upload files, recursive quote popup
 // @grant       none
 // ==/UserScript==
 
@@ -45,9 +45,11 @@
 
 /*
  yamanu-chang(山ぬちゃん)です
+・(v2.21 2017.07.17)
+  ・機能追加: UserJS(仮)
 ・(v2.20 2017.07.10)
-  ・ポップアップが縦幅100%でクリップされるのを撤廃
-  ・縦に大きなポップアップの場合の出現位置を調整
+  ・調整: ポップアップが縦幅100%でクリップされるのを撤廃
+  ・調整: 縦に大きなポップアップの場合の出現位置を調整
 ・(v2.19 2017.07.09)
   ・機能追加: 右下ダンスを非表示にする機能
 ・(v2.18 2017.07.02)
@@ -2424,6 +2426,164 @@
     etcthis.maskFilename = false;
     etcthis.hideLibrejpBottomLeftMascot = false;
 
+    etcthis.UserJs = function() {
+      etcthis.setButtonToEditUserJs();
+      etcthis.excuteUserJs();
+    };
+
+    etcthis.setButtonToEditUserJs = function() {
+      var button = document.createElement("BUTTON");
+      button.style.cursor = "pointer";
+      button.type = "button";
+      button.appendChild( document.createTextNode("(山仮)UserJS") );
+      button.onclick = etcthis.showHideEditBoxForUserJs;
+      var origin = document.querySelector('select[name=switchcolorcontrol]');
+      if ( origin ) {
+        origin.parentElement.appendChild( button );
+      };
+
+    };
+
+    etcthis.showHideEditBoxForUserJs = function() {
+      var editboxUserJsContainer = document.getElementById("editboxUserJsContainer");
+      if ( editboxUserJsContainer ) {
+        if ( "none" !== editboxUserJsContainer.style.display ) {
+          editboxUserJsContainer.style.display = "none";
+        } else {
+          editboxUserJsContainer.style.display = "block";
+        };
+      } else {
+        var element = etcthis.createUserJsControls();
+        document.body.appendChild( element );
+      };
+    };
+
+    etcthis.createUserJsControls = function() {
+      /* TODO: CSSに書き換える */
+      var editboxUserJsContainer = document.createElement("DIV");
+      editboxUserJsContainer.id = "editboxUserJsContainer";
+      editboxUserJsContainer.style.position = "fixed";
+      editboxUserJsContainer.style.top = "0px";
+      editboxUserJsContainer.style.left = "0px";
+      editboxUserJsContainer.style.bottom = "0px";
+      editboxUserJsContainer.style.right = "0px";
+      editboxUserJsContainer.style.width ="100%";
+      editboxUserJsContainer.style.height = "100%";
+      editboxUserJsContainer.style.textAlign = "center";
+      editboxUserJsContainer.style.zIndex = 10;
+      editboxUserJsContainer.style.maxWidth = "100%";
+
+      var blackoutCurtain = document.createElement("DIV");
+      blackoutCurtain.id = "blackoutCurtain";
+      blackoutCurtain.style.background = "black";
+      blackoutCurtain.style.opacity = 0.3;
+      blackoutCurtain.style.position = "absolute";
+      blackoutCurtain.style.top = "0px";
+      blackoutCurtain.style.left = "0px";
+      blackoutCurtain.style.right = "0px";
+      blackoutCurtain.style.bottom = "0px";
+      blackoutCurtain.style.width = "100%";
+      blackoutCurtain.style.maxWidth = "100%";
+      blackoutCurtain.style.height = "100%";
+      blackoutCurtain.style.zIndex = "-1";
+      blackoutCurtain.onclick = etcthis.showHideEditBoxForUserJs;
+
+      var editboxUserJsDiv = document.createElement("DIV");
+      editboxUserJsDiv.id = "editboxUserJsDiv";
+      editboxUserJsDiv.style.background = "#f0e0d6";
+      editboxUserJsDiv.style.borderColor = "#d9bfb7";
+      etcthis.setInnerPostStyle( editboxUserJsDiv.style );
+      editboxUserJsDiv.style.opacity = "1";
+      editboxUserJsDiv.style.resize = "both";
+      editboxUserJsDiv.style.overflow = "auto";
+      editboxUserJsDiv.style.height = "90%";
+      editboxUserJsDiv.style.width = "97%";
+      editboxUserJsDiv.style.margin = "0.5em";
+      editboxUserJsDiv.style.maxWidth = "97%";
+      editboxUserJsDiv.style.maxHeight = "97%";
+
+      var editboxUserJsTitle = document.createElement("DIV");
+      editboxUserJsTitle.appendChild( document.createTextNode("UserJS") );
+      editboxUserJsTitle.appendChild( document.createElement("BR") );
+      editboxUserJsTitle.appendChild( document.createTextNode("warning: javascript can send spam and attack") );
+
+      var editboxUserJsCloseButton = document.createElement("DIV");
+      editboxUserJsCloseButton.style.float = "right";
+      editboxUserJsCloseButton.style.margin = "0.5em";
+      editboxUserJsCloseButton.style.cursor = "pointer";
+      editboxUserJsCloseButton.onclick = etcthis.showHideEditBoxForUserJs;
+      editboxUserJsCloseButton.appendChild( document.createTextNode("×") );
+      
+      var editboxUserJs = document.createElement("TEXTAREA");
+      editboxUserJs.id = "editboxUserJs";
+      editboxUserJs.style.maxWidth = "98%";
+      editboxUserJs.style.width = "100%";
+      editboxUserJs.style.height = "calc( 100% - 7em )";
+      editboxUserJs.style.fontFamily = "monospace";
+      editboxUserJs.style.disable = "block";
+      editboxUserJs.style.resize = "none";
+      if (localStorage.user_js) {
+        editboxUserJs.value = localStorage.user_js;
+      };
+
+      var editboxUserJsSaveButton = document.createElement("BUTTON");
+      editboxUserJsSaveButton.appendChild( document.createTextNode("save custom Javascript" ) );
+      editboxUserJsSaveButton.onclick = etcthis.saveAndRunUserJs;
+
+      editboxUserJsContainer.appendChild( blackoutCurtain );
+      editboxUserJsContainer.appendChild( editboxUserJsDiv );
+      editboxUserJsDiv.appendChild( editboxUserJsCloseButton );
+      editboxUserJsDiv.appendChild( editboxUserJsTitle );
+      editboxUserJsDiv.appendChild( editboxUserJs );
+      editboxUserJsDiv.appendChild( editboxUserJsSaveButton );
+
+      return editboxUserJsContainer;
+    };
+
+    etcthis.saveAndRunUserJs = function() {
+      var editboxUserJs = document.getElementById("editboxUserJs");
+      if (!editboxUserJs) {
+        return;
+      };
+
+      localStorage.user_js = editboxUserJs.value;
+
+      etcthis.excuteUserJs();
+    };
+
+    etcthis.excuteUserJs = function() {
+      if ( localStorage.user_js ) {
+        try { eval( localStorage.user_js ); }
+        catch(e){ alert( e ); };
+      };
+    };
+
+    etcthis.setInnerPostStyle = function( destStyle ) {
+      var innerPostList = document.getElementsByClassName("innerPost");
+      var srcStyle;
+      if ( 0 < innerPostList.length ) {
+        srcStyle = window.getComputedStyle( innerPostList[0], null );
+      };
+      if ( srcStyle ) {
+        destStyle.background = srcStyle.backgroundColor;
+        destStyle.borderTopColor = srcStyle.borderTopColor;
+        destStyle.borderLeftColor = srcStyle.borderLeftColor;
+        destStyle.borderBottomColor = srcStyle.borderBottomColor;
+        destStyle.borderRightColor = srcStyle.borderRightColor;
+        destStyle.fontSize = srcStyle.fontSize;
+        destStyle.color = srcStyle.color;
+      };
+    };
+
+    etcthis.movePostBox = function() {
+      if ( 0 <= document.location.href.indexOf("/res/") ) {
+        var postBox = document.getElementById("postBox");
+        if (postBox) {
+          document.body.appendChild( postBox );
+        };
+      };
+    };
+
     etcthis.setCheckboxOfDancingMascot = function() {
 
       etcthis.hideLibrejpBottomLeftMascot =
@@ -2434,7 +2594,7 @@
       input.id = 'myHideLibrejpBottomLeftMascot';
       input.onclick = etcthis.updateShowHideLibrejpBottomLeftMascot;
       input.checked = etcthis.hideLibrejpBottomLeftMascot;
-      
+
       var label = document.createElement('LABEL');
       label.style.display = 'inline';
       label.appendChild( input );
@@ -2452,7 +2612,7 @@
     etcthis.updateShowHideLibrejpBottomLeftMascot = function(ev) {
 
       var style_id = "styleHideLibrejpBottomLeftMascot";
-      
+
       if ( ev ) {
         etcthis.hideLibrejpBottomLeftMascot = ev.target.checked;
         window.setSetting('ymncLibrejpBottomLeftMascot', etcthis.hideLibrejpBottomLeftMascot );
@@ -2471,7 +2631,7 @@
               + "body:before { content: none !important; }";
           document.head.appendChild( style );
         };
-        
+
       } else {
 
         if ( null !== style ) {
@@ -2480,7 +2640,7 @@
 
       };
     };
-    
+
     etcthis.setCheckboxOfMaskFilenameMode = function() {
 
       etcthis.maskFilename =
@@ -2493,14 +2653,14 @@
       input.checked = etcthis.maskFilename;
 
       var label = document.createElement('LABEL');
-      label.style.display = 'inline';
+      label.style.display = 'block';
       label.appendChild( input );
       label.appendChild( document.createTextNode('常に投稿ファイル名をマスクする') );
 
       var origin;
       origin = document.getElementById('postBox');
       if ( origin ) {
-        origin.parentElement.insertBefore( label, origin );
+        origin.insertBefore( label, origin.firstChild );
         return;
       };
 
@@ -3592,7 +3752,7 @@
 
     etcthis.removeNonJsSendButton = function removeNonJsSendButton() {
       /* エンターキーで送信暴発しちゃうのを防ぐために */
-      
+
       var formButton = document.getElementById('formButton');
 
       if ( formButton !== null && 'none' === formButton.style.display) {
@@ -3654,7 +3814,9 @@
       if ( 0 <= document.location.href.indexOf("/librejp/") ) {
         etcthis.setCheckboxOfDancingMascot();
       };
-      
+
+      /* etcthis.movePostBox(); */
+      etcthis.UserJs();
     };
 
     etcthis.trigger = function()
