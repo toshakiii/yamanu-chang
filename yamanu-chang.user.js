@@ -28,8 +28,8 @@
 // @include    /https?://waifuchan\.moe/.*$/
 // @include    /https?://waifuchan\.moe/.*$/
 //
-// @version      2.21
-// @description v2.21: endchan: catalog sorter, preview upload files, recursive quote popup
+// @version      2.23
+// @description v2.23: endchan: catalog sorter, preview upload files, recursive quote popup
 // @grant       none
 // ==/UserScript==
 
@@ -45,6 +45,10 @@
 
 /*
  yamanu-chang(山ぬちゃん)です
+・(v2.23 2017.07.17)
+  ・機能追加: クリップボードのデータを添付ファイルにする昨日
+・(v2.22 2017.07.17)
+  ・微調整
 ・(v2.21 2017.07.17)
   ・機能追加: UserJS(仮)
 ・(v2.20 2017.07.10)
@@ -2426,6 +2430,51 @@
     etcthis.maskFilename = false;
     etcthis.hideLibrejpBottomLeftMascot = false;
 
+    etcthis.makeCanvasFromImg = function(imgElement) {
+      var canvas = document.createElement('CANVAS');
+      canvas.width  = imgElement.width;
+      canvas.height = imgElement.height;
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(imgElement, 0, 0);
+      return canvas;
+    };
+
+    etcthis.uploadFileFromClipboard = function() {
+      var fieldMessage = document.getElementById("fieldMessage");
+      if ( fieldMessage ) {
+        fieldMessage.contentEditable = true;
+        fieldMessage.title = "Ctrl-V to upload";
+        fieldMessage.addEventListener('paste', fieldMessageOnPaste );
+      };
+
+      if ( window.show_quick_reply ) {
+        var original_show_quick_reply = window.show_quick_reply;
+        function ymnc_show_quick_reply() {
+          var r = original_show_quick_reply();
+          var qrbody = document.getElementById("qrbody");
+          if (qrbody && "1" !== qrbody.getAttribute("data-ymnc-initialized")) {
+            qrbody.addEventListener('paste', fieldMessageOnPaste );
+            qrbody.title = "Ctrl-V to upload";
+            qrbody.setAttribute("data-ymnc-initialized","1");
+          };
+          return r;
+        };
+        window.show_quick_reply = ymnc_show_quick_reply;
+      };
+    };
+
+    function fieldMessageOnPaste( event ) {
+      var items = (event.clipboardData || event.originalEvent.clipboardData).items;
+      
+      for (var index in items) {
+        var item = items[index];
+        if (item.kind === 'file') {
+          var blob = item.getAsFile();
+          window.addSelectedFile( blob );
+        };
+      };
+    };
+
     etcthis.UserJs = function() {
       etcthis.setButtonToEditUserJs();
       etcthis.excuteUserJs();
@@ -2440,6 +2489,8 @@
       var origin = document.querySelector('select[name=switchcolorcontrol]');
       if ( origin ) {
         origin.parentElement.appendChild( button );
+      } else {
+        document.body.appendChild( button );
       };
 
     };
@@ -2505,7 +2556,7 @@
       var editboxUserJsTitle = document.createElement("DIV");
       editboxUserJsTitle.appendChild( document.createTextNode("UserJS") );
       editboxUserJsTitle.appendChild( document.createElement("BR") );
-      editboxUserJsTitle.appendChild( document.createTextNode("warning: javascript can send spam and attack") );
+      editboxUserJsTitle.appendChild( document.createTextNode("warning: javascript can send spam and any attack") );
 
       var editboxUserJsCloseButton = document.createElement("DIV");
       editboxUserJsCloseButton.style.float = "right";
@@ -3817,6 +3868,8 @@
 
       /* etcthis.movePostBox(); */
       etcthis.UserJs();
+
+      etcthis.uploadFileFromClipboard();
     };
 
     etcthis.trigger = function()
