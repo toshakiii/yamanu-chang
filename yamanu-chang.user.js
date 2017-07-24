@@ -28,8 +28,8 @@
 // @include    /https?://waifuchan\.moe/.*$/
 // @include    /https?://waifuchan\.moe/.*$/
 //
-// @version      2.23
-// @description v2.23: endchan: catalog sorter, preview upload files, recursive quote popup
+// @version      2.24
+// @description v2.24: endchan: catalog sorter, preview upload files, recursive quote popup
 // @grant       none
 // ==/UserScript==
 
@@ -45,8 +45,10 @@
 
 /*
  yamanu-chang(山ぬちゃん)です
+・(v2.23 2017.07.25)
+  ・機能追加: マークダウン支援(タグ追加)
 ・(v2.23 2017.07.17)
-  ・機能追加: クリップボードのデータを添付ファイルにする昨日
+  ・機能追加: クリップボードのデータを添付ファイルにする機能
 ・(v2.22 2017.07.17)
   ・微調整
 ・(v2.21 2017.07.17)
@@ -2430,6 +2432,89 @@
     etcthis.maskFilename = false;
     etcthis.hideLibrejpBottomLeftMascot = false;
 
+    etcthis.markdowns = [
+      { name: "Spo",  className: "spoiler", beg: "[spoiler]", end: "[/spoiler]" },
+      { name: "Red",  className: "redText", beg: "==", end: "==" },
+      { name: "Ita",  fontStyle: "italic",  beg: "''", end: "''" },
+      { name: "Bol",  fontStyle: "bold",    beg: "'''", end: "'''" },
+      { name: "Und",  textDecoration: "underline", beg: "__", end: "__"},
+      { name: "Str",    textDecoration: "line-through", beg: "~~", end: "~~"},
+      { name: "mem",    className: "memeText", beg: "[meme]", end: "[/meme]" },
+      { name: "Aut",    className: "autismText", beg: "[autism]", end: "[/autism]" },
+      { name: "AA",   title: "Ascii Art", beg: "[aa]", end: "[/aa]"},
+      { name: "code", beg: "[code]", end: "[/code]" }
+    ];
+
+    etcthis.markdownTool = function() {
+
+      etcthis.setMarkdownToolForMainForm();
+
+    };
+
+    etcthis.setMarkdownToolForMainForm = function() {
+      var fieldMessage = document.getElementById('fieldMessage');
+      if (!fieldMessage) {
+        return false;
+      };
+      var commentTh = fieldMessage.parentElement ?
+          fieldMessage.parentElement.previousElementSibling :
+          null;
+
+      if (!commentTh) {
+        return false;
+      };
+
+      commentTh.style.width = "5em";
+      etcthis.setMarkdownToolButton( commentTh, fieldMessage );
+
+      return true;
+    };
+
+    etcthis.setMarkdownToolButton = function( container, textarea ) {
+
+      for ( var markdownIndex = 0, markdownLen = etcthis.markdowns.length;
+          markdownIndex < markdownLen ; ++markdownIndex ) {
+
+        var Anchor = document.createElement("A");
+        var markdown = etcthis.markdowns[ markdownIndex ];
+        Anchor.style.border="1px solid";
+        Anchor.style.cursor="pointer";
+        if (markdown.className)
+          Anchor.className = markdown.className;
+        if (markdown.fontStyle)
+          Anchor.style.fontStyle = markdown.fontStyle;
+        if (markdown.textDecoration)
+          Anchor.style.textDecoration = markdown.textDecoration;
+        if (markdown.title)
+          Anchor.title = markdown.title;
+        Anchor.appendChild( document.createTextNode( markdown.name ) );
+
+        Anchor.addEventListener("click", (function closure() {
+          var index = markdownIndex;
+          return function() {
+            var originalSelectionEnd = +textarea.selectionEnd;
+            var originalSelectionStart = +textarea.selectionStart;
+            var begTag = etcthis.markdowns[index].beg;
+            var endTag = etcthis.markdowns[index].end;
+
+            textarea.value = textarea.value.substring(0, originalSelectionEnd ) + endTag +
+                textarea.value.substring( originalSelectionEnd);
+
+            textarea.value = textarea.value.substring(0, originalSelectionStart ) + begTag +
+                textarea.value.substring( originalSelectionStart);
+
+            textarea.select();
+            textarea.selectionStart = begTag.length + originalSelectionStart;
+            textarea.selectionEnd = begTag.length + originalSelectionEnd;
+
+          }; })() );
+
+        container.appendChild( document.createTextNode(" ") );
+        container.appendChild( Anchor );
+      };
+
+    };
+
     etcthis.makeCanvasFromImg = function(imgElement) {
       var canvas = document.createElement('CANVAS');
       canvas.width  = imgElement.width;
@@ -2465,7 +2550,7 @@
 
     function fieldMessageOnPaste( event ) {
       var items = (event.clipboardData || event.originalEvent.clipboardData).items;
-      
+
       for (var index in items) {
         var item = items[index];
         if (item.kind === 'file') {
@@ -2564,7 +2649,7 @@
       editboxUserJsCloseButton.style.cursor = "pointer";
       editboxUserJsCloseButton.onclick = etcthis.showHideEditBoxForUserJs;
       editboxUserJsCloseButton.appendChild( document.createTextNode("×") );
-      
+
       var editboxUserJs = document.createElement("TEXTAREA");
       editboxUserJs.id = "editboxUserJs";
       editboxUserJs.style.maxWidth = "98%";
@@ -3868,8 +3953,8 @@
 
       /* etcthis.movePostBox(); */
       etcthis.UserJs();
-
       etcthis.uploadFileFromClipboard();
+      etcthis.markdownTool();
     };
 
     etcthis.trigger = function()
