@@ -28,8 +28,8 @@
 // @include    /https?://waifuchan\.moe/.*$/
 // @include    /https?://waifuchan\.moe/.*$/
 //
-// @version      2.24
-// @description v2.24: endchan: catalog sorter, preview upload files, recursive quote popup
+// @version      2.25
+// @description v2.25: endchan: catalog sorter, preview upload files, recursive quote popup
 // @grant       none
 // ==/UserScript==
 
@@ -45,44 +45,30 @@
 
 /*
  yamanu-chang(山ぬちゃん)です
-・(v2.23 2017.07.25)
-  ・機能追加: マークダウン支援(タグ追加)
-・(v2.23 2017.07.17)
-  ・機能追加: クリップボードのデータを添付ファイルにする機能
-・(v2.22 2017.07.17)
-  ・微調整
-・(v2.21 2017.07.17)
-  ・機能追加: UserJS(仮)
+・(v2.25 2017.07.25) 微調整: マークダウン支援UI
+・(v2.24 2017.07.25) 機能追加: マークダウン支援(タグ追加)
+・(v2.23 2017.07.17) 機能追加: クリップボードのデータを添付ファイルにする機能
+・(v2.22 2017.07.17) 微調整
+・(v2.21 2017.07.17) 機能追加: UserJS(仮)
 ・(v2.20 2017.07.10)
   ・調整: ポップアップが縦幅100%でクリップされるのを撤廃
   ・調整: 縦に大きなポップアップの場合の出現位置を調整
-・(v2.19 2017.07.09)
-  ・機能追加: 右下ダンスを非表示にする機能
-・(v2.18 2017.07.02)
-  ・ファイル名を自由に変更できる機能を追加
-・(v2.17 2017.06.28)
-  ・微調整
-・(v2.16)
-  ・ファイル名をランダムな名前に変更するオプションを追加。
-・(v2.15)
-  ・引用ポップアップの大きさ調整
-・(v2.14)
-  ・動画ループ補助機能
-・(v2.13)
-  ・通し番号CSSを調整。(v2.12は余計な対処だった)
-・(v2.12)
-  ・通し番号CSSを調整。
-・(v2.11)
-  ・補助機能:「400 Bad Request」ページにクッキー削除ボタンを設置
+・(v2.19 2017.07.09) 機能追加: 右下ダンスを非表示にする機能
+・(v2.18 2017.07.02) ファイル名を自由に変更できる機能を追加
+・(v2.17 2017.06.28) 微調整
+・(v2.16) ファイル名をランダムな名前に変更するオプションを追加。
+・(v2.15) 引用ポップアップの大きさ調整
+・(v2.14) 動画ループ補助機能
+・(v2.13) 通し番号CSSを調整。(v2.12は余計な対処だった)
+・(v2.12) 通し番号CSSを調整。
+・(v2.11) 補助機能:「400 Bad Request」ページにクッキー削除ボタンを設置
 ・(v2.10)
   ・v2.10の修正
     スクリプトを実行させる方法の選択を、「Firefox と Edge または、それ以外」という風に変更
 ・(v2.09)
   ・スクリプトを実行させる方法の選択を、「Firefox または、それ以外」という風に変更(MS Edge対応用)
-・(v2.08)
-  ・hideの仕様を公式にあわせる
-・(v2.07)
-  ・ミス修正
+・(v2.08) hideの仕様を公式にあわせる
+・(v2.07) ミス修正
 ・(v2.06 2017.04.02 14:43 JST)
   ・endchan公式でカタログリフレッシュが導入され、公式のカタhideが動いていない。
     カタログhideを有効にする補助機能を追加
@@ -92,24 +78,19 @@
   ・Youtube埋め込みをautoplyに
   ・soundcloudの埋め込み対応
   ・endchanがEmbedを表示しないURIの埋め込みにも対応
-・(v2.03 2017.02.21 JST)
-  ・デバッグコードが消えていなかったのを修正
+・(v2.03 2017.02.21 JST) デバッグコードが消えていなかったのを修正
 ・(v2.02 2017.02.21.01.09 JST)
   ・endchan公式に入ったため、複数行引用機能削除
   ・名前変更: CompulsoryProcesses → CompulsoryProcessing
   ・変数名調整多数
   ・endchan公式の変化に追従し、日付ローカライズ方法を縮小。公式の「Use Local Time」に寄生する形式に。
-・(v2.01 2017.01.22 03:15 JST)
-  ・複数行引用の引用方法の微修正
-・(v2.00 2017.01.22 03:03 JST)
-  ・クイックリプライの複数行引用の補助機能を追加。
+・(v2.01 2017.01.22 03:15 JST) 複数行引用の引用方法の微修正
+・(v2.00 2017.01.22 03:03 JST) クイックリプライの複数行引用の補助機能を追加。
 ・(v1.99 2017.01.02.19.05 JST)
   ・オブザーバーパターンを歪めて統一した扱いができるようなコードに変更。(CompulsoryProcesses周り)
   ・Audioファイルのインライン再生時にサムネを残す補助機能を追加。
-・(v1.98 2016.12.30.05.25 JST)
-  ・引用ポップアップで画像が表示できなかったのを修正
-・(v1.97 2016.12.30.02.53 JST)
-  ・Tor用アドレスに対応してみる(動作未確認)
+・(v1.98 2016.12.30.05.25 JST) 引用ポップアップで画像が表示できなかったのを修正
+・(v1.97 2016.12.30.02.53 JST) Tor用アドレスに対応してみる(動作未確認)
 ・(v1.96 2016.12.30.02.34 JST)
   ・endchan が http を廃止して https に全面移行したみたいだから
     https に対応していないニコニコの埋め込みメッセージを変更
@@ -119,10 +100,8 @@
 ・(v1.94)
   ・ページタイトルを "<何々> - /<板名>/" にする補助機能を追加。
   ・Google Chrome で mp3 を貼れるようにする機能の実装を変更。
-・(v1.93)
-  ・Refresh読み込み分のレスにも、[X] と del を設置する補助機能を追加。
-・(v1.92)
-  ・autoRefresh の状態を記憶する補助機能を追加。
+・(v1.93) Refresh読み込み分のレスにも、[X] と del を設置する補助機能を追加。
+・(v1.92) autoRefresh の状態を記憶する補助機能を追加。
 ・(v1.91)
   ・カタログのスレ立てフォームを表示/非表示できるように。初期値は非表示。
   ・通報/削除フォームを表示/非表示できるように。初期値は非表示。
@@ -130,10 +109,8 @@
   ・div.markedPost にも通し番号が出るように
   ・endchan のカタログ hide の新仕様に対応。hide したスレが下に溜まるように。
   ・再帰的ポップアップのクイック引用に対応。レス番部分を押すと Quick Reply が開きます。
-・(v1.89 2016.11.30 15:08 JST)
-  ・バグ修正
-・(v1.88 2016.11.30 14:44 JST)
-  ・Google Chrome でも mp3 が貼れるようにハックを追加。
+・(v1.89 2016.11.30 15:08 JST) バグ修正
+・(v1.88 2016.11.30 14:44 JST) Google Chrome でも mp3 が貼れるようにハックを追加。
 ・(v1.87 2016.11.28 21:43 JST)
   ・freech.net で再帰的ポップアップが動かないのを修正
   ・ポップアップ待機中の「now loading」表示を追加
@@ -2432,17 +2409,37 @@
     etcthis.maskFilename = false;
     etcthis.hideLibrejpBottomLeftMascot = false;
 
+    etcthis.insertMiscCSS = function() {
+      var s = "";
+      s += '.ymncMarkdownToolButton { cursor: pointer; border: 1px solid; }';
+      s += '.ymncMarkdownToolButton:hover { border: 1px solid white }';
+      
+      var style = document.createElement('STYLE');
+      style.type = "text/css";
+      style.id = "ymanuchangStyles";
+      style.innerHTML = s;
+      document.head.appendChild( style );
+    };
+    
     etcthis.markdowns = [
-      { name: "Spo",  className: "spoiler", beg: "[spoiler]", end: "[/spoiler]" },
-      { name: "Red",  className: "redText", beg: "==", end: "==" },
-      { name: "Ita",  fontStyle: "italic",  beg: "''", end: "''" },
-      { name: "Bol",  fontStyle: "bold",    beg: "'''", end: "'''" },
-      { name: "Und",  textDecoration: "underline", beg: "__", end: "__"},
-      { name: "Str",    textDecoration: "line-through", beg: "~~", end: "~~"},
-      { name: "mem",    className: "memeText", beg: "[meme]", end: "[/meme]" },
-      { name: "Aut",    className: "autismText", beg: "[autism]", end: "[/autism]" },
-      { name: "AA",   title: "Ascii Art", beg: "[aa]", end: "[/aa]"},
-      { name: "code", beg: "[code]", end: "[/code]" }
+      { name: "Spo",  title: "spoiler",   className: "spoiler", fontWeight: "normal",
+        beg: "[spoiler]", end: "[/spoiler]" },
+      { name: "Red",  title: "red",       className: "redText",
+        beg: "==", end: "==" },
+      { name: "Ita",  title: "italic",    fontStyle: "italic",  fontWeight: "normal",
+        beg: "''", end: "''" },
+      { name: "Bol",  title: "bold",      fontStyle: "bold",    fontWeight: "bold",
+        beg: "'''", end: "'''" },
+      { name: "Und",  title: "underline", textDecoration: "underline", fontWeight: "normal",
+        beg: "__", end: "__"},
+      { name: "Str",  title: "strike",    textDecoration: "line-through", fontWeight: "normal",
+        beg: "~~", end: "~~"},
+      { name: "mem",  title: "meme",      className: "memeText", fontWeight: "normal",
+        beg: "[meme]", end: "[/meme]" },
+      { name: "Aut",  title: "autism",    className: "autismText", fontWeight: "normal",
+        beg: "[autism]", end: "[/autism]" },
+      { name: "AA",   title: "Ascii Art", fontWeight: "normal", beg: "[aa]",   end: "[/aa]"},
+      { name: "code", title: "code",      fontWeight: "normal", beg: "[code]", end: "[/code]" }
     ];
 
     etcthis.markdownTool = function() {
@@ -2477,16 +2474,18 @@
 
         var Anchor = document.createElement("A");
         var markdown = etcthis.markdowns[ markdownIndex ];
-        Anchor.style.border="1px solid";
-        Anchor.style.cursor="pointer";
         if (markdown.className)
           Anchor.className = markdown.className;
+        Anchor.className = Anchor.className + " ymncMarkdownToolButton";
         if (markdown.fontStyle)
           Anchor.style.fontStyle = markdown.fontStyle;
         if (markdown.textDecoration)
           Anchor.style.textDecoration = markdown.textDecoration;
         if (markdown.title)
           Anchor.title = markdown.title;
+        if (markdown.fontWeight)
+          Anchor.style.fontWeight = markdown.fontWeight;
+
         Anchor.appendChild( document.createTextNode( markdown.name ) );
 
         Anchor.addEventListener("click", (function closure() {
@@ -3955,6 +3954,7 @@
       etcthis.UserJs();
       etcthis.uploadFileFromClipboard();
       etcthis.markdownTool();
+      etcthis.insertMiscCSS();
     };
 
     etcthis.trigger = function()
