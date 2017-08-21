@@ -28,8 +28,8 @@
 // @include    /https?://waifuchan\.moe/.*$/
 // @include    /https?://waifuchan\.moe/.*$/
 //
-// @version      2.25
-// @description v2.25: endchan: catalog sorter, preview upload files, recursive quote popup
+// @version      2.26
+// @description v2.26: endchan: catalog sorter, preview upload files, recursive quote popup
 // @grant       none
 // ==/UserScript==
 
@@ -45,6 +45,9 @@
 
 /*
  yamanu-chang(山ぬちゃん)です
+・(v2.26 2017.08.22)
+  ・HTML Element Unique ID のインフラを変更
+  ・Board CSS で通報フォームを透明化したので、通報/削除フォームム非表示機能を停止
 ・(v2.25 2017.07.25) 微調整: マークダウン支援UI
 ・(v2.24 2017.07.25) 機能追加: マークダウン支援(タグ追加)
 ・(v2.23 2017.07.17) 機能追加: クリップボードのデータを添付ファイルにする機能
@@ -160,6 +163,7 @@
   ・"message"
   ・'system_constant_value'
   ・trigger, enable, disable
+  ・文字列定数は直接書く。変数を媒介しない。
 */
 
 /*
@@ -725,25 +729,21 @@
           .beginAsync();
     };
 
-    uthis.elementOfUid = {};
-    uthis.uidCounter = 0;
+    uthis.elementUidCounter = 0;
     uthis.getElementUniqueId =
         function( element )
     {
-      ++uthis.uidCounter;
-
-      var cdaName = "data-tsk-uid";
-      var uid = element.getAttribute( cdaName );
-
-      if( null != uid &&
-            uthis.elementOfUid[ uid ] === element )
-      {
-        return uid;
+      if ( element === element.thisself ) {
+        /* thisself フィールドが element 自身を示すなら "data-tsk-uid" も有効に設定されているはず */
+        return element.getAttribute("data-tsk-uid");
       };
 
-      uid = "tskuid" + uthis.uidCounter + "__";
-      element.setAttribute( cdaName, uid );
-      uthis.elementOfUid[ uid ] = element;
+      ++uthis.uidCounter;
+
+      var uid = "tskuid" + uthis.elementUidCounter + "__";
+      element.setAttribute( "data-tsk-uid", uid );
+      element.thisself = element;
+
       return uid;
     };
     uthis.toMarkElementDiscarded =
@@ -3665,12 +3665,12 @@
         return;
       };
       var showHideAnchor = document.createElement('A');
-      showHideAnchor.appendChild( document.createTextNode('[Show hidden report and deletion form]') );
+      showHideAnchor.appendChild( document.createTextNode('[+report/del form]') );
       showHideAnchor.setAttribute( etcthis.isHiddenCDAName, '1' );
       showHideAnchor.addEventListener('click', etcthis.showHideContentAction);
 
       contentAction.parentElement.insertBefore( showHideAnchor, contentAction );
-      contentAction.style.display = 'none';
+      contentAction.style.visibility = 'hidden';
     };
 
     etcthis.showHideContentAction =
@@ -3678,8 +3678,8 @@
     {
       var showHideAnchor = this;
       var target = etcthis.getContentActionElement();
-      var toShowText = '[Show hidden report and deletion form]';
-      var toHideText = '[Hide a report and delettion form]';
+      var toShowText = '[+report/del form]';
+      var toHideText = '[-report/del form]';
 
       if( null == target )
       {
@@ -3688,14 +3688,14 @@
       if( '0' === showHideAnchor.getAttribute( etcthis.isHiddenCDAName ) )
       {
         showHideAnchor.setAttribute( etcthis.isHiddenCDAName, '1' );
-        target.style.display = 'none';
+        target.style.visibility = 'hidden';
         showHideAnchor.replaceChild( document.createTextNode( toShowText ),
             showHideAnchor.firstChild );
       }
       else
       {
         showHideAnchor.setAttribute( etcthis.isHiddenCDAName, '0' );
-        target.style.display = '';
+        target.style.visibility = 'visible';
         showHideAnchor.replaceChild( document.createTextNode( toHideText),
             showHideAnchor.firstChild );
       };
@@ -3918,7 +3918,7 @@
       feWrapper.titleCP.appendAfterCP( etcthis.procTitle );
 
       /* setTimeout( etcthis.insertButtonShowHidePostingForm, 0 ); */
-      setTimeout( etcthis.insertButtonShowHideContentAction, 0 );
+      /* setTimeout( etcthis.insertButtonShowHideContentAction, 0 ); */
 
       setTimeout( etcthis.fixGoogleChromeMp3Mime, 0 );
 
