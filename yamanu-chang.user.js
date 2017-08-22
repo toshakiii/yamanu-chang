@@ -28,8 +28,8 @@
 // @include    /https?://waifuchan\.moe/.*$/
 // @include    /https?://waifuchan\.moe/.*$/
 //
-// @version      2.27
-// @description v2.27: endchan: catalog sorter, preview upload files, recursive quote popup
+// @version      2.28
+// @description v2.28: endchan: catalog sorter, preview upload files, recursive quote popup
 // @grant       none
 // ==/UserScript==
 
@@ -45,6 +45,7 @@
 
 /*
  yamanu-chang(山ぬちゃん)です
+・(v2.28 2017.08.22) getElementUniqueIdのタイプミスを修正
 ・(v2.27 2017.08.22) 変更: 通報/削除フォームム非表示機能を再有効化
 ・(v2.26 2017.08.22)
   ・HTML Element Unique ID のインフラを変更
@@ -739,7 +740,7 @@
         return element.getAttribute("data-tsk-uid");
       };
 
-      ++uthis.uidCounter;
+      ++uthis.elementUidCounter;
 
       var uid = "tskuid" + uthis.elementUidCounter + "__";
       element.setAttribute( "data-tsk-uid", uid );
