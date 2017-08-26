@@ -28,15 +28,15 @@
 // @include    /https?://waifuchan\.moe/.*$/
 // @include    /https?://waifuchan\.moe/.*$/
 //
-// @version      2.28
-// @description v2.28: endchan: catalog sorter, preview upload files, recursive quote popup
+// @version      2.29
+// @description v2.29: endchan: catalog sorter, preview upload files, recursive quote popup
 // @grant       none
 // ==/UserScript==
 
 
 /**************************************************
  *  yamanu-chang
- *  Copyright (c) 2016 "to_sha_ki_ii"
+ *  Copyright (c) 2017 "to_sha_ki_ii"
  *  This software is released under the MIT License.
  *  http://opensource.org/licenses/mit-license.php
  **************************************************
@@ -45,6 +45,7 @@
 
 /*
  yamanu-chang(山ぬちゃん)です
+・(v2.29 2017.08.27) 機能追加: 読み込み失敗した画像を再読み込みさせる補助機能を追加
 ・(v2.28 2017.08.22) getElementUniqueIdのタイプミスを修正
 ・(v2.27 2017.08.22) 変更: 通報/削除フォームム非表示機能を再有効化
 ・(v2.26 2017.08.22)
@@ -3212,17 +3213,13 @@
         var div = document.createElement('DIV');
         div.style.border = "1px solid red";
         var br = document.createElement('BR');
+        var anchor = document.createElement("A");
+        anchor.href = this.href;
+        anchor.appendChild( document.createTextNode(this.href) );
 
-        div.appendChild( document.createTextNode("https から http へはつなげられないから、" ) );
+        div.appendChild( document.createTextNode("埋め込み不可: https —×→ http" ) );
         div.appendChild( br );
-        div.appendChild( document.createTextNode("ニコニコ動画の埋め込みはできません。") );
-        div.appendChild( br.cloneNode() );
-        div.appendChild( document.createTextNode("embed をホイールクリックやら、Control Key + 左クリックやらで別タブで開くか、") );
-        div.appendChild( br.cloneNode() );
-        div.appendChild( document.createTextNode("Google Chrome の人はアドレスバー右の、縦と×のアイコンから、") );
-        div.appendChild( br.cloneNode() );
-        div.appendChild( document.createTextNode("「安全でないスクリプトを読み込む」で表示できないこともありません。") );
-        div.appendChild( br.cloneNode() );
+        div.appendChild( anchor );
 
         this.parentElement.appendChild( div );
 
@@ -3907,9 +3904,50 @@
       };
     };
 
+    etcthis.maxRetries = 5;
+    etcthis.retryLoading = function (event) {
+      /* event.target だけを使う */
 
+      /* 連続アクセスが原因で503が起きているらしい。時間をあけてから処理する */
+      setTimeout( function(){
+
+        var target = event.target;
+        var count = parseInt(target.getAttribute("data-yamanu-retries-count"));
+
+        if (count < etcthis.maxRetries) {
+          ++count;
+          target.setAttribute("data-yamanu-retries-count", count.toString());
+          event.target.src = event.target.src + "?t=" + (+new Date());
+
+        } else {
+          /* count が NaN の場合もここ */
+          target.removeEventListener("error", etcthis.retryLoading);
+        };
+      }, 1000 );
+    };
+    
+    etcthis.retryFailedTags = function() {
+      var imgList = Array.apply(null, document.getElementsByTagName("IMG"));
+      var imgIndex = 0, imgLength = imgList.length;
+
+      for (; imgIndex < imgLength; ++imgIndex ) {
+        var img = imgList[imgIndex];
+        if (! img.complete) {
+          img.setAttribute("data-yamanu-retries-count", "0");
+          img.addEventListener("error", etcthis.retryLoading );
+
+        } else if (0 === img.naturalWidth && 0 === img.naturalHeight) {
+          img.setAttribute("data-yamanu-retries-count", "0");
+          img.addEventListener("error", etcthis.retryLoading );
+          etcthis.retryLoading( { "target": img} );
+        };
+      };
+    };
+    
     etcthis.enable = function enable()
     {
+      etcthis.retryFailedTags();
+
       feWrapper.postCellCP.appendAfterCP( etcthis.overrideWrapperAll );
 
       feWrapper.messageUriHandlers.push( etcthis.enableSoundcloudEmbed );
