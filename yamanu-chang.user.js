@@ -28,8 +28,8 @@
 // @include    /https?://waifuchan\.moe/.*$/
 // @include    /https?://waifuchan\.moe/.*$/
 //
-// @version      2.29
-// @description v2.29: endchan: catalog sorter, preview upload files, recursive quote popup
+// @version      2.30
+// @description v2.30: endchan: catalog sorter, preview upload files, recursive quote popup
 // @grant       none
 // ==/UserScript==
 
@@ -45,6 +45,7 @@
 
 /*
  yamanu-chang(山ぬちゃん)です
+・(v2.29 2017.08.27) 対応: マークダウン支援で Red 周りの表示が崩れるのを修正。原因は global.css で .redText に position: absolute が指定されていたから。
 ・(v2.29 2017.08.27) 機能追加: 読み込み失敗した画像を再読み込みさせる補助機能を追加
 ・(v2.28 2017.08.22) getElementUniqueIdのタイプミスを修正
 ・(v2.27 2017.08.22) 変更: 通報/削除フォームム非表示機能を再有効化
@@ -2427,7 +2428,7 @@
     etcthis.markdowns = [
       { name: "Spo",  title: "spoiler",   className: "spoiler", fontWeight: "normal",
         beg: "[spoiler]", end: "[/spoiler]" },
-      { name: "Red",  title: "red",       className: "redText",
+      { name: "Red",  title: "red",       className: "redText", position: "static",
         beg: "==", end: "==" },
       { name: "Ita",  title: "italic",    fontStyle: "italic",  fontWeight: "normal",
         beg: "''", end: "''" },
@@ -2488,6 +2489,8 @@
           Anchor.title = markdown.title;
         if (markdown.fontWeight)
           Anchor.style.fontWeight = markdown.fontWeight;
+        if (markdown.position)
+          Anchor.style.position = markdown.position;
 
         Anchor.appendChild( document.createTextNode( markdown.name ) );
 
