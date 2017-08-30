@@ -28,8 +28,8 @@
 // @include    /https?://waifuchan\.moe/.*$/
 // @include    /https?://waifuchan\.moe/.*$/
 //
-// @version      2.30
-// @description v2.30: endchan: catalog sorter, preview upload files, recursive quote popup
+// @version      2.32
+// @description v2.32: endchan: catalog sorter, preview upload files, recursive quote popup
 // @grant       none
 // ==/UserScript==
 
@@ -45,7 +45,9 @@
 
 /*
  yamanu-chang(山ぬちゃん)です
-・(v2.29 2017.08.27) 対応: マークダウン支援で Red 周りの表示が崩れるのを修正。原因は global.css で .redText に position: absolute が指定されていたから。
+・(v2.32 2017.09.06) 修正: 再帰的ポップアップの表示を改善
+・(v2.31 2017.08.31) 機能追加: qr.js 失敗時に再読み込みする機能を追加。
+・(v2.30 2017.08.27) 対応: マークダウン支援で Red 周りの表示が崩れるのを修正。原因は global.css で .redText に position: absolute が指定されていたから。
 ・(v2.29 2017.08.27) 機能追加: 読み込み失敗した画像を再読み込みさせる補助機能を追加
 ・(v2.28 2017.08.22) getElementUniqueIdのタイプミスを修正
 ・(v2.27 2017.08.22) 変更: 通報/削除フォームム非表示機能を再有効化
@@ -1170,7 +1172,7 @@
     pthis.startQuickReplyObserver =
         function()
     {
-      if( ! window.show_quick_reply )
+      if( pthis.qrMutationObserver !== undefined && ! window.show_quick_reply )
       {
         return;
       };
@@ -2417,14 +2419,23 @@
       var s = "";
       s += '.ymncMarkdownToolButton { cursor: pointer; border: 1px solid; }';
       s += '.ymncMarkdownToolButton:hover { border: 1px solid white }';
+
+      s += '.tskQuoteblock img { float: none; margin: auto; max-width: 100%; max-height: 100% }';
+      s += '.tskQuoteblock .imgLink { display: block; width: 127px; height: 127px; }';
+          
+
+      s += '.tskQuoteblock .uploadCell { display: inline-block; max-width: 127px;' +
+          'word-wrap: break-word }';
+      s += '.tskQuoteblock .uploadDetails { max-width: 127px }';
       
+
       var style = document.createElement('STYLE');
       style.type = "text/css";
       style.id = "ymanuchangStyles";
       style.innerHTML = s;
       document.head.appendChild( style );
     };
-    
+
     etcthis.markdowns = [
       { name: "Spo",  title: "spoiler",   className: "spoiler", fontWeight: "normal",
         beg: "[spoiler]", end: "[/spoiler]" },
@@ -2571,16 +2582,16 @@
     };
 
     etcthis.setButtonToEditUserJs = function() {
-      var button = document.createElement("BUTTON");
-      button.style.cursor = "pointer";
-      button.type = "button";
-      button.appendChild( document.createTextNode("(山仮)UserJS") );
-      button.onclick = etcthis.showHideEditBoxForUserJs;
-      var origin = document.querySelector('select[name=switchcolorcontrol]');
-      if ( origin ) {
-        origin.parentElement.appendChild( button );
+      var anchor = document.createElement("A");
+      anchor.style.cursor = "pointer";
+      anchor.appendChild( document.createTextNode(" [(山仮)UserJS]") );
+      anchor.onclick = etcthis.showHideEditBoxForUserJs;
+
+      var navList = document.getElementsByTagName("NAV");
+      if ( 0 < navList.length ) {
+        navList[0].appendChild( anchor );
       } else {
-        document.body.appendChild( button );
+        document.body.appendChild( anchor );
       };
 
     };
@@ -3926,15 +3937,21 @@
           /* count が NaN の場合もここ */
           target.removeEventListener("error", etcthis.retryLoading);
         };
-      }, 1000 );
+      }, 1500 );
     };
-    
-    etcthis.retryFailedTags = function() {
+
+    etcthis.retryFailedImgTags = function() {
       var imgList = Array.apply(null, document.getElementsByTagName("IMG"));
       var imgIndex = 0, imgLength = imgList.length;
 
       for (; imgIndex < imgLength; ++imgIndex ) {
+
         var img = imgList[imgIndex];
+
+        if (0 <= img.src.indexOf("/.youtube/vi/")) {
+          continue;
+        };
+
         if (! img.complete) {
           img.setAttribute("data-yamanu-retries-count", "0");
           img.addEventListener("error", etcthis.retryLoading );
@@ -3946,7 +3963,51 @@
         };
       };
     };
-    
+
+    etcthis.qrJsRetriesCount = 0;
+    etcthis.reloadQrJs = function() {
+      if ( 5 <= etcthis.qrJsRetriesCount ||
+            undefined !== window.show_quick_reply ) {
+        etcthis.uploadFileFromClipboard();
+        window.toshakiii.filePreview.startQuickReplyObserver();
+        return;
+      };
+      etcthis.qrJsRetriesCount = 1 + etcthis.qrJsRetriesCount;
+      var script = document.createElement("SCRIPT");
+      script.src = "/.static/qr.js?t=" + (+new Date());
+
+      document.head.appendChild( script );
+
+      setTimeout( etcthis.reloadQrJs, 1500 );
+    };
+
+    etcthis.retryFailedScriptSources = function() {
+      /* 読み込みに失敗したjavascript sourcesを再読み込みする。
+       * 2017年7月からある 503/502 エラー対策
+       * DOMContentLoaded時点で読み込みエラーをキャッチすることはできない
+       * だから泥臭い方法で再読み込みを行う */
+      var scriptTags = document.getElementsByTagName("SCRIPT");
+      var needToReloadQrJs = false;
+
+      for ( var scriptIndex = 0, scriptLength = scriptTags.length;
+            scriptIndex < scriptLength ; ++scriptIndex ) {
+
+        if ( 0 <= scriptTags[ scriptIndex ].src.indexOf("/.static/qr.js") &&
+              undefined === window.show_quick_reply ) {
+
+          needToReloadQrJs = true;
+        };
+      };
+      if (needToReloadQrJs) {
+        setTimeout( etcthis.reloadQrJs, 1500 );
+      };
+    };
+
+    etcthis.retryFailedTags = function() {
+      etcthis.retryFailedImgTags();
+      etcthis.retryFailedScriptSources();
+    };
+
     etcthis.enable = function enable()
     {
       etcthis.retryFailedTags();
@@ -4709,12 +4770,18 @@
         function( postCell )
     {
       var linkQuoteList = postCell.getElementsByClassName('linkQuote');
-      for( var lqIdx = linkQuoteList.length - 1; -1 < lqIdx ; --lqIdx )
+      for ( var lqIdx = linkQuoteList.length - 1; -1 < lqIdx ; --lqIdx )
       {
         var linkQuote = linkQuoteList[ lqIdx ];
         linkQuote.removeEventListener( "click", mthis.add_reply_quote );
         linkQuote.onclick = null;
         linkQuote.addEventListener( "click", mthis.add_reply_quote );
+      };
+
+      var imgList = postCell.getElementsByTagName("IMG");
+      for (var imgIdx = 0, imgLen = imgList.length; imgIdx < imgLen; ++imgIdx) {
+        imgList[imgIdx].removeAttribute("width");
+        imgList[imgIdx].removeAttribute("height");
       };
       /*
         var panelUploadsList = postCell.getElementsByClassName('panelUploads');
