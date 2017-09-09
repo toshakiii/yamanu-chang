@@ -45,7 +45,7 @@
 
 /*
  yamanu-chang(山ぬちゃん)です
-・(v2.32 2017.09.06) 修正: 再帰的ポップアップの表示を改善
+・(v2.32 2017.09.06) 修正: 再帰的ポップアップの表示CSSを改善
 ・(v2.31 2017.08.31) 機能追加: qr.js 失敗時に再読み込みする機能を追加。
 ・(v2.30 2017.08.27) 対応: マークダウン支援で Red 周りの表示が崩れるのを修正。原因は global.css で .redText に position: absolute が指定されていたから。
 ・(v2.29 2017.08.27) 機能追加: 読み込み失敗した画像を再読み込みさせる補助機能を追加
@@ -2417,18 +2417,25 @@
 
     etcthis.insertMiscCSS = function() {
       var s = "";
-      s += '.ymncMarkdownToolButton { cursor: pointer; border: 1px solid; }';
+      s += '.ymncMarkdownToolButton { cursor: pointer; border: 1px solid }';
       s += '.ymncMarkdownToolButton:hover { border: 1px solid white }';
 
-      s += '.tskQuoteblock img { float: none; margin: auto; max-width: 100%; max-height: 100% }';
-      s += '.tskQuoteblock .imgLink { display: block; width: 127px; height: 127px; }';
-          
+      /* ポップアップ関係 */
+      s += '.tskQuoteblock img { float: none; margin: auto; max-width: 127px; max-height: 127px }';
+      s += '.tskQuoteblock .imgLink { display: block; text-align: center; vertical-align: middle }';
 
       s += '.tskQuoteblock .uploadCell { display: inline-block; max-width: 127px;' +
           'word-wrap: break-word }';
       s += '.tskQuoteblock .uploadDetails { max-width: 127px }';
-      
 
+      s += '.tskQuoteblock .multipleUploads .opUploadPanel, ' +
+          '.tskQuoteblock .multipleUploads .panelUploads {' +
+          '  float: none; display: block }';
+
+      s += '.tskQuoteblock .innerPost > div:not(.divMessage)' +
+          ':not(.tskQuoteblock .multipleUploads .opUploadPanel)' +
+          ':not(.tskQuoteblock .multipleUploads .panelUploads){ display: inline-block; }';
+      
       var style = document.createElement('STYLE');
       style.type = "text/css";
       style.id = "ymanuchangStyles";
