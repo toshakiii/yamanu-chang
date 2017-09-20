@@ -28,8 +28,8 @@
 // @include    /https?://waifuchan\.moe/.*$/
 // @include    /https?://waifuchan\.moe/.*$/
 //
-// @version      2.32
-// @description v2.32: endchan: catalog sorter, preview upload files, recursive quote popup
+// @version      2.34
+// @description v2.34: endchan: catalog sorter, preview upload files, recursive quote popup
 // @grant       none
 // ==/UserScript==
 
@@ -45,6 +45,7 @@
 
 /*
  yamanu-chang(山ぬちゃん)です
+・(v2.34 2017.09.20) コード整理。プレビューの'POINTER'機構を削除して、'Element Unique Id'を使うように変更
 ・(v2.33 2017.09.20) 機能追加: 右クリックマークダウン支援を追加
 ・(v2.32 2017.09.06) 修正: 再帰的ポップアップの表示CSSを改善
 ・(v2.31 2017.08.31) 機能追加: qr.js 失敗時に再読み込みする機能を追加。
@@ -751,10 +752,14 @@
 
       return uid;
     };
-    uthis.toMarkElementDiscarded =
-        function( element )
-    {
-      element.setAttribute( "data-tsk-discarded", "1" );
+
+    uthis.getElementsByUniqueId = function(euid) {
+      var query = '[data-tsk-uid="' + euid + '"]';
+      return document.querySelectorAll(query);
+    };
+
+    uthis.toMarkElementDiscarded = function(element) {
+      element.setAttribute("data-tsk-discarded", "1");
     };
 
     uthis.trigger =
@@ -875,6 +880,7 @@
 
     var pthis = {};
     var feWrapper = window.toshakiii.feWrapper;
+    var utils = window.toshakiii.utils;
 
     window.toshakiii.filePreview = pthis;
 
@@ -884,38 +890,26 @@
     pthis.PREVIEW_CLASSNAME = "toshakiPreviewCell";
     pthis.PREVIEWS_AREA_CLASSNAME = "toshakiPreviewsArea";
 
-    /*
-     * endchan公式の $(".selectedCell") に設定する Custom Data Attribute名
-     * selectedCell.getAttribute( POINTER_CDA_NAME ) が、ある previewCell の ClassName の
-     * ひとつに対応する。
-     */
-    pthis.POINTER_CDA_NAME = "data-toshaki-preview-pointer";
+    /* previewCell の ClassName に selectedCell の Element Unique Id を設定する */
 
-    pthis.insertPreviewElement =
-        function( selectedCell, file, pointer )
-    {
-      if( pthis.hasPreviewed( selectedCell ) )
-      {
+    pthis.insertPreviewElement = function( selectedCell, file) {
+      if ( pthis.hasPreviewed( selectedCell ) )
         return true;
-      };
 
-      var previewsArea = pthis.getPreviewsAreaElement( selectedCell );
+      var previewsArea = pthis.getPreviewsAreaElement(selectedCell);
       var span = document.createElement('SPAN');
-      span.className = pthis.PREVIEW_CLASSNAME + " " + pointer;
-      selectedCell.setAttribute( pthis.POINTER_CDA_NAME, pointer);
-      previewsArea.appendChild( span );
+      var selectedCellUid = utils.getElementUniqueId(selectedCell);
+      span.className = pthis.PREVIEW_CLASSNAME + " preview" + selectedCellUid;
+      span.setAttribute("data-rel-selected-cell", selectedCellUid);
+      previewsArea.appendChild(span);
 
-      if( ( 350 * 1024 * 1024 ) <= file.size )
-      {
+      if((350 * 1024 * 1024) <= file.size) {
         return this.insertDummyElement( span, file, "OVER 350MiB");
-      }
-      else if( 0 <= file.type.indexOf( 'image/' ) )
-      {
+
+      } else if( 0 <= file.type.indexOf( 'image/' ) ) {
         return pthis.insertImagePreviewElement( span, file);
-      }
-      else if( 0 <= file.type.indexOf( 'audio/' ) ||
-            0 <= file.type.indexOf( 'video/' ) )
-      {
+
+      } else if( 0 <= file.type.indexOf( 'audio/' ) || 0 <= file.type.indexOf( 'video/' ) ) {
         return pthis.insertAudioVideoPreviewElement( span, file);
       };
 
@@ -975,132 +969,60 @@
       destElt.appendChild( elt );
     };
 
-    pthis.getPreviewsAreaElement =
-        function( refSelectedCell )
-    {
+    pthis.getPreviewsAreaElement = function( refSelectedCell ) {
       return refSelectedCell.parentElement.parentElement
-          .getElementsByClassName( pthis.PREVIEWS_AREA_CLASSNAME )[0];
+        .getElementsByClassName(pthis.PREVIEWS_AREA_CLASSNAME)[0];
     };
 
-    pthis.hasPreviewed =
-        function( selectedCell )
-    {
-      return selectedCell.hasAttribute( pthis.POINTER_CDA_NAME );
-      /*
-        function( selectedCell, pointer){
-        var previewsArea = pthis.getPreviewsAreaElement( selectedCell );
-        return 0 < previewsArea.getElementsByClassName( pointer ).length;}
-      */
+    pthis.hasPreviewed = function(selectedCell) {
+      var className = "preview" + utils.getElementUniqueId(selectedCell);
+      return 0 != document.getElementsByClassName(className).length;
     };
 
-    pthis.removeOldPreviews =
-        function()
-    {
-      var alivePointers = pthis.getAlivePointers();
-      var previewElts = document.getElementsByClassName( pthis.PREVIEW_CLASSNAME );
-      var toRemoveElts = [];
-      var peIdx = 0;
-      var previewElt;
-      var needsRemove;
-      var aliveIdx;
-      var aliveLen = alivePointers.length;
-      var alivePointer;
-      for( peIdx = previewElts.length - 1 ; peIdx > -1 ; --peIdx )
-      {
-        previewElt = previewElts[ peIdx ];
-        needsRemove = true;
-        for( aliveIdx = 0 ; aliveIdx < aliveLen ; ++aliveIdx )
-        {
-          alivePointer = alivePointers[ aliveIdx ];
-          if( 0 <= previewElt.className.indexOf( alivePointer ) )
-          {
-            needsRemove = false;
-            break;
-          };
-        };
-        if( needsRemove )
-        {
-          toRemoveElts.push( previewElt );
+    pthis.removeOldPreviews = function() {
+      var previewList = document.getElementsByClassName(pthis.PREVIEW_CLASSNAME);
+      var elementsToRemove = [];
+
+      for (var pIdx = 0, pLen = previewList.length; pIdx < pLen; ++pIdx ) {
+        var selectedCellEuid = previewList[pIdx].getAttribute("data-rel-selected-cell");
+        if ( 0 == utils.getElementsByUniqueId(selectedCellEuid).length) {
+          elementsToRemove.push(previewList[pIdx]);
         };
       };
 
-      var treIdx = 0;
-      var treLen = toRemoveElts.length;
-      for( ; treIdx < treLen ; ++treIdx )
-      {
-        toRemoveElts[ treIdx ].parentElement.removeChild( toRemoveElts[ treIdx ] );
+      for (var rIdx = elementsToRemove.length - 1; -1 < rIdx ; --rIdx ) {
+        var elt = elementsToRemove[rIdx];
+        elt.parentElement.removeChild(elt);
       };
     };
 
-    pthis.getAlivePointers =
-        function()
-    {
-      var elts = document.getElementsByClassName("selectedCell");
-      var a = [];
-      for( var idx = 0, len = elts.length ; idx < len ; ++idx )
-      {
-        if( elts[ idx ].hasAttribute( pthis.POINTER_CDA_NAME ) )
-        {
-          var name = elts[ idx ].getAttribute( pthis.POINTER_CDA_NAME );
-          if( null != name )
-          {
-            a.push( name );
-          };
-        };
-      };
-      return a;
-    };
-
-    pthis.selectedDivOnChange =
-        function( mutationRecords, mutationObserver )
-    {
-      /* 本フォームへの ".selectedCell" 追加の前に、クイックリプライへの追加が行なわれる
-         ことを前提としたコード*/
+    pthis.selectedDivOnChange = function(mutationRecords, mutationObserver) {
+      /* 本フォームへの ".selectedCell" 追加の前に、クイックリプライへの追加が行なわれることを前提と
+       * する */
       var selectedCells = document.getElementsByClassName("selectedCell");
-      var selectedCell;
       var scIdx = 0;
-      var mLen = Math.min( selectedCells.length, window.selectedFiles.length );
-      var pointers = new Array( mLen );
+      var scLen = selectedCells.length;
+      var mLen = Math.min(selectedCells.length, window.selectedFiles.length);
       pthis.removeOldPreviews();
 
-      for( ; scIdx < mLen ; ++scIdx )
-      {
-        selectedCell = selectedCells[ scIdx ];
-        if( selectedCell.hasAttribute( pthis.POINTER_CDA_NAME ) )
-        {
-          pointers[ scIdx ] = selectedCell.getAttribute( pthis.POINTER_CDA_NAME );
-        }
-        else
-        {
-          pointers[ scIdx ] = "p"+(+new Date())+"p"+scIdx;
-          pthis.insertPreviewElement( selectedCells[ scIdx ],
-              window.selectedFiles[ scIdx ],
-              pointers[ scIdx ] );
+      for (; scIdx < mLen ; ++scIdx) {
+        if (! pthis.hasPreviewed(selectedCells[scIdx])) {
+          pthis.insertPreviewElement( selectedCells[scIdx], window.selectedFiles[scIdx]);
         };
       };
 
-      var quickReplyElt = document.getElementById("quick-reply");
-      if( null != quickReplyElt )
-      {
-        var scLen = selectedCells.length;
-        for( ; scIdx < scLen ; ++scIdx )
-        {
-          var fIdx = scIdx - window.selectedFiles.length;
-          pthis.insertPreviewElement( selectedCells[ scIdx ],
-              window.selectedFiles[ fIdx ],
-              pointers[ fIdx ] );
+      for (; scIdx < scLen; ++scIdx) {
+        if (! pthis.hasPreviewed(selectedCells[scIdx])) {
+          pthis.insertPreviewElement( selectedCells[scIdx], window.selectedFiles[scIdx - mLen]);
         };
       };
 
-      for( var shIdx in feWrapper.selectedDivOnChangeHandlers )
-      {
-        feWrapper.selectedDivOnChangeHandlers[ shIdx ]();
+      for(var shIdx in feWrapper.selectedDivOnChangeHandlers) {
+        feWrapper.selectedDivOnChangeHandlers[shIdx]();
       };
     };
 
-    pthis.quickReplyOnLoad =
-        function( mutationRecords, mutationObserver )
-    {
+    pthis.quickReplyOnLoad = function(mutationRecords, mutationObserver ) {
       for( var mrIdx = 0, mrLen = mutationRecords.length; mrIdx < mrLen ; ++mrIdx ) {
         if( 0 >= mutationRecords[ mrIdx ].addedNodes.Length )
           continue;
@@ -1111,17 +1033,13 @@
             var selectedCells = mutationRecords[ mrIdx ].addedNodes[ anIdx ]
                   .getElementsByClassName("selectedCell");
 
-            for( var scIdx = 0, scLen = selectedCells.length; scIdx < scLen ; ++scIdx ) {
-              selectedCells[ scIdx ].removeAttribute( pthis.POINTER_CDA_NAME );
-            };
-
-            pthis.insertPreviewsArea( document.getElementById("selectedDivQr") );
+            pthis.insertPreviewsArea(document.getElementById("selectedDivQr"));
 
             for( var qrhIdx = 0, qrhLen = feWrapper.quickReplyOnLoadHandlers.length;
                  qrhIdx < qrhLen; ++qrhIdx) {
 
               feWrapper.quickReplyOnLoadHandlers[qrhIdx](
-                mutationRecords[ mrIdx ].addedNodes[ anIdx ]);
+                mutationRecords[mrIdx].addedNodes[anIdx]);
             };
 
             pthis.selectedDivOnChange();
