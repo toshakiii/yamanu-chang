@@ -45,6 +45,7 @@
 
 /*
  yamanu-chang(山ぬちゃん)です
+・(v2.33 2017.09.20) 機能追加: 右クリックマークダウン支援を追加
 ・(v2.32 2017.09.06) 修正: 再帰的ポップアップの表示CSSを改善
 ・(v2.31 2017.08.31) 機能追加: qr.js 失敗時に再読み込みする機能を追加。
 ・(v2.30 2017.08.27) 対応: マークダウン支援で Red 周りの表示が崩れるのを修正。原因は global.css で .redText に position: absolute が指定されていたから。
@@ -736,9 +737,7 @@
     };
 
     uthis.elementUidCounter = 0;
-    uthis.getElementUniqueId =
-        function( element )
-    {
+    uthis.getElementUniqueId = function(element) {
       if ( element === element.thisself ) {
         /* thisself フィールドが element 自身を示すなら "data-tsk-uid" も有効に設定されているはず */
         return element.getAttribute("data-tsk-uid");
@@ -875,7 +874,7 @@
     var settings = window.toshakiii.settings;
 
     var pthis = {};
-    var lthis = window.toshakiii.feWrapper;
+    var feWrapper = window.toshakiii.feWrapper;
 
     window.toshakiii.filePreview = pthis;
 
@@ -1093,36 +1092,38 @@
         };
       };
 
-      for( var shIdx in lthis.selectedDivOnChangeHandlers )
+      for( var shIdx in feWrapper.selectedDivOnChangeHandlers )
       {
-        lthis.selectedDivOnChangeHandlers[ shIdx ]();
+        feWrapper.selectedDivOnChangeHandlers[ shIdx ]();
       };
     };
 
     pthis.quickReplyOnLoad =
         function( mutationRecords, mutationObserver )
     {
-      for( var mrIdx = 0, mrLen = mutationRecords.length;
-          mrIdx < mrLen ; ++mrIdx )
-      {
+      for( var mrIdx = 0, mrLen = mutationRecords.length; mrIdx < mrLen ; ++mrIdx ) {
         if( 0 >= mutationRecords[ mrIdx ].addedNodes.Length )
-        {
           continue;
-        }
         for( var anIdx = 0, anLen = mutationRecords[ mrIdx ].addedNodes.length ;
-            anIdx < anLen ; ++anIdx )
-        {
-          if( "quick-reply" == mutationRecords[ mrIdx ].addedNodes[ anIdx ].id )
-          {
+             anIdx < anLen ; ++anIdx ) {
+
+          if( "quick-reply" == mutationRecords[ mrIdx ].addedNodes[ anIdx ].id ) {
             var selectedCells = mutationRecords[ mrIdx ].addedNodes[ anIdx ]
-                .getElementsByClassName("selectedCell");
-            for( var scIdx = 0, scLen = selectedCells.length;
-                scIdx < scLen ; ++scIdx )
-            {
+                  .getElementsByClassName("selectedCell");
+
+            for( var scIdx = 0, scLen = selectedCells.length; scIdx < scLen ; ++scIdx ) {
               selectedCells[ scIdx ].removeAttribute( pthis.POINTER_CDA_NAME );
             };
 
             pthis.insertPreviewsArea( document.getElementById("selectedDivQr") );
+
+            for( var qrhIdx = 0, qrhLen = feWrapper.quickReplyOnLoadHandlers.length;
+                 qrhIdx < qrhLen; ++qrhIdx) {
+
+              feWrapper.quickReplyOnLoadHandlers[qrhIdx](
+                mutationRecords[ mrIdx ].addedNodes[ anIdx ]);
+            };
+
             pthis.selectedDivOnChange();
           };
         };
@@ -2435,7 +2436,7 @@
       s += '.tskQuoteblock .innerPost > div:not(.divMessage)' +
           ':not(.tskQuoteblock .multipleUploads .opUploadPanel)' +
           ':not(.tskQuoteblock .multipleUploads .panelUploads){ display: inline-block; }';
-      
+
       var style = document.createElement('STYLE');
       style.type = "text/css";
       style.id = "ymanuchangStyles";
@@ -2444,30 +2445,43 @@
     };
 
     etcthis.markdowns = [
-      { name: "Spo",  title: "spoiler",   className: "spoiler", fontWeight: "normal",
-        beg: "[spoiler]", end: "[/spoiler]" },
-      { name: "Red",  title: "red",       className: "redText", position: "static",
-        beg: "==", end: "==" },
-      { name: "Ita",  title: "italic",    fontStyle: "italic",  fontWeight: "normal",
-        beg: "''", end: "''" },
-      { name: "Bol",  title: "bold",      fontStyle: "bold",    fontWeight: "bold",
-        beg: "'''", end: "'''" },
-      { name: "Und",  title: "underline", textDecoration: "underline", fontWeight: "normal",
-        beg: "__", end: "__"},
-      { name: "Str",  title: "strike",    textDecoration: "line-through", fontWeight: "normal",
-        beg: "~~", end: "~~"},
-      { name: "mem",  title: "meme",      className: "memeText", fontWeight: "normal",
-        beg: "[meme]", end: "[/meme]" },
-      { name: "Aut",  title: "autism",    className: "autismText", fontWeight: "normal",
-        beg: "[autism]", end: "[/autism]" },
-      { name: "AA",   title: "Ascii Art", fontWeight: "normal", beg: "[aa]",   end: "[/aa]"},
-      { name: "code", title: "code",      fontWeight: "normal", beg: "[code]", end: "[/code]" }
+      { name: "Spo",  title: "spoiler",   beg: "[spoiler]", end: "[/spoiler]",
+        className: "spoiler", style: { fontWeight: "normal" } },
+      { name: "Red",  title: "red",       beg: "==",        end: "==",
+        className: "redText", style: { position: "static" } },
+      { name: "Ita",  title: "italic",    beg: "''",        end: "''",
+        style: { fontStyle: "italic",  fontWeight: "normal" } },
+      { name: "Bol",  title: "bold",      beg: "'''",       end: "'''",
+        style: { fontStyle: "bold",    fontWeight: "bold" } },
+      { name: "Und",  title: "underline", beg: "__",        end: "__",
+        style: { textDecoration: "underline", fontWeight: "normal" } },
+      { name: "Str",  title: "strike",    beg: "~~",        end: "~~",
+        style: { textDecoration: "line-through", fontWeight: "normal" } },
+      { name: "mem",  title: "meme",      beg: "[meme]",    end: "[/meme]",
+        className: "memeText", style: { fontWeight: "normal" } },
+      { name: "Aut",  title: "autism",    beg: "[autism]",  end: "[/autism]",
+        className: "autismText", style: { fontWeight: "normal" } },
+      { name: "AA",   title: "Ascii Art", beg: "[aa]",      end: "[/aa]",
+        style: { fontWeight: "normal" } },
+      { name: "code", title: "code",      beg: "[code]",    end: "[/code]",
+        style: { fontWeight: "normal" } }
     ];
 
     etcthis.markdownTool = function() {
-
       etcthis.setMarkdownToolForMainForm();
+      etcthis.contextMenuOnMarkdownTool();
+    };
 
+    etcthis.contextMenuOnMarkdownTool = function() {
+      var fieldMessage = document.getElementById('fieldMessage');
+      etcthis.setMarkdownToolOnTextAreaContextMenu(fieldMessage, fieldMessage.id);
+
+      feWrapper.quickReplyOnLoadHandlers.push( etcthis.setMarkdownToolOnQrBodyContextMenu );
+    };
+
+    etcthis.setMarkdownToolOnQrBodyContextMenu = function() {
+      var qrBody = document.getElementById("qrbody");
+      etcthis.setMarkdownToolOnTextAreaContextMenu(qrBody, qrBody.id);
     };
 
     etcthis.setMarkdownToolForMainForm = function() {
@@ -2492,50 +2506,96 @@
     etcthis.setMarkdownToolButton = function( container, textarea ) {
 
       for ( var markdownIndex = 0, markdownLen = etcthis.markdowns.length;
-          markdownIndex < markdownLen ; ++markdownIndex ) {
+            markdownIndex < markdownLen ; ++markdownIndex ) {
 
         var Anchor = document.createElement("A");
         var markdown = etcthis.markdowns[ markdownIndex ];
         if (markdown.className)
           Anchor.className = markdown.className;
         Anchor.className = Anchor.className + " ymncMarkdownToolButton";
-        if (markdown.fontStyle)
-          Anchor.style.fontStyle = markdown.fontStyle;
-        if (markdown.textDecoration)
-          Anchor.style.textDecoration = markdown.textDecoration;
+
+        for ( var name in markdown.style ) {
+          Anchor.style[name] = markdown.style[name];
+        };
+
         if (markdown.title)
           Anchor.title = markdown.title;
-        if (markdown.fontWeight)
-          Anchor.style.fontWeight = markdown.fontWeight;
-        if (markdown.position)
-          Anchor.style.position = markdown.position;
 
         Anchor.appendChild( document.createTextNode( markdown.name ) );
 
         Anchor.addEventListener("click", (function closure() {
           var index = markdownIndex;
-          return function() {
-            var originalSelectionEnd = +textarea.selectionEnd;
-            var originalSelectionStart = +textarea.selectionStart;
-            var begTag = etcthis.markdowns[index].beg;
-            var endTag = etcthis.markdowns[index].end;
-
-            textarea.value = textarea.value.substring(0, originalSelectionEnd ) + endTag +
-                textarea.value.substring( originalSelectionEnd);
-
-            textarea.value = textarea.value.substring(0, originalSelectionStart ) + begTag +
-                textarea.value.substring( originalSelectionStart);
-
-            textarea.select();
-            textarea.selectionStart = begTag.length + originalSelectionStart;
-            textarea.selectionEnd = begTag.length + originalSelectionEnd;
-
-          }; })() );
+          etcthis.applyMarkdown( textarea, etcthis.markdowns[index]);
+        } ) );
 
         container.appendChild( document.createTextNode(" ") );
         container.appendChild( Anchor );
       };
+    };
 
+    etcthis.applyMarkdown = function(textarea, markdown){
+      var originalSelectionEnd = +textarea.selectionEnd;
+      var originalSelectionStart = +textarea.selectionStart;
+      var begTag = markdown.beg;
+      var endTag = markdown.end;
+
+      textarea.value = textarea.value.substring(0, originalSelectionEnd ) + endTag +
+        textarea.value.substring( originalSelectionEnd);
+
+      textarea.value = textarea.value.substring(0, originalSelectionStart ) + begTag +
+        textarea.value.substring( originalSelectionStart);
+
+      textarea.select();
+      textarea.selectionStart = begTag.length + originalSelectionStart;
+      textarea.selectionEnd = begTag.length + originalSelectionEnd;
+
+    };
+
+    etcthis.setMarkdownToolOnTextAreaContextMenu = function(textarea, textareaId) {
+      var menuId = "markdownToolMenu" + textareaId;
+      textarea.setAttribute('contextmenu', menuId);
+
+      if (document.getElementById(menuId)) {
+        return;
+      };
+
+      var menu = document.createElement('MENU');
+      var markdownMenu = document.createElement('MENU');
+
+      menu.type = 'context';
+      menu.id = menuId;
+      menu.appendChild(markdownMenu);
+
+      markdownMenu.setAttribute('label', "Markdown");
+
+      for ( var markdownIndex = 0, markdownLength = etcthis.markdowns.length;
+            markdownIndex < markdownLength; ++markdownIndex ) {
+
+        var markdown = etcthis.markdowns[ markdownIndex ];
+        var menuitem = document.createElement('MENUITEM');
+
+        if (markdown.className)
+          menuitem.className = markdown.className;
+
+        if (markdown.title)
+          menuitem.title = markdown.title;
+
+        menuitem.textContent = markdown.title;
+
+        for ( var name in markdown.style ) {
+          menuitem.style[name] = menuitem.style[name];
+        };
+
+        (function() {
+          var markdownN = markdown;
+          menuitem.addEventListener('click', function() {
+            etcthis.applyMarkdown( textarea, markdownN);
+          } );
+        })();
+
+        markdownMenu.appendChild(menuitem);
+      };
+      document.body.appendChild(menu);
     };
 
     etcthis.makeCanvasFromImg = function(imgElement) {
@@ -3992,7 +4052,8 @@
       /* 読み込みに失敗したjavascript sourcesを再読み込みする。
        * 2017年7月からある 503/502 エラー対策
        * DOMContentLoaded時点で読み込みエラーをキャッチすることはできない
-       * だから泥臭い方法で再読み込みを行う */
+       * だから泥臭い方法で再読み込みを行う
+       * Firefox(55あたり)におけるキャッシュバグまではカバーできない */
       var scriptTags = document.getElementsByTagName("SCRIPT");
       var needToReloadQrJs = false;
 
@@ -5018,6 +5079,9 @@
     window.toshakiii.feWrapper = fewrapper;
 
     fewrapper.selectedDivOnChangeHandlers = [];
+    fewrapper.postCellCP = undefined;
+    fewrapper.titleCP = undefined;
+    fewrapper.quickReplyOnLoadHandlers = [];
 
     /*
      * 投稿内のURIアンカーを引数に渡される関数のリスト。
@@ -5042,7 +5106,6 @@
       } );
       postCellCP.setPreProc( utils.CompulsoryProcessing.prototype.preProc_enumAddedNodes );
     };
-    fewrapper.postCellCP = undefined;
 
     fewrapper.callMessageUriHandlers = function( anchor ) {
       for (var hndIdx = 0, hndLen = fewrapper.messageUriHandlers.length;
@@ -5077,9 +5140,6 @@
       titleCP.setObservingOptions( { childList: true} );
       titleCP.setFuncEnumExistingTargets( function(){ return [titleCP.observingElement]; } );
     };
-    fewrapper.titleCP = undefined;
-
-    fewrapper.postCellOverrides = undefined;
 
     fewrapper.enable = function()
     {
