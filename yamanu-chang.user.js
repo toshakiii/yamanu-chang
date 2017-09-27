@@ -28,8 +28,8 @@
 // @include    /https?://waifuchan\.moe/.*$/
 // @include    /https?://waifuchan\.moe/.*$/
 //
-// @version      2.34
-// @description v2.34: endchan: catalog sorter, preview upload files, recursive quote popup
+// @version      2.35
+// @description v2.35: endchan: catalog sorter, preview upload files, recursive quote popup
 // @grant       none
 // ==/UserScript==
 
@@ -45,6 +45,7 @@
 
 /*
  yamanu-chang(山ぬちゃん)です
+・(v2.35 2017.09.27) 修正: 再帰的ポップアップの表示CSSを改善
 ・(v2.34 2017.09.20) コード整理。プレビューの'POINTER'機構を削除して、'Element Unique Id'を使うように変更
 ・(v2.33 2017.09.20) 機能追加: 右クリックマークダウン支援を追加
 ・(v2.32 2017.09.06) 修正: 再帰的ポップアップの表示CSSを改善
@@ -890,38 +891,43 @@
     pthis.PREVIEW_CLASSNAME = "toshakiPreviewCell";
     pthis.PREVIEWS_AREA_CLASSNAME = "toshakiPreviewsArea";
 
-    /* previewCell の ClassName に selectedCell の Element Unique Id を設定する */
+    /* previewCell の className と data-rel-selected-cell に selectedCell の Element Unique Id
+     * を設定する */
 
     pthis.insertPreviewElement = function( selectedCell, file) {
       if ( pthis.hasPreviewed( selectedCell ) )
         return true;
 
       var previewsArea = pthis.getPreviewsAreaElement(selectedCell);
-      var span = document.createElement('SPAN');
+      var div = document.createElement('DIV');
       var selectedCellUid = utils.getElementUniqueId(selectedCell);
-      span.className = pthis.PREVIEW_CLASSNAME + " preview" + selectedCellUid;
-      span.setAttribute("data-rel-selected-cell", selectedCellUid);
-      previewsArea.appendChild(span);
+      var previewCell;
+      div.className = pthis.PREVIEW_CLASSNAME + " preview" + selectedCellUid;
+      div.style.display = "inline-block";
+      div.setAttribute("data-rel-selected-cell", selectedCellUid);
+      previewsArea.appendChild(div);
 
-      if((350 * 1024 * 1024) <= file.size) {
-        return this.insertDummyElement( span, file, "OVER 350MiB");
+      if ((350 * 1024 * 1024) <= file.size) {
+        previewCell = this.insertDummyElement( div, file, "OVER 350MiB");
 
-      } else if( 0 <= file.type.indexOf( 'image/' ) ) {
-        return pthis.insertImagePreviewElement( span, file);
+      } else if ( 0 <= file.type.indexOf( 'image/' ) ) {
+        previewCell = pthis.insertImagePreviewElement( div, file);
 
-      } else if( 0 <= file.type.indexOf( 'audio/' ) || 0 <= file.type.indexOf( 'video/' ) ) {
-        return pthis.insertAudioVideoPreviewElement( span, file);
+      } else if ( 0 <= file.type.indexOf( 'audio/' ) || 0 <= file.type.indexOf( 'video/' ) ) {
+        previewCell = pthis.insertAudioVideoPreviewElement( div, file);
+
+      } else {
+        previewCell = pthis.insertDummyElement( div, file);
       };
 
-      return this.insertDummyElement( span, file);
+      return previewCell;
     };
 
-    pthis.insertImagePreviewElement =
-        function( destElt, file)
-    {
+
+
+    pthis.insertImagePreviewElement = function( destElt, file) {
       var fileReader = new FileReader();
-      fileReader.onload = function()
-      {
+      fileReader.onload = function() {
         var dataUri = this.result;
         var elt = document.createElement('IMG');
         elt.src = dataUri.toString();
@@ -933,12 +939,9 @@
       fileReader.readAsDataURL( file );
     };
 
-    pthis.insertAudioVideoPreviewElement =
-        function( destElt, file)
-    {
+    pthis.insertAudioVideoPreviewElement = function( destElt, file) {
       var fileReader = new FileReader();
-      fileReader.onload = function()
-      {
+      fileReader.onload = function() {
         var dataUri = this.result;
         var elt = document.createElement('VIDEO');
         elt.controls = true;
@@ -951,14 +954,11 @@
       fileReader.readAsDataURL( file );
     };
 
-    pthis.insertDummyElement =
-        function( destElt, file, msg )
-    {
+    pthis.insertDummyElement = function( destElt, file, msg ) {
       var elt = document.createElement('DIV');
       var text = document.createTextNode( file.type );
       elt.appendChild( text );
-      if( undefined != msg )
-      {
+      if( undefined != msg ) {
         elt.appendChild( document.createElement('BR') );
         elt.appendChild( document.createTextNode( msg ) );
       };
@@ -972,6 +972,15 @@
     pthis.getPreviewsAreaElement = function( refSelectedCell ) {
       return refSelectedCell.parentElement.parentElement
         .getElementsByClassName(pthis.PREVIEWS_AREA_CLASSNAME)[0];
+    };
+
+    pthis.getPreviewCellByChild = function(element) {
+      for(; element.parentElement; element = element.parentElement) {
+        if (0 <= element.className.indexOf(pthis.PREVIEW_CLASSNAME)) {
+          return element;
+        };
+      };
+      return null;
     };
 
     pthis.hasPreviewed = function(selectedCell) {
@@ -1048,29 +1057,21 @@
       };
     };
 
-    pthis.insertPreviewsArea =
-        function( refSelectedDiv )
-    {
+    pthis.insertPreviewsArea = function(refSelectedDiv) {
       var previewsArea = document.createElement("div");
       previewsArea.className = pthis.PREVIEWS_AREA_CLASSNAME;
       refSelectedDiv.parentElement.insertBefore( previewsArea, refSelectedDiv );
     };
 
-    pthis.stopSelectedDivObserver =
-        function()
-    {
-      if( undefined != pthis.sdMutationObserver )
-      {
+    pthis.stopSelectedDivObserver = function() {
+      if( undefined != pthis.sdMutationObserver ) {
         pthis.sdMutationObserver.disconnect();
         pthis.sdMutationObserver = undefined;
       };
     };
-    pthis.startSelectedDivObserver =
-        function()
-    {
+    pthis.startSelectedDivObserver = function() {
       var selectedDiv = document.getElementById("selectedDiv");
-      if( null == selectedDiv )
-      {
+      if( null == selectedDiv ) {
         return;
       };
       var options = { childList: true};
@@ -1079,20 +1080,14 @@
       pthis.sdMutationObserver.observe( selectedDiv, options );
     };
 
-    pthis.stopQuickReplyObserver =
-        function()
-    {
-      if( undefined != pthis.qrMutationObserver )
-      {
+    pthis.stopQuickReplyObserver = function() {
+      if( undefined != pthis.qrMutationObserver ) {
         pthis.qrMutationObserver.disconnect();
         pthis.qrMutationObserver = undefined;
       };
     };
-    pthis.startQuickReplyObserver =
-        function()
-    {
-      if( pthis.qrMutationObserver !== undefined && ! window.show_quick_reply )
-      {
+    pthis.startQuickReplyObserver = function() {
+      if( pthis.qrMutationObserver !== undefined && ! window.show_quick_reply ) {
         return;
       };
       var qrOptions = { childList: true};
@@ -1100,19 +1095,14 @@
       pthis.qrMutationObserver.observe( document.body, qrOptions);
     };
 
-    pthis.trigger =
-        function()
-    {
+    pthis.trigger = function() {
       pthis.enable();
     };
 
-    pthis.enable =
-        function()
-    {
+    pthis.enable = function() {
       /* 公式対応したら動かない */
       if( undefined != window.addSelectedFile &&
-            0 <= window.addSelectedFile.toString().indexOf("dragAndDropThumb") )
-      {
+          0 <= window.addSelectedFile.toString().indexOf("dragAndDropThumb") ) {
         return;
       };
       pthis.startSelectedDivObserver();
@@ -2351,9 +2341,20 @@
           '.tskQuoteblock .multipleUploads .panelUploads {' +
           '  float: none; display: block }';
 
+      s += '.tskQuoteblock .panelUploads { display: inline-block;';
+      s += '  vertical-align: top }';
+
+      s += '.tskQuoteblock .divMessage {' +
+        '  margin-left: 1em;' +
+        '  margin-top: 1em;' +
+        '  margin-right: 0.5em;' +
+        '  margin-bottom: 0.5em }';
+
       s += '.tskQuoteblock .innerPost > div:not(.divMessage)' +
-          ':not(.tskQuoteblock .multipleUploads .opUploadPanel)' +
-          ':not(.tskQuoteblock .multipleUploads .panelUploads){ display: inline-block; }';
+        ':not(.tskQuoteblock .multipleUploads .opUploadPanel)' +
+        ':not(.tskQuoteblock .multipleUploads .panelUploads){ display: inline-block; }';
+
+
 
       var style = document.createElement('STYLE');
       style.type = "text/css";
@@ -4481,41 +4482,32 @@
       return mthis.downloadPostCell( popupInfo, callback );
     };
 
-    mthis.showPopup =
-        function( popupInfo, postCell, errorMessage )
-    {
+    mthis.showPopup = function( popupInfo, postCell, errorMessage ) {
+
       var quoteLink = popupInfo['quoteAnchor'];
-      if( undefined == postCell && undefined == errorMessage )
-      {
+      if( undefined == postCell && undefined == errorMessage ) {
         mthis.lookForPostCell( popupInfo, mthis.showPopup );
         return;
       };
-      if( undefined != errorMessage )
-      {
+      if( undefined != errorMessage ) {
         postCell = document.createElement('DIV');
         postCell.appendChild( document.createTextNode(errorMessage) );
       };
       var originElement = mthis.getRelatedDivMessage( quoteLink );
-      if( null == originElement )
-      {
+      if( null == originElement ) {
         originElement = quoteLink;
       };
 
       var quoteblock;
-      if( undefined != popupInfo['element'] )
-      {
-        if( null == popupInfo['element'].firstChild )
-        {
+      if( undefined != popupInfo['element'] ) {
+        if( null == popupInfo['element'].firstChild ) {
           popupInfo['element'].appendChild( postCell );
-        }
-        else
-        {
+
+        } else {
           popupInfo['element'].replaceChild( postCell, popupInfo['element'].firstChild );
         };
         quoteblock = popupInfo['element'];
-      }
-      else
-      {
+      } else {
         quoteblock = document.createElement('DIV');
         quoteblock.appendChild( postCell );
       };
@@ -4523,19 +4515,18 @@
       quoteblock.className = "tskQuoteblock";
       var uid = popupInfo['uid'];
       mthis.processPostCell( postCell );
-      mthis.overridePostCellQuotePopups( postCell,
-          function( e ){
-            mthis.setUidOfPopupParent( e, uid );
-          } );
+      mthis.overridePostCellQuotePopups( postCell, function(e) {
+        mthis.setUidOfPopupParent( e, uid );
+      } );
 
-      quoteblock.addEventListener("mouseout" , function(){
+      quoteblock.addEventListener("mouseout", function() {
         mthis.startCountdownForClosePopup( popupInfo ); } );
 
-      quoteblock.addEventListener("mousemove", function(){
+      quoteblock.addEventListener("mousemove", function() {
         mthis.extendExpirationDate( popupInfo );
         return true; } );
 
-      quoteblock.addEventListener("click",     function(){
+      quoteblock.addEventListener("click", function() {
         mthis.extendExpirationDate( popupInfo );
         return true; } );
 
@@ -4565,20 +4556,19 @@
       var rect      = originElement.getBoundingClientRect();
       var left    = rect.left + rect.height + scrollLeft;
       var top     = rect.top  + rect.height + scrollTop;
-      if( undefined != targetPosition )
-      {
+
+      if( undefined != targetPosition ) {
         left = targetPosition.x;
         top  = targetPosition.y;
       };
+
       var tmpRight  = left + width;
       var tmpBottom = top  + height;
 
-      if( scrollRight < tmpRight )
-      {
+      if( scrollRight < tmpRight ) {
         left = scrollRight - width;
       };
-      if( scrollBottom < tmpBottom )
-      {
+      if( scrollBottom < tmpBottom ) {
         if ( height > window.innerHeight ) {
           top = scrollTop;
         } else {
@@ -4590,12 +4580,10 @@
       quoteblock.style.left = ( left + 5 ) + "px";
 
       var parentUid = mthis.getUidOfPopupParent( quoteLink );
-      if( undefined != parentUid )
-      {
+      if( undefined != parentUid ) {
         popupInfo['parent']  = parentUid;
         var parentPopupInfo = mthis.popups[ parentUid ];
-        if( undefined != parentPopupInfo )
-        {
+        if( undefined != parentPopupInfo ) {
           parentPopupInfo['children'].push( popupInfo['uid'] );
         };
       };
