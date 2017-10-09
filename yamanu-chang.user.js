@@ -28,8 +28,8 @@
 // @include    /https?://waifuchan\.moe/.*$/
 // @include    /https?://waifuchan\.moe/.*$/
 //
-// @version      2.35
-// @description v2.35: endchan: catalog sorter, preview upload files, recursive quote popup
+// @version      2.36
+// @description v2.36: endchan: catalog sorter, preview upload files, recursive quote popup
 // @grant       none
 // ==/UserScript==
 
@@ -45,6 +45,7 @@
 
 /*
  * yamanu-chang(山ぬちゃん)です
+ * ・(v2.36 2017.10.09) 機能追加: 引用テキストポップアップ機能を追加
  * ・(v2.35 2017.09.27) 修正: 再帰的ポップアップの表示CSSを改善
  * ・(v2.34 2017.09.20) コード整理。プレビューの'POINTER'機構を削除して、'Element Unique Id'を使うように変更
  * ・(v2.33 2017.09.20) 機能追加: 右クリックマークダウン支援を追加
@@ -681,6 +682,17 @@
       element.setAttribute("data-tsk-discarded", "1");
     };
 
+    uthis.getElementByClassNameFromAncestor = function(element, className) {
+      for (; element !== null; element = element.parentElement) {
+        for( var clIdx = 0, clLen = element.classList.length; clIdx < clLen; ++clIdx) {
+          if (className === element.classList[clIdx]) {
+            return element;
+          };
+        };
+      };
+      return null;
+    };
+    
     uthis.trigger = function() {
       return;
     };
@@ -2486,11 +2498,9 @@
         };
 
       } else {
-
         if (null !== style) {
           style.parentElement.removeChild(style);
         };
-
       };
     };
 
@@ -3963,6 +3973,43 @@
       return;
     };
 
+    mthis.postCellContainsText = function(postCell, text) {
+      return 0 <= postCell.textContent.indexOf(text);
+    };
+    
+    mthis.lookForPostCellByGreenText = function(popupInfo, callback) {
+      var text = popupInfo['quoteAnchor'].textContent.replace(/> */,"");
+      var postCell = utils.getElementByClassNameFromAncestor(popupInfo['quoteAnchor'], "postCell");
+
+      /* 上の postCell はポップアップの postCell かも知れない。元々の postCell を使ってたどる */
+      postCell = postCell.originalPostCell || postCell;
+
+      postCell = postCell.previousElementSibling;
+
+      for (; null !== postCell; postCell = postCell.previousElementSibling) {
+
+        if (0 <= postCell.className.indexOf("postCell") &&
+            mthis.postCellContainsText(postCell, text)) {
+
+          return callback(popupInfo, mthis.clonePostCellForPopup(postCell));
+        };
+      };
+      return callback(popupInfo, null, "現在ページにはないよ");
+    };
+
+    mthis.clonePostCellForPopup = function(postCell) {
+      var clone = postCell.cloneNode(true);
+
+      var divPostsList = clone.getElementsByClassName("divPosts");
+      for (var dpIdx = divPostsList.length - 1; -1 < dpIdx ; --dpIdx) {
+        divPostsList[dpIdx].parentElement.removeChild( divPostsList[ dpIdx ] );
+      };
+
+      var postCellId = postCell.id;
+      clone.originalPostCell = postCell;
+      return clone;
+    };
+    
     mthis.lookForPostCellFromDocument = function(popupInfo, callback) {
       var quoteAnchor = popupInfo['quoteAnchor'];
       var postId = quoteAnchor.hash;
@@ -3984,27 +4031,20 @@
       if (null == postCell) {
         return callback(popupInfo, null, "no such post:No." + postId);
       };
-      postCell = postCell.cloneNode(true);
-
-      var divPostsList = postCell.getElementsByClassName("divPosts");
-      for (var dpIdx = divPostsList.length - 1; -1 < dpIdx ; --dpIdx) {
-        divPostsList[dpIdx].parentElement.removeChild( divPostsList[ dpIdx ] );
-      };
       
-      postCell = utils.removeIdAll(postCell);
-      return callback(popupInfo, postCell);
+      return callback(popupInfo, mthis.clonePostCellForPopup(postCell));
     };
 
     mthis.lookForPostCell = function(popupInfo, callback) {
-      /* TODO:"//yamanu.org/chang/index.html" とかのスレが複数あるページで、
-       * 通信なしに取得できないか試行すること */
       var here = location;
       var quoteAnchor = popupInfo['quoteAnchor'];
       var postCell;
-      if (here.host     == quoteAnchor.host &&
-          here.port     == quoteAnchor.port) {
+      if (here.host == quoteAnchor.host &&
+          here.port == quoteAnchor.port) {
+
         return mthis.lookForPostCellFromDocument(popupInfo, function( popupInfo, postCell,
             errorMessage) {
+
           if (null === postCell) {
             return mthis.downloadPostCell(popupInfo, callback);
           } else {
@@ -4012,7 +4052,12 @@
           };
         });
       };
-      return mthis.downloadPostCell(popupInfo, callback);
+
+      if ("A" === quoteAnchor.tagName) {
+        return mthis.downloadPostCell(popupInfo, callback);
+      } else {
+        return mthis.lookForPostCellByGreenText(popupInfo, callback);
+      };
     };
 
     mthis.showPopup = function( popupInfo, postCell, errorMessage) {
@@ -4048,9 +4093,13 @@
       quoteblock.className = "tskQuoteblock";
       var uid = popupInfo['uid'];
       mthis.processPostCell(postCell);
-      mthis.overridePostCellQuotePopups( postCell, function(e) {
-        mthis.setUidOfPopupParent( e, uid );
-      } );
+
+      var setParentUid = function(quoteLinkOrGreenText) {
+        quoteLinkOrGreenText.setAttribute('data-tsk-parent-popup-uid', uid);
+      };
+      
+      mthis.overridePostCellQuotePopups(postCell, setParentUid);
+      mthis.enableGreenTextPopup(postCell, setParentUid);
 
       quoteblock.addEventListener("mouseout", function() {
         mthis.startCountdownForClosePopup(popupInfo); } );
@@ -4170,8 +4219,9 @@
     mthis.dateToLastCheckMouseIsIn = 0;
     mthis.onBodyMouseMove = function(event) {
       var now = (+new Date());
-      var intervalToCheck = 100;
-      if (now > (intervalToCheck + mthis.DateToLastCheckMouseIsIn)) {
+      var intervalToCheck = 150;
+
+      if (now >= (intervalToCheck + mthis.dateToLastCheckMouseIsIn)) {
         mthis.checkMouseIsIn(event);
         mthis.dateToLastCheckMouseIsIn = now;
       };
@@ -4186,7 +4236,7 @@
       var uidsToClosePopup = [];
       var popupInfo;
       for (var key in mthis.popups) {
-        popupInfo = mthis.popups[ key ];
+        popupInfo = mthis.popups[key];
         if (mthis.POPUP_PHASE.NOW_SHOWING != popupInfo['phase']) {
           continue;
         };
@@ -4195,34 +4245,35 @@
         var rect = popupInfo['element'].getBoundingClientRect();
         var mcx = mthis.mouseClientPos.x;
         var mcy = mthis.mouseClientPos.y;
-        if (( rect.left   <= mcx &&
-            rect.right  >  mcx &&
-            rect.top    <= mcy &&
-            rect.bottom >  mcy   ) ||
-            ( rect2.left   <= mcx &&
-              rect2.right  >  mcx &&
-              rect2.top    <= mcy &&
-              rect2.bottom >  mcy   )) {
+        if ((rect.left   <= mcx &&
+             rect.right  >  mcx &&
+             rect.top    <= mcy &&
+             rect.bottom >  mcy ) ||
+            (rect2.left   <= mcx &&
+             rect2.right  >  mcx &&
+             rect2.top    <= mcy &&
+             rect2.bottom >  mcy )) {
           continue;
         };
         uidsToClosePopup.push(key);
       };
+
       for (var idx in uidsToClosePopup) {
-        key = uidsToClosePopup[ idx ];
-        popupInfo = mthis.popups[ key ];
-        if (undefined == popupInfo) {
+        key = uidsToClosePopup[idx];
+        popupInfo = mthis.popups[key];
+        if (undefined === popupInfo) {
           continue;
         };
-        var descList = mthis.popupDescendants(popupInfo);
-        var noClose = false;
-        for (var dlIdx in descList) {
-          if (mthis.POPUP_PHASE.NOW_SHOWING == descList[ dlIdx ]['phase']) {
-            noClose = true;
+        var descList = mthis.getPopupDescendants(popupInfo);
+        var close = true;
+        for (var deIdx in descList) {
+          if (mthis.POPUP_PHASE.NOW_SHOWING === descList[deIdx]['phase']) {
+            close = false;
             break;
           };
         };
-        if (! noClose) {
-          mthis.closePopup( popupInfo, true );
+        if (close) {
+          mthis.closePopup(popupInfo, true);
         };
       };
     };
@@ -4238,10 +4289,10 @@
       quoteAnchor.onmouseout = null;
     };
 
-    mthis.enablePopup = function(anchor) {
-      mthis.disablePopup(anchor);
-      anchor.addEventListener("mousemove", mthis.touchElement);
-      anchor.addEventListener("mouseout" , mthis.untouchElement);
+    mthis.enablePopup = function(element) {
+      mthis.disablePopup(element);
+      element.addEventListener("mousemove", mthis.touchElement);
+      element.addEventListener("mouseout" , mthis.untouchElement);
     };
 
     mthis.processPostCell = function(postCell) {
@@ -4281,7 +4332,14 @@
       return true;
     };
 
-    mthis.greenTextPopup = function(postCell) {
+    mthis.enableGreenTextPopup = function(postCell, afterOverrideHook) {
+      var greenTextList = postCell.getElementsByClassName('greenText');
+      for (var gtIdx = 0, gtLen = greenTextList.length; gtIdx < gtLen; ++gtIdx) {
+        mthis.enablePopup(greenTextList[gtIdx]);
+        if (afterOverrideHook != undefined) {
+          afterOverrideHook(greenTextList[gtIdx]);
+        };
+      }
     };
 
 
@@ -4313,7 +4371,7 @@
       };
     };
 
-    mthis.popupDescendants = function popupDescendants(obj, descList) {
+    mthis.getPopupDescendants = function getPopupDescendants(obj, descList) {
       if (undefined == descList) {
         descList = [];
       };
@@ -4326,7 +4384,7 @@
           continue;
         };
         descList.push(child);
-        popupDescendants(child, descList);
+        getPopupDescendants(child, descList);
       };
       return descList;
     };
@@ -4383,7 +4441,7 @@
        * だから Popup 挿入時に冗長呼び出しにはならない */
 
       feWrapper.postCellCP.appendCP( mthis.overridePostCellQuotePopups );
-      feWrapper.postCellCP.appendCP( mthis.greenTextPopup );
+      feWrapper.postCellCP.appendCP( mthis.enableGreenTextPopup );
 
       var iloops = utils.IntermittentLoops();
       var links;
