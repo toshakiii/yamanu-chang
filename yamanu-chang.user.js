@@ -28,8 +28,8 @@
 // @include    /https?://waifuchan\.moe/.*$/
 // @include    /https?://waifuchan\.moe/.*$/
 //
-// @version      2.36
-// @description v2.36: endchan: catalog sorter, preview upload files, recursive quote popup
+// @version      2.37
+// @description v2.37: endchan: catalog sorter, preview upload files, recursive quote popup
 // @grant       none
 // ==/UserScript==
 
@@ -45,6 +45,7 @@
 
 /*
  * yamanu-chang(山ぬちゃん)です
+ * ・(v2.37 2017.10.16) 修正: マークダウン支援が動作しなかったのを修正
  * ・(v2.36 2017.10.09) 機能追加: 引用テキストポップアップ機能を追加
  * ・(v2.35 2017.09.27) 修正: 再帰的ポップアップの表示CSSを改善
  * ・(v2.34 2017.09.20) コード整理。プレビューの'POINTER'機構を削除して、'Element Unique Id'を使うように変更
@@ -2169,10 +2170,12 @@
 
         Anchor.appendChild( document.createTextNode( markdown.name ) );
 
-        Anchor.addEventListener("click", (function closure() {
+        (function() {
           var index = markdownIndex;
-          etcthis.applyMarkdown( textarea, etcthis.markdowns[index]);
-        } ) );
+          Anchor.addEventListener("click", (function closure() {
+            etcthis.applyMarkdown( textarea, etcthis.markdowns[index]);
+          } ) );
+        })();
 
         container.appendChild( document.createTextNode(" ") );
         container.appendChild(Anchor);
@@ -2208,7 +2211,7 @@
       var menu = document.createElement('MENU');
       var markdownMenu = document.createElement('MENU');
 
-      menu.type = 'context';
+      menu.setAttribute('type', 'context');
       menu.id = menuId;
       menu.appendChild(markdownMenu);
 
