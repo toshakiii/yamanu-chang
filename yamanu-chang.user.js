@@ -28,8 +28,8 @@
 // @include    /https?://waifuchan\.moe/.*$/
 // @include    /https?://waifuchan\.moe/.*$/
 //
-// @version      2.37
-// @description v2.37: endchan: catalog sorter, preview upload files, recursive quote popup
+// @version      2.38
+// @description v2.38: endchan: catalog sorter, preview upload files, recursive quote popup
 // @grant       none
 // ==/UserScript==
 
@@ -45,6 +45,7 @@
 
 /*
  * yamanu-chang(山ぬちゃん)です
+ * ・(v2.38 2017.10.18) 機能追加: 自動投稿パスワード
  * ・(v2.37 2017.10.16) 修正: マークダウン支援が動作しなかったのを修正
  * ・(v2.36 2017.10.09) 機能追加: 引用テキストポップアップ機能を追加
  * ・(v2.35 2017.09.27) 修正: 再帰的ポップアップの表示CSSを改善
@@ -176,6 +177,7 @@
 
 /*
  * TODO:
+ * ・コードコンテナをひとつにしたい
  * ・圧縮しても動くコードにしたい
  * ・sendReplyData の hack をオフにできるオプションを追加すること。
  * ・2回もダウンロードしないように
@@ -2091,6 +2093,29 @@
       document.head.appendChild(style);
     };
 
+    etcthis.autoPostingPassowrd = function() {
+      var fieldPostingPassword = document.getElementById("fieldPostingPassword");
+
+      if (undefined === localStorage.deletionPassword &&
+          null !== fieldPostingPassword && 0 === fieldPostingPassword.value.length) {
+
+        var deletionFieldPassword = document.getElementById("deletionFieldPassword");
+        if (null !== deletionFieldPassword && 0 !== deletionFieldPassword.value.length) {
+          return;
+        };
+        
+        var password = "";
+        for (var i = 8; 0 < i; --i) {
+          password += String.fromCharCode (Math.random () * 94 + 33);
+        };
+
+        fieldPostingPassword.value = password;
+        if (null !== deletionFieldPassword) {
+          deletionFieldPassword.value = password;
+        };
+      };
+    };
+
     etcthis.markdowns = [
       { name: "Spo",  title: "spoiler",   beg: "[spoiler]", end: "[/spoiler]",
         className: "spoiler", style: { fontWeight: "normal" } },
@@ -2211,6 +2236,7 @@
       var menu = document.createElement('MENU');
       var markdownMenu = document.createElement('MENU');
 
+      menu.style.display = 'none';
       menu.setAttribute('type', 'context');
       menu.id = menuId;
       menu.appendChild(markdownMenu);
@@ -3653,6 +3679,7 @@
       etcthis.uploadFileFromClipboard();
       etcthis.markdownTool();
       etcthis.insertMiscCSS();
+      etcthis.autoPostingPassowrd();
     };
 
     etcthis.trigger = function() {
