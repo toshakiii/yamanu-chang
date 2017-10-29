@@ -28,8 +28,8 @@
 // @include    /https?://waifuchan\.moe/.*$/
 // @include    /https?://waifuchan\.moe/.*$/
 //
-// @version      2.39
-// @description v2.39: endchan: catalog sorter, preview upload files, recursive quote popup
+// @version      2.40
+// @description v2.40: endchan: catalog sorter, preview upload files, recursive quote popup
 // @grant       none
 // ==/UserScript==
 
@@ -3622,7 +3622,8 @@
       var mimeExt = {
         "image/jpeg": "jpg", "image/png": "png", "image/gif": "gif",
         "audio/mp3": "mp3", "audio/mp4": "mp4", "audio/mpeg": "mp3",
-        "video/mp4": "mp4", "video/webm": "webm", "video/x-flv": "flv"
+        "video/mp4": "mp4", "video/webm": "webm", "video/x-flv": "flv",
+        "text/plain": "txt"
       };
 
       var ext = mimeExt[mime];
