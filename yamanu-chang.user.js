@@ -28,8 +28,8 @@
 // @include    /https?://waifuchan\.moe/.*$/
 // @include    /https?://waifuchan\.moe/.*$/
 //
-// @version      2.38
-// @description v2.38: endchan: catalog sorter, preview upload files, recursive quote popup
+// @version      2.39
+// @description v2.39: endchan: catalog sorter, preview upload files, recursive quote popup
 // @grant       none
 // ==/UserScript==
 
@@ -45,6 +45,7 @@
 
 /*
  * yamanu-chang(山ぬちゃん)です
+ * ・(v2.39 2017.10.29) 機能追加: ファイルハッシュをメッセージへ追加する機能
  * ・(v2.38 2017.10.18) 機能追加: 自動投稿パスワード
  * ・(v2.37 2017.10.16) 修正: マークダウン支援が動作しなかったのを修正
  * ・(v2.36 2017.10.09) 機能追加: 引用テキストポップアップ機能を追加
@@ -695,7 +696,7 @@
       };
       return null;
     };
-    
+
     uthis.trigger = function() {
       return;
     };
@@ -2084,7 +2085,8 @@
         ':not(.tskQuoteblock .multipleUploads .opUploadPanel)' +
         ':not(.tskQuoteblock .multipleUploads .panelUploads){ display: inline-block; }';
 
-
+      s += '.tskQuoteblock .panelBacklinks + div:not(.panelUploads) {' +
+        '  display: block }';
 
       var style = document.createElement('STYLE');
       style.type = "text/css";
@@ -2103,7 +2105,7 @@
         if (null !== deletionFieldPassword && 0 !== deletionFieldPassword.value.length) {
           return;
         };
-        
+
         var password = "";
         for (var i = 8; 0 < i; --i) {
           password += String.fromCharCode (Math.random () * 94 + 33);
@@ -2540,7 +2542,7 @@
 
       var input = document.createElement('INPUT');
       input.type = 'checkbox';
-      input.id = 'myForceCookie';
+      input.id = 'ymncMaskFilenameCheckbox';
       input.onclick = etcthis.updateMaskFilenameMode;
       input.checked = etcthis.maskFilename;
 
@@ -2549,24 +2551,10 @@
       label.appendChild(input);
       label.appendChild( document.createTextNode('常に投稿ファイル名をマスクする') );
 
-      var origin;
-      origin = document.getElementById('postBox');
+      var origin = document.getElementById('postBox');
       if (origin) {
         origin.insertBefore( label, origin.firstChild );
-        return;
       };
-
-      /*
-
-       if (origin) {
-       origin = origin.parentElement;
-       } else {
-       origin = document.body;
-       }
-
-       origin.appendChild(label);
-       */
-
     };
 
     etcthis.updateMaskFilenameMode = function(ev) {
@@ -2660,7 +2648,6 @@
       };
 
       etcthis.updateSelectedFilenameLabels();
-
     };
 
     etcthis.updateSelectedFilenameLabels = function updateSelectedFilenameLabels() {
@@ -3631,6 +3618,85 @@
       etcthis.retryFailedScriptSources();
     };
 
+    etcthis.getFileExtension = function(mime) {
+      var mimeExt = {
+        "image/jpeg": "jpg", "image/png": "png", "image/gif": "gif",
+        "audio/mp3": "mp3", "audio/mp4": "mp4", "audio/mpeg": "mp3",
+        "video/mp4": "mp4", "video/webm": "webm", "video/x-flv": "flv"
+      };
+
+      var ext = mimeExt[mime];
+
+      if (undefined===ext) {
+        return "undefined";
+      };
+      return ext;
+    };
+
+    etcthis.getNormalizedMime = function(mime) {
+      if ("audio/mp3"===mime) {
+        return "audio/mpeg";
+      };
+      return mime;
+    };
+
+    etcthis.addHashToMessage = function() {
+      if (null === window.selectedFiles || "true" !== localStorage["addHashToMessage"]) {
+        return;
+      };
+
+      for (var idx in window.selectedFiles) {
+        (function() {
+          var file = window.selectedFiles[idx];
+          var reader = new FileReader();
+
+          if (! file.ymncAddedHashToMessage && "" !== file.type) {
+            file.ymncAddedHashToMessage = true;
+            var fieldMessage = document.getElementById('fieldMessage');
+            var qrBody = document.getElementById("qrbody");
+
+            reader.onloadend = function(e) {
+              var mime = etcthis.getNormalizedMime(file.type);
+              var md5 = window.SparkMD5.ArrayBuffer.hash(reader.result);
+              var ext = etcthis.getFileExtension(mime);
+              var str = "https://endchan.xyz/.media/" + md5 + '-' + mime.replace('/', '') + "." + ext + "\n";
+
+              fieldMessage.value += str;
+              if (qrBody) {
+                qrBody.value += str;
+              };
+            };
+
+            reader.readAsArrayBuffer(file);
+          };
+        })();
+      };
+    };
+
+    etcthis.insertPostOptionCheckbox = function(settingName, labelString) {
+      var input = document.createElement('INPUT');
+      input.type = 'checkbox';
+      input.id = settingName + "Checkbox";
+      input.setAttribute("data-setting-name", settingName);
+      input.onclick = etcthis.updatePostOptionCheckbox;
+      input.checked = "true" === localStorage[settingName];
+
+      var label = document.createElement('LABEL');
+      label.style.display = 'inline';
+      label.appendChild(input);
+      label.appendChild(document.createTextNode(labelString));
+
+      var origin = document.getElementById('postBox');
+      if (origin) {
+        origin.insertBefore(label, origin.firstChild );
+      };
+    };
+
+    etcthis.updatePostOptionCheckbox = function(e) {
+      var settingName = e.target.getAttribute("data-setting-name");
+      localStorage[settingName] = e.target.checked;
+    };
+
     etcthis.enable = function enable() {
       etcthis.retryFailedTags();
 
@@ -3667,7 +3733,6 @@
 
         feWrapper.selectedDivOnChangeHandlers.push(etcthis.updateMaskFilenameMode);
       };
-
       etcthis.removeNonJsSendButton();
 
       if (0 <= document.location.href.indexOf("/librejp/")) {
@@ -3680,6 +3745,15 @@
       etcthis.markdownTool();
       etcthis.insertMiscCSS();
       etcthis.autoPostingPassowrd();
+
+      if(undefined===localStorage["addHashToMessage"]) {
+        /* 2017年10月27日から続く投稿ファイル消失への対策として
+         * メッセージへのファイルURI挿入をデフォルトにする
+         */
+        localStorage["addHashToMessage"] = true;
+      };
+      feWrapper.selectedDivOnChangeHandlers.push(etcthis.addHashToMessage);
+      etcthis.insertPostOptionCheckbox("addHashToMessage", "メッセージにファイルURLを含める");
     };
 
     etcthis.trigger = function() {
@@ -4006,7 +4080,7 @@
     mthis.postCellContainsText = function(postCell, text) {
       return 0 <= postCell.textContent.indexOf(text);
     };
-    
+
     mthis.lookForPostCellByGreenText = function(popupInfo, callback) {
       var text = popupInfo['quoteAnchor'].textContent.replace(/> */,"");
       var postCell = utils.getElementByClassNameFromAncestor(popupInfo['quoteAnchor'], "postCell");
@@ -4039,7 +4113,7 @@
       clone.originalPostCell = postCell;
       return clone;
     };
-    
+
     mthis.lookForPostCellFromDocument = function(popupInfo, callback) {
       var quoteAnchor = popupInfo['quoteAnchor'];
       var postId = quoteAnchor.hash;
@@ -4056,12 +4130,12 @@
       } else {
         postId = postId.substring(1); /* "#456" -> "456" */
       };
-      
+
       var postCell = document.getElementById(postId);
       if (null == postCell) {
         return callback(popupInfo, null, "no such post:No." + postId);
       };
-      
+
       return callback(popupInfo, mthis.clonePostCellForPopup(postCell));
     };
 
@@ -4127,7 +4201,7 @@
       var setParentUid = function(quoteLinkOrGreenText) {
         quoteLinkOrGreenText.setAttribute('data-tsk-parent-popup-uid', uid);
       };
-      
+
       mthis.overridePostCellQuotePopups(postCell, setParentUid);
       mthis.enableGreenTextPopup(postCell, setParentUid);
 
