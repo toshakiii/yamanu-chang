@@ -3747,12 +3747,6 @@
       etcthis.insertMiscCSS();
       etcthis.autoPostingPassowrd();
 
-      if(undefined===localStorage["addHashToMessage"]) {
-        /* 2017年10月27日から続く投稿ファイル消失への対策として
-         * メッセージへのファイルURI挿入をデフォルトにする
-         */
-        localStorage["addHashToMessage"] = true;
-      };
       feWrapper.selectedDivOnChangeHandlers.push(etcthis.addHashToMessage);
       etcthis.insertPostOptionCheckbox("addHashToMessage", "メッセージにファイルURLを含める");
     };
