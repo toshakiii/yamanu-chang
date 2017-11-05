@@ -45,6 +45,7 @@
 
 /*
  * yamanu-chang(山ぬちゃん)です
+ * ・(v2.40 2017.11.05) 機能追加: ドメイン間リンク
  * ・(v2.39 2017.10.29) 機能追加: ファイルハッシュをメッセージへ追加する機能
  * ・(v2.38 2017.10.18) 機能追加: 自動投稿パスワード
  * ・(v2.37 2017.10.16) 修正: マークダウン支援が動作しなかったのを修正
@@ -444,7 +445,7 @@
       return true;
     };
 
-    uthis.contains = function( array, item) {
+    uthis.contain = function( array, item) {
       for (var arIdx in array) {
         if (item != array[ arIdx ]) {
           return true;
@@ -695,6 +696,17 @@
         };
       };
       return null;
+    };
+
+    uthis.createTextLink = function(uri, text) {
+      if (undefined === text) {
+        text = uri;
+      };
+
+      var anchor = document.createElement("A");
+      anchor.appendChild( document.createTextNode(text) );
+      anchor.href = uri;
+      return anchor;
     };
 
     uthis.trigger = function() {
@@ -3698,6 +3710,109 @@
       localStorage[settingName] = e.target.checked;
     };
 
+    etcthis.interDomainLink = function() {
+      switch(document.location.host) {
+      default: return;
+      case "endchan.xyz": case "endchan.net": case "infinow.net":
+      case "endchan5doxvprs5.onion": case "s6424n4x4bsmqs27.onion":
+      case "endchan5doxvprs5.onion.to": case "s6424n4x4bsmqs27.onion.to":
+      };
+
+      var topNavList = document.getElementsByClassName("topNav");
+      var bottomNavList = document.getElementsByClassName("bottomNav");
+      var top = document.getElementById("top");
+      var bottom = document.getElementById("bottom");
+
+      if (top) {
+        top.parentElement.insertBefore(etcthis.createInterDomainLinkButton(), top.nextSibling);
+        top.parentElement.insertBefore(document.createTextNode(" | "), top.nextSibling);
+      };
+      if (bottom) {
+        bottom.parentElement.insertBefore(etcthis.createInterDomainLinkButton(), bottom.nextSibling);
+        bottom.parentElement.insertBefore(document.createTextNode(" | "), bottom.nextSibling);
+      };
+
+      for (var tnIdx = 0, tnLen = topNavList.length; tnIdx < tnLen; ++tnIdx) {
+        topNavList[tnIdx].appendChild(document.createTextNode(" | "));
+        topNavList[tnIdx].appendChild(etcthis.createInterDomainLinkButton());
+      };
+
+      for (var bnIdx = 0, bnLen = bottomNavList.length; bnIdx < bnLen; ++bnIdx) {
+        bottomNavList[bnIdx].appendChild(document.createTextNode(" | "));
+        bottomNavList[bnIdx].appendChild(etcthis.createInterDomainLinkButton());
+      };
+    };
+
+    etcthis.createInterDomainLinkButton = function() {
+      var button = document.createElement("A");
+      var openingText = "[-Domain]";
+      var closingText = "[+Domain]";
+      button.href = "#";
+      button.textContent = closingText;
+      button.setAttribute("data-expanded", "false");
+
+      button.addEventListener("click", function(event) {
+        if ("true"===event.target.getAttribute("data-expanded")) {
+          button.setAttribute("data-expanded", "false");
+          button.textContent = closingText;
+
+          var element = event.target.domainLinksElement;
+          element.parentElement.removeChild(element);
+          button.domainLinksElement = undefined;
+        } else {
+          button.setAttribute("data-expanded", "true");
+          button.textContent = openingText;
+
+          button.domainLinksElement = etcthis.createInterDomainLinks();
+          event.target.parentElement.insertBefore(button.domainLinksElement,
+              event.target.nextSibling);
+        };
+        event.preventDefault();
+        return false;
+      });
+
+      return button;
+    };
+
+    etcthis.createInterDomainLinks = function() {
+      /* .onion.to には案内しない */
+      var hosts = [ "https://endchan.xyz", "https://endchan.net", "http://endchan5doxvprs5.onion",
+                    "http://s6424n4x4bsmqs27.onion"];
+
+      var createDomainsLinks = function(url) {
+        var span = document.createElement("SPAN");
+        if (0 === document.location.href.indexOf(url)) {
+          span.style.fontWeight = "bold";
+        };
+        var anotherHere = utils.createTextLink(url + document.location.pathname
+            + document.location.search + document.location.hash, "here");
+        var blockBypass = utils.createTextLink(url + "/blockBypass.js", "bypass");
+        var parts = document.location.href.split("/");
+
+        span.appendChild(document.createTextNode(" [ "));
+        span.appendChild(utils.createTextLink(url, url.replace(/https?:\/\//,"")));
+        span.appendChild(document.createTextNode(" | "));
+        span.appendChild(anotherHere);
+        span.appendChild(document.createTextNode(" | "));
+        span.appendChild(blockBypass);
+        if (5 <= parts.length) {
+          var catalog = utils.createTextLink(url + "/" + parts[3] + "/catalog.html", "catalog");
+          span.appendChild(document.createTextNode(" | "));
+          span.appendChild(catalog);
+        };
+        span.appendChild(document.createTextNode(" ] "));
+        return span;
+      };
+
+      var span = document.createElement("SPAN");
+      for (var hostIdx in hosts) {
+        span.appendChild(createDomainsLinks(hosts[hostIdx]));
+      };
+
+      return span;
+    };
+
+
     etcthis.enable = function enable() {
       etcthis.retryFailedTags();
 
@@ -3749,6 +3864,8 @@
 
       feWrapper.selectedDivOnChangeHandlers.push(etcthis.addHashToMessage);
       etcthis.insertPostOptionCheckbox("addHashToMessage", "メッセージにファイルURLを含める");
+
+      setTimeout(etcthis.interDomainLink, 0);
     };
 
     etcthis.trigger = function() {
@@ -3987,7 +4104,7 @@
 
     };
 
-    mthis.downloadPostCell = function( popupInfo, callback) {
+    mthis.downloadPostCell = function(popupInfo, callback) {
       var quoteAnchor = popupInfo['quoteAnchor'];
       var msg;
       if (quoteAnchor.host != location.host) {
@@ -4170,6 +4287,8 @@
         postCell = document.createElement('DIV');
         postCell.appendChild( document.createTextNode(errorMessage) );
       };
+
+      /* ポップアップの基準位置 */
       var originElement = mthis.getRelatedDivMessage(quoteAnchor);
       if (null == originElement) {
         originElement = quoteAnchor;
@@ -4234,9 +4353,16 @@
       var width     = quoteblock.offsetWidth;
 
       var targetPosition = popupInfo['targetPosition'];
-      var rect      = originElement.getBoundingClientRect();
-      var left    = rect.left + rect.height + scrollLeft;
-      var top     = rect.top  + rect.height + scrollTop;
+      var top, left;
+      if (undefined === originElement) {
+        left = mthis.mouseClientPos.x;
+        top = mthis.mouseClientPos.y;
+      } else {
+        var rect = originElement.getBoundingClientRect();
+        left = rect.left + rect.height + scrollLeft;
+        top  = rect.top  + rect.height + scrollTop;
+        rect = undefined;
+      };
 
       if (undefined != targetPosition) {
         left = targetPosition.x;
