@@ -15,21 +15,8 @@
 // @include    /https?://endchan5doxvprs5\.onion.to/.*$/
 // @include    /https?://s6424n4x4bsmqs27\.onion.to/.*$/
 //
-// @include    /https?://32ch\.org/.*$/
-// @include    /https?://32ch\.org/.*$/
-// @include    /https?://bunkerchan\.xyz/.*$/
-//
-// @include    /https?://freech\.net/.*$/
-// @include    /https?://keksec\.com/.*$/
-// @include    /https?://lynxhub\.com/.*$/
-// @include    /https?://spacechan\.xyz/.*$/
-// @include    /https?://spqrchan\.org/.*$/
-// @include    /https?://spqrchan\.org/.*$/
-// @include    /https?://waifuchan\.moe/.*$/
-// @include    /https?://waifuchan\.moe/.*$/
-//
-// @version      2.40
-// @description v2.40: endchan: catalog sorter, preview upload files, recursive quote popup
+// @version      2.42
+// @description v2.42: endchan用の再帰的レスポップアップ、Catalogソート、添付ファイルプレビュー
 // @grant       none
 // ==/UserScript==
 
@@ -45,6 +32,7 @@
 
 /*
  * yamanu-chang(山ぬちゃん)です
+ * ・(v2.42 2017.11.25) 修正: 実行タイミングの問題でカタログで動作不良を起こす問題を修正
  * ・(v2.40 2017.11.05) 機能追加: ドメイン間リンク
  * ・(v2.39 2017.10.29) 機能追加: ファイルハッシュをメッセージへ追加する機能
  * ・(v2.38 2017.10.18) 機能追加: 自動投稿パスワード
@@ -179,12 +167,9 @@
 
 /*
  * TODO:
- * ・コードコンテナをひとつにしたい
- * ・圧縮しても動くコードにしたい
+ * ・コードコンテナをひとつに
  * ・sendReplyData の hack をオフにできるオプションを追加すること。
- * ・2回もダウンロードしないように
- * ・ボードトップでページ内引用をするように。サウロンの目にも対応したい。
- * ・selectedDivOnChange を lynxChanWrapper に移動すること。今時点、ファイルプレビューに依存している。
+ * ・サウロンの目にも対応
  * ・Youtubeのリンクを有効にする補助機能を盛ること
  * ・埋め込みを一本化すること
  * ・再生開始機能を盛ること
@@ -696,6 +681,54 @@
         };
       };
       return null;
+    };
+
+    uthis.getCookie = function(Name) {
+      var re = new RegExp(Name + "=[^;]+", "i");
+      if (document.cookie.match(re)) {
+        return document.cookie.match(re)[0].split("=")[1];
+      };
+      return null;
+    };
+
+    uthis.setCookie = function(name, value, days) {
+      var expireDate=new Date();
+      var expstring=(typeof days!="undefined")?expireDate.setDate(expireDate.getDate()+parseInt(days)):expireDate.setDate(expireDate.getDate()-5);
+      document.cookie=name+"="+value+"; expires="+expireDate.toGMTString()+"; path=/";
+    };
+
+    uthis.deleteCookie = function(name) {
+      uthis.setCookie(name, "", -1);
+    };
+
+    uthis.getSetting = function(Name) {
+      if (localStorage) {
+        return localStorage.getItem(Name);
+      }
+      var re = new RegExp(Name + "=[^;]+", "i");
+      if (document.cookie.match(re)) {
+        return document.cookie.match(re)[0].split("=")[1];
+      };
+      return null;
+    };
+
+    uthis.setSetting = function(name, value, days) {
+      if (localStorage) {
+        localStorage.setItem(name, value);
+      } else {
+        var expireDate = new Date();
+        var expstring = (typeof days!="undefined") ?
+              expireDate.setDate(expireDate.getDate() + parseInt(days)) :
+              expireDate.setDate(expireDate.getDate()-5 );
+        document.cookie = name + "=" + value + "; expires=" + expireDate.toGMTString() + "; path=/";
+      };
+    };
+
+    uthis.deleteSetting = function(name) {
+      if (localStorage) {
+        localStorage.removeItem(name);
+      };
+      uthis.setCookie(name, "", -1);
     };
 
     uthis.createTextLink = function(uri, text) {
@@ -1507,8 +1540,7 @@
           parentElt.appendChild( showButtonElts[ catalogCell.id ] );
         }
         else if (settings.sageHidedThreads &&
-                 window.getSetting !== undefined &&
-                 window.getSetting( 'hide' + sthis.boardUri + 'Thread' + catalogCell.id )) {
+                 utils.getSetting('hide' + sthis.boardUri + 'Thread' + catalogCell.id)) {
           sageElts.push(catalogCell);
           continue;
         };
@@ -1950,7 +1982,7 @@
         window.enableHideThreadLink(element);
 
         /* var cookie = '; ' + document.cookie + "; "; */
-        if (window.getSetting('hide' + sthis.boardUri + 'Thread' + element.id)) {
+        if (utils.getSetting('hide' + sthis.boardUri + 'Thread' + element.id)) {
           element.style.display = "none";
           var fragment = document.createDocumentFragment();
           fragment.appendChild( createShowThreadLink(element) );
@@ -2160,9 +2192,11 @@
 
     etcthis.contextMenuOnMarkdownTool = function() {
       var fieldMessage = document.getElementById('fieldMessage');
-      etcthis.setMarkdownToolOnTextAreaContextMenu(fieldMessage, fieldMessage.id);
+      if (fieldMessage) {
+        etcthis.setMarkdownToolOnTextAreaContextMenu(fieldMessage, fieldMessage.id);
 
-      feWrapper.quickReplyOnLoadHandlers.push( etcthis.setMarkdownToolOnQrBodyContextMenu );
+        feWrapper.quickReplyOnLoadHandlers.push( etcthis.setMarkdownToolOnQrBodyContextMenu );
+      };
     };
 
     etcthis.setMarkdownToolOnQrBodyContextMenu = function() {
@@ -2493,9 +2527,8 @@
     };
 
     etcthis.setCheckboxOfDancingMascot = function() {
-
       etcthis.hideLibrejpBottomLeftMascot =
-        'true' === window.getSetting('ymncLibrejpBottomLeftMascot');
+        'true' === utils.getSetting('ymncLibrejpBottomLeftMascot');
 
       var input = document.createElement('INPUT');
       input.type = 'checkbox';
@@ -2523,7 +2556,7 @@
 
       if (ev) {
         etcthis.hideLibrejpBottomLeftMascot = ev.target.checked;
-        window.setSetting('ymncLibrejpBottomLeftMascot', etcthis.hideLibrejpBottomLeftMascot );
+        utils.setSetting('ymncLibrejpBottomLeftMascot', etcthis.hideLibrejpBottomLeftMascot );
       };
 
       var style = document.getElementById( style_id );
@@ -2550,7 +2583,7 @@
     etcthis.setCheckboxOfMaskFilenameMode = function() {
 
       etcthis.maskFilename =
-        'true' === window.getSetting('ymncMaskFilename');
+        'true' === utils.getSetting('ymncMaskFilename');
 
       var input = document.createElement('INPUT');
       input.type = 'checkbox';
@@ -2573,7 +2606,7 @@
 
       if (ev) {
         etcthis.maskFilename = ev.target.checked;
-        window.setSetting('ymncMaskFilename', etcthis.maskFilename );
+        utils.setSetting('ymncMaskFilename', etcthis.maskFilename );
       };
 
       etcthis.maskAllFilename( etcthis.maskFilename );
@@ -3695,7 +3728,7 @@
       input.checked = "true" === localStorage[settingName];
 
       var label = document.createElement('LABEL');
-      label.style.display = 'inline';
+      label.style.display = 'box';
       label.appendChild(input);
       label.appendChild(document.createTextNode(labelString));
 
@@ -3722,6 +3755,7 @@
       var bottomNavList = document.getElementsByClassName("bottomNav");
       var top = document.getElementById("top");
       var bottom = document.getElementById("bottom");
+      var boardHeaderList = document.getElementsByClassName("boardHeader");
 
       if (top) {
         top.parentElement.insertBefore(etcthis.createInterDomainLinkButton(), top.nextSibling);
