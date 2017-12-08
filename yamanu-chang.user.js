@@ -9,6 +9,7 @@
 // @include    https://endchan.net*
 // @include    http://infinow.net*
 // @include    https://infinow.net*
+// @exclude    */.media/*
 //
 // @include    /https?://endchan5doxvprs5\.onion/.*$/
 // @include    /https?://s6424n4x4bsmqs27\.onion/.*$/
@@ -167,7 +168,6 @@
 
 /*
  * TODO:
- * ・コードコンテナをひとつに
  * ・sendReplyData の hack をオフにできるオプションを追加すること。
  * ・サウロンの目にも対応
  * ・Youtubeのリンクを有効にする補助機能を盛ること
@@ -176,32 +176,22 @@
  */
 
 (function() {
-  // pthis: modFilePreview
-  // sthis: modCatalogSorter
-  // mthis: modMultiPopup
-  // etcthis: modEtCetera
-  // ethis: DOM Elementを指すthis
-  // lthis: modFeWrapper
-  // cthis: 一時使用用
 
-  window.toshakiii = window.toshakiii || {};
-  window.toshakiii2 = window.toshakiii || {};
-  var toshakiii = window.toshakiii;
-  var toshakiii2 = window.toshakiii || {};
-
-  /*********
-   * utils *
-   *********/
-  function modUtils() {
+  function modYamanuchang() {
     window.toshakiii = window.toshakiii || {};
-    window.toshakiii.settings = window.toshakiii.settings || {};
-    var toshakiii = window.toshakiii;
-    var settings = window.toshakiii.settings;
 
-    var uthis = window.toshakiii.utils = window.toshakiii.utils || {};
-    var utils = uthis;
+    var utils = window.toshakiii.utils = window.toshakiii.utils || {};
+    var settings = window.toshakiii.settings = window.toshakiii.settings || {};
+    var filePreview = window.toshakiii.filePreview = window.toshakiii.filePreview || {};
+    var feWrapper = window.toshakiii.feWrapper = window.toshakiii.feWrapper || {};
+    var catalogSort = window.toshakiii.catalogSort = window.toshakiii.catalogSort || {};
+    var etCetera = window.toshakiii.etCetera = window.toshakiii.etCetera || {};
+    var multiPopup = window.toshakiii.multiPopup = window.toshakiii.multiPopup || {};
 
-    uthis.CompulsoryProcessing = function(initFunc) {
+    /*********
+     * utils *
+     *********/
+    utils.CompulsoryProcessing = function(initFunc) {
       this.initFunc = initFunc;
       /* mutationRecords を preProc したものを渡される関数のリスト */
       this.processes = [];
@@ -218,23 +208,23 @@
       this.funcEnumExistingTargets = undefined;
     };
 
-    uthis.CompulsoryProcessing.prototype.setObservingElement =
+    utils.CompulsoryProcessing.prototype.setObservingElement =
       function setObservingElement(element) {
         this.observingElement = element;
       };
-    uthis.CompulsoryProcessing.prototype.setObservingOptions =
+    utils.CompulsoryProcessing.prototype.setObservingOptions =
       function setObservingElement(options) {
         this.observingOptions = options;
       };
-    uthis.CompulsoryProcessing.prototype.setFuncEnumExistingTargets =
+    utils.CompulsoryProcessing.prototype.setFuncEnumExistingTargets =
       function setFuncEnumExistingTargets(value) {
         this.funcEnumExistingTargets = value;
       };
-    uthis.CompulsoryProcessing.prototype.setPreProc =
+    utils.CompulsoryProcessing.prototype.setPreProc =
       function setPreProc(value) {
         this.preProc = value;
       };
-    uthis.CompulsoryProcessing.prototype.processExistingTargets =
+    utils.CompulsoryProcessing.prototype.processExistingTargets =
       function processExistingTargets( proc, procAfter) {
 
         if (undefined === proc) {
@@ -272,7 +262,7 @@
         } ).beginAsync();
       };
 
-    uthis.CompulsoryProcessing.prototype.startApply =
+    utils.CompulsoryProcessing.prototype.startApply =
       function startApply() {
         if (undefined !== this.initFunc) {
           this.initFunc(this);
@@ -286,7 +276,7 @@
         };
       };
 
-    uthis.CompulsoryProcessing.prototype.stopApply =
+    utils.CompulsoryProcessing.prototype.stopApply =
       function stopApply() {
         if (undefined !== this.mutationObserver) {
           this.mutationObserver.disconnect();
@@ -294,7 +284,7 @@
         };
       };
 
-    uthis.CompulsoryProcessing.prototype.defaultCallback =
+    utils.CompulsoryProcessing.prototype.defaultCallback =
       function defaultCallback( mutationRecords, mutationObserver) {
         if (undefined === this.preProc) {
           this.process(mutationRecords);
@@ -323,7 +313,7 @@
         } ).beginAsync();
       };
 
-    uthis.CompulsoryProcessing.prototype.process =
+    utils.CompulsoryProcessing.prototype.process =
       function process(target) {
         for (var pidx = 0, plen = this.processes.length; pidx < plen ; ++pidx) {
           this.processes[ pidx ](target);
@@ -331,14 +321,14 @@
       };
 
     /* 名前と設計を再考すること */
-    uthis.CompulsoryProcessing.prototype.processAfter =
+    utils.CompulsoryProcessing.prototype.processAfter =
       function processAfter() {
         for (var pidx = 0, plen = this.processesAfter.length; pidx < plen ; ++pidx) {
           this.processesAfter[ pidx ]();
         };
       };
 
-    uthis.CompulsoryProcessing.prototype.appendCP =
+    utils.CompulsoryProcessing.prototype.appendCP =
       function appendCP( func, noStartApply, noApplyToExistingTargets) {
         this.processes.push(func);
         if (! noStartApply) {
@@ -350,7 +340,7 @@
         return func;
       };
 
-    uthis.CompulsoryProcessing.prototype.removeCP =
+    utils.CompulsoryProcessing.prototype.removeCP =
       function removeCP( func, noStopApply) {
         for (var idx = this.processes.length - 1; -1 < idx ; --idx) {
           if (this.processes[ idx ] === func) {
@@ -368,7 +358,7 @@
         return null;
       };
 
-    uthis.CompulsoryProcessing.prototype.appendAfterCP = function appendAfterCP( func, noStartApply,
+    utils.CompulsoryProcessing.prototype.appendAfterCP = function appendAfterCP( func, noStartApply,
         noApplyToExistingTargets) {
 
       this.processesAfter.push(func);
@@ -383,7 +373,7 @@
       return func;
     };
 
-    uthis.CompulsoryProcessing.prototype.removeAfterCP = function removeCP( func, noStopApply) {
+    utils.CompulsoryProcessing.prototype.removeAfterCP = function removeCP( func, noStopApply) {
       for (var idx = this.processesAfter.length - 1; -1 < idx ; --idx) {
         if (this.processesAfter[ idx ] === func) {
           this.processesAfter.splice( idx, 1 );
@@ -398,7 +388,7 @@
       return null;
     };
 
-    uthis.CompulsoryProcessing.prototype.preProc_enumAddedNodes =
+    utils.CompulsoryProcessing.prototype.preProc_enumAddedNodes =
       function preProc_enumAddedNodes(mutationRecords) {
         var tlist = [];
         for (var mrIdx = 0, mrLen = mutationRecords.length; mrIdx < mrLen ; ++mrIdx) {
@@ -411,11 +401,11 @@
       };
 
 
-    uthis.endsWith = function endsWith( str, suffix) {
+    utils.endsWith = function endsWith( str, suffix) {
       return -1 !== str.indexOf(suffix, str.length - suffix.length);
     };
 
-    uthis.foreEachElementDescendants = function foreEachElementDescendants( element, func) {
+    utils.foreEachElementDescendants = function foreEachElementDescendants( element, func) {
       var children, idx, len;
       for (children = element.children, idx = 0, len = element.children.length; idx < len ; ++idx) {
         if (! func( children[ idx ] )) {
@@ -430,7 +420,7 @@
       return true;
     };
 
-    uthis.contain = function( array, item) {
+    utils.contain = function( array, item) {
       for (var arIdx in array) {
         if (item != array[ arIdx ]) {
           return true;
@@ -439,14 +429,14 @@
       return false;
     };
 
-    uthis.getFirstLanguage = function() {
+    utils.getFirstLanguage = function() {
       return (window.navigator.languages && window.navigator.languages[0]) ||
         window.navigator.language ||
         window.navigator.userLanguage ||
         window.navigator.browserLanguage;
     };
 
-    uthis.getBodyBackgroundColor = function() {
+    utils.getBodyBackgroundColor = function() {
       var cssProperties = window.getComputedStyle(document.body);
       var backgroundColor = cssProperties["background-color"];
       if (backgroundColor == null) {
@@ -455,7 +445,7 @@
       return backgroundColor;
     };
 
-    uthis.getBodyForegroundColor = function() {
+    utils.getBodyForegroundColor = function() {
       var cssProperties = window.getComputedStyle(document.body);
       var foregroundColor = cssProperties["color"];
       if (foregroundColor == null) {
@@ -464,7 +454,7 @@
       return foregroundColor;
     };
 
-    uthis.getScrollTop = function() {
+    utils.getScrollTop = function() {
       var v = document.documentElement.scrollTop;
       if (0 == v) {
         return document.body.scrollTop;
@@ -472,7 +462,7 @@
       return v;
     };
 
-    uthis.getScrollLeft = function() {
+    utils.getScrollLeft = function() {
       var v = document.documentElement.scrollLeft;
       if (0 == v) {
         return document.body.scrollLeft;
@@ -480,7 +470,7 @@
       return v;
     };
 
-    uthis.replaceItem = function( array, fromItem, toItem) {
+    utils.replaceItem = function( array, fromItem, toItem) {
       for (var idx = 0, len = array.length ; idx < len ; ++idx) {
         if (array[ idx ] === fromItem) {
           array[ idx ] = toItem;
@@ -489,7 +479,7 @@
       return array;
     };
 
-    uthis.leftpad = function( str, n, char) {
+    utils.leftpad = function( str, n, char) {
       str = str.toString();
       if (n <= str.length) {
         return str;
@@ -500,7 +490,7 @@
       return char.repeat( n - str.length ) + str;
     };
 
-    uthis.removeIdAll = function removeIdAll(element) {
+    utils.removeIdAll = function removeIdAll(element) {
       element.id = "";
       for (var i in element.children) {
         if (undefined != element.children) {
@@ -510,7 +500,7 @@
       return element;
     };
 
-    uthis.removePostCells = function() {
+    utils.removePostCells = function() {
       var postCellList = document.getElementsByClassName('postCell');
       for (var idx = postCellList.length - 1; -1 < idx ; --idx) {
         postCellList[idx].parentElement.removeChild( postCellList[idx] );
@@ -518,7 +508,7 @@
       window.lastReplyId = 0;
     };
 
-    uthis.differenceSet = function( lhs, rhs) {
+    utils.differenceSet = function( lhs, rhs) {
       var r = {};
       for (var key in lhs) {
         if (! key in rhs) {
@@ -528,7 +518,7 @@
       return r;
     };
 
-    uthis.getYearMonthDateDayHoursMinutesSeconds =
+    utils.getYearMonthDateDayHoursMinutesSeconds =
       function( dateObj , useUTC) {
         /* return type: int array */
         /* return value: [ year, month, date, day, hours, minutes, seconds] */
@@ -554,17 +544,17 @@
       };
 
     /* IntermittentLoops { */
-    uthis.IntermittentLoops = function() {
-      return new uthis.IntermittentLoops__();
+    utils.IntermittentLoops = function() {
+      return new utils.IntermittentLoops__();
       /* ・`IntermittentLoops' enables asynchronous loop execution. *
        * ・makes setTimeout-recursion easier to write.              */
     };
 
-    uthis.IntermittentLoops__ = function() {
+    utils.IntermittentLoops__ = function() {
       this.loopFuncList = [];
     };
 
-    uthis.IntermittentLoops__.prototype.push = function(f) {
+    utils.IntermittentLoops__.prototype.push = function(f) {
       this.loopFuncList.push(f);
       return this;
     };
@@ -572,7 +562,7 @@
     /* note: the following setTimeout( [function], 0 )   */
     /*       I don't expect 0ms.                         */
     /*       with many browsers 0 stands for about 40ms. */
-    uthis.IntermittentLoops__.prototype.beginAsync = function() {
+    utils.IntermittentLoops__.prototype.beginAsync = function() {
       var ilThis = this;
       var loopFuncList = ilThis.loopFuncList;
       var wrappedLoopFuncList = new Array(loopFuncList.length);
@@ -604,75 +594,35 @@
       setTimeout( wrappedLoopFuncList[0], 0 );
     };
 
-    uthis.IntermittentLoops__.prototype.doNothing = function() {};
+    utils.IntermittentLoops__.prototype.doNothing = function() {};
     /* } IntermittentLoops */
 
-    uthis.__Test_IntermittentLoops = function() {
-      /*
-       outputs: [1][2][3](A)(B)(C) {_}{~}{=}
-       */
-      var ile = uthis.IntermittentLoops();
-
-      var sss1 = ["[1]","[2]","[3]"];
-      var idx1 = 0;
-      var len1 = sss1.length;
-      ile.push( function() {
-        if (idx1 >= len1 ) return false;
-        console.log( sss1[ idx1 ] );
-        ++idx1;
-        return true;
-      } );
-
-      var sss2 = ["(A)","(B)","(C)"];
-      var idx2 = 0;
-      var len2 = sss2.length;
-
-      var sss3 = ["{_}","{-}","{=}"];
-      var idx3 = 0;
-      var len3 = sss3.length;
-
-      ile.push( function() {
-        if (idx2 >= len2 ) return false;
-        console.log( sss2[ idx2 ] );
-        ++idx2;
-        return true;
-
-      } ).push( function() {
-
-        if (idx3 >= len3 ) return false;
-        console.log( sss3[ idx3 ] );
-        ++idx3;
-        return true;
-      } )
-        .beginAsync();
-    };
-
-    uthis.elementUidCounter = 0;
-    uthis.getElementUniqueId = function(element) {
+    utils.elementUidCounter = 0;
+    utils.getElementUniqueId = function(element) {
       if (element === element.thisself) {
         /* thisself フィールドが element 自身を示すなら "data-tsk-uid" も有効に設定されているはず */
         return element.getAttribute("data-tsk-uid");
       };
 
-      ++uthis.elementUidCounter;
+      ++utils.elementUidCounter;
 
-      var uid = "tskuid" + uthis.elementUidCounter + "__";
+      var uid = "tskuid" + utils.elementUidCounter + "__";
       element.setAttribute( "data-tsk-uid", uid );
       element.thisself = element;
 
       return uid;
     };
 
-    uthis.getElementsByUniqueId = function(euid) {
+    utils.getElementsByUniqueId = function(euid) {
       var query = '[data-tsk-uid="' + euid + '"]';
       return document.querySelectorAll(query);
     };
 
-    uthis.toMarkElementDiscarded = function(element) {
+    utils.toMarkElementDiscarded = function(element) {
       element.setAttribute("data-tsk-discarded", "1");
     };
 
-    uthis.getElementByClassNameFromAncestor = function(element, className) {
+    utils.getElementByClassNameFromAncestor = function(element, className) {
       for (; element !== null; element = element.parentElement) {
         for( var clIdx = 0, clLen = element.classList.length; clIdx < clLen; ++clIdx) {
           if (className === element.classList[clIdx]) {
@@ -683,7 +633,7 @@
       return null;
     };
 
-    uthis.getCookie = function(Name) {
+    utils.getCookie = function(Name) {
       var re = new RegExp(Name + "=[^;]+", "i");
       if (document.cookie.match(re)) {
         return document.cookie.match(re)[0].split("=")[1];
@@ -691,17 +641,17 @@
       return null;
     };
 
-    uthis.setCookie = function(name, value, days) {
+    utils.setCookie = function(name, value, days) {
       var expireDate=new Date();
       var expstring=(typeof days!="undefined")?expireDate.setDate(expireDate.getDate()+parseInt(days)):expireDate.setDate(expireDate.getDate()-5);
       document.cookie=name+"="+value+"; expires="+expireDate.toGMTString()+"; path=/";
     };
 
-    uthis.deleteCookie = function(name) {
-      uthis.setCookie(name, "", -1);
+    utils.deleteCookie = function(name) {
+      utils.setCookie(name, "", -1);
     };
 
-    uthis.getSetting = function(Name) {
+    utils.getSetting = function(Name) {
       if (localStorage) {
         return localStorage.getItem(Name);
       }
@@ -712,7 +662,7 @@
       return null;
     };
 
-    uthis.setSetting = function(name, value, days) {
+    utils.setSetting = function(name, value, days) {
       if (localStorage) {
         localStorage.setItem(name, value);
       } else {
@@ -724,14 +674,14 @@
       };
     };
 
-    uthis.deleteSetting = function(name) {
+    utils.deleteSetting = function(name) {
       if (localStorage) {
         localStorage.removeItem(name);
       };
-      uthis.setCookie(name, "", -1);
+      utils.setCookie(name, "", -1);
     };
 
-    uthis.createTextLink = function(uri, text) {
+    utils.createTextLink = function(uri, text) {
       if (undefined === text) {
         text = uri;
       };
@@ -742,21 +692,14 @@
       return anchor;
     };
 
-    uthis.trigger = function() {
+    utils.trigger = function() {
       return;
     };
 
-    return uthis;
-  };
 
-  /**********************************
-   * settings                       *
-   **********************************/
-  function modSettings() {
-    window.toshakiii = window.toshakiii || {};
-    window.toshakiii.settings = window.toshakiii.settings || {};
-    var toshakiii = window.toshakiii;
-    var settings = window.toshakiii.settings;
+    /**********************************
+     * settings                       *
+     **********************************/
 
     /*                         [<keynames>...] */
     settings.miniDataKeyList = [ 'ThreadAutoRefresh' ];
@@ -825,42 +768,27 @@
     settings.enable = function() {};
     settings.disable = function() {};
 
-    return settings;
-  };
+    /**********************************
+     * filePreview                    *
+     **********************************/
+    filePreview.previewMaxWidth = "140px";
+    filePreview.previewMaxHeight = "140px";
 
-  /**********************************
-   * filePreview                    *
-   **********************************/
-  function modFilePreview() {
-    window.toshakiii = window.toshakiii || {};
-    window.toshakiii.settings = window.toshakiii.settings || {};
-    var toshakiii = window.toshakiii;
-    var settings = window.toshakiii.settings;
-
-    var pthis = {};
-    var feWrapper = window.toshakiii.feWrapper;
-    var utils = window.toshakiii.utils;
-
-    window.toshakiii.filePreview = pthis;
-
-    pthis.previewMaxWidth = "140px";
-    pthis.previewMaxHeight = "140px";
-
-    pthis.PREVIEW_CLASSNAME = "toshakiPreviewCell";
-    pthis.PREVIEWS_AREA_CLASSNAME = "toshakiPreviewsArea";
+    filePreview.PREVIEW_CLASSNAME = "toshakiPreviewCell";
+    filePreview.PREVIEWS_AREA_CLASSNAME = "toshakiPreviewsArea";
 
     /* previewCell の className と data-rel-selected-cell に selectedCell の Element Unique Id
      * を設定する */
 
-    pthis.insertPreviewElement = function( selectedCell, file) {
-      if (pthis.hasPreviewed(selectedCell) )
+    filePreview.insertPreviewElement = function( selectedCell, file) {
+      if (filePreview.hasPreviewed(selectedCell) )
         return true;
 
-      var previewsArea = pthis.getPreviewsAreaElement(selectedCell);
+      var previewsArea = filePreview.getPreviewsAreaElement(selectedCell);
       var div = document.createElement('DIV');
       var selectedCellUid = utils.getElementUniqueId(selectedCell);
       var previewCell;
-      div.className = pthis.PREVIEW_CLASSNAME + " preview" + selectedCellUid;
+      div.className = filePreview.PREVIEW_CLASSNAME + " preview" + selectedCellUid;
       div.style.display = "inline-block";
       div.setAttribute("data-rel-selected-cell", selectedCellUid);
       previewsArea.appendChild(div);
@@ -869,13 +797,13 @@
         previewCell = this.insertDummyElement( div, file, "OVER 350MiB");
 
       } else if (0 <= file.type.indexOf( 'image/' )) {
-        previewCell = pthis.insertImagePreviewElement( div, file);
+        previewCell = filePreview.insertImagePreviewElement( div, file);
 
       } else if (0 <= file.type.indexOf( 'audio/' ) || 0 <= file.type.indexOf( 'video/' )) {
-        previewCell = pthis.insertAudioVideoPreviewElement( div, file);
+        previewCell = filePreview.insertAudioVideoPreviewElement( div, file);
 
       } else {
-        previewCell = pthis.insertDummyElement( div, file);
+        previewCell = filePreview.insertDummyElement( div, file);
       };
 
       return previewCell;
@@ -883,36 +811,36 @@
 
 
 
-    pthis.insertImagePreviewElement = function( destElt, file) {
+    filePreview.insertImagePreviewElement = function( destElt, file) {
       var fileReader = new FileReader();
       fileReader.onload = function() {
         var dataUri = this.result;
         var elt = document.createElement('IMG');
         elt.src = dataUri.toString();
-        elt.style.maxWidth = pthis.previewMaxWidth;
-        elt.style.maxHeight = pthis.previewMaxHeight;
+        elt.style.maxWidth = filePreview.previewMaxWidth;
+        elt.style.maxHeight = filePreview.previewMaxHeight;
         elt.style.border = "1px dashed black";
         destElt.appendChild(elt);
       };
       fileReader.readAsDataURL(file);
     };
 
-    pthis.insertAudioVideoPreviewElement = function( destElt, file) {
+    filePreview.insertAudioVideoPreviewElement = function( destElt, file) {
       var fileReader = new FileReader();
       fileReader.onload = function() {
         var dataUri = this.result;
         var elt = document.createElement('VIDEO');
         elt.controls = true;
         elt.src = dataUri.toString();
-        elt.style.maxWidth = pthis.previewMaxWidth;
-        elt.style.maxHeight = pthis.previewMaxHeight;
+        elt.style.maxWidth = filePreview.previewMaxWidth;
+        elt.style.maxHeight = filePreview.previewMaxHeight;
         elt.style.border = "1px dashed black";
         destElt.appendChild(elt);
       };
       fileReader.readAsDataURL(file);
     };
 
-    pthis.insertDummyElement = function( destElt, file, msg) {
+    filePreview.insertDummyElement = function( destElt, file, msg) {
       var elt = document.createElement('DIV');
       var text = document.createTextNode( file.type );
       elt.appendChild(text);
@@ -921,33 +849,33 @@
         elt.appendChild( document.createTextNode(msg) );
       };
 
-      elt.style.maxWidth = pthis.previewMaxWidth;
-      elt.style.maxHeight = pthis.previewMaxHeight;
+      elt.style.maxWidth = filePreview.previewMaxWidth;
+      elt.style.maxHeight = filePreview.previewMaxHeight;
       elt.style.border = "1px dashed black";
       destElt.appendChild(elt);
     };
 
-    pthis.getPreviewsAreaElement = function(refSelectedCell) {
+    filePreview.getPreviewsAreaElement = function(refSelectedCell) {
       return refSelectedCell.parentElement.parentElement
-        .getElementsByClassName(pthis.PREVIEWS_AREA_CLASSNAME)[0];
+        .getElementsByClassName(filePreview.PREVIEWS_AREA_CLASSNAME)[0];
     };
 
-    pthis.getPreviewCellByChild = function(element) {
+    filePreview.getPreviewCellByChild = function(element) {
       for (; element.parentElement; element = element.parentElement) {
-        if (0 <= element.className.indexOf(pthis.PREVIEW_CLASSNAME)) {
+        if (0 <= element.className.indexOf(filePreview.PREVIEW_CLASSNAME)) {
           return element;
         };
       };
       return null;
     };
 
-    pthis.hasPreviewed = function(selectedCell) {
+    filePreview.hasPreviewed = function(selectedCell) {
       var className = "preview" + utils.getElementUniqueId(selectedCell);
       return 0 != document.getElementsByClassName(className).length;
     };
 
-    pthis.removeOldPreviews = function() {
-      var previewList = document.getElementsByClassName(pthis.PREVIEW_CLASSNAME);
+    filePreview.removeOldPreviews = function() {
+      var previewList = document.getElementsByClassName(filePreview.PREVIEW_CLASSNAME);
       var elementsToRemove = [];
 
       for (var pIdx = 0, pLen = previewList.length; pIdx < pLen; ++pIdx) {
@@ -963,24 +891,24 @@
       };
     };
 
-    pthis.selectedDivOnChange = function(mutationRecords, mutationObserver) {
+    filePreview.selectedDivOnChange = function(mutationRecords, mutationObserver) {
       /* 本フォームへの ".selectedCell" 追加の前に、クイックリプライへの追加が行なわれることを前提と
        * する */
       var selectedCells = document.getElementsByClassName("selectedCell");
       var scIdx = 0;
       var scLen = selectedCells.length;
       var mLen = Math.min(selectedCells.length, window.selectedFiles.length);
-      pthis.removeOldPreviews();
+      filePreview.removeOldPreviews();
 
       for (; scIdx < mLen ; ++scIdx) {
-        if (! pthis.hasPreviewed(selectedCells[scIdx])) {
-          pthis.insertPreviewElement( selectedCells[scIdx], window.selectedFiles[scIdx]);
+        if (! filePreview.hasPreviewed(selectedCells[scIdx])) {
+          filePreview.insertPreviewElement( selectedCells[scIdx], window.selectedFiles[scIdx]);
         };
       };
 
       for (; scIdx < scLen; ++scIdx) {
-        if (! pthis.hasPreviewed(selectedCells[scIdx])) {
-          pthis.insertPreviewElement( selectedCells[scIdx], window.selectedFiles[scIdx - mLen]);
+        if (! filePreview.hasPreviewed(selectedCells[scIdx])) {
+          filePreview.insertPreviewElement( selectedCells[scIdx], window.selectedFiles[scIdx - mLen]);
         };
       };
 
@@ -989,7 +917,7 @@
       };
     };
 
-    pthis.quickReplyOnLoad = function(mutationRecords, mutationObserver) {
+    filePreview.quickReplyOnLoad = function(mutationRecords, mutationObserver) {
       for (var mrIdx = 0, mrLen = mutationRecords.length; mrIdx < mrLen ; ++mrIdx) {
         if (0 >= mutationRecords[ mrIdx ].addedNodes.Length )
           continue;
@@ -1000,7 +928,7 @@
             var selectedCells = mutationRecords[ mrIdx ].addedNodes[ anIdx ]
                   .getElementsByClassName("selectedCell");
 
-            pthis.insertPreviewsArea(document.getElementById("selectedDivQr"));
+            filePreview.insertPreviewsArea(document.getElementById("selectedDivQr"));
 
             for (var qrhIdx = 0, qrhLen = feWrapper.quickReplyOnLoadHandlers.length;
                  qrhIdx < qrhLen; ++qrhIdx) {
@@ -1009,116 +937,100 @@
                 mutationRecords[mrIdx].addedNodes[anIdx]);
             };
 
-            pthis.selectedDivOnChange();
+            filePreview.selectedDivOnChange();
           };
         };
       };
     };
 
-    pthis.insertPreviewsArea = function(refSelectedDiv) {
+    filePreview.insertPreviewsArea = function(refSelectedDiv) {
       var previewsArea = document.createElement("div");
-      previewsArea.className = pthis.PREVIEWS_AREA_CLASSNAME;
+      previewsArea.className = filePreview.PREVIEWS_AREA_CLASSNAME;
       refSelectedDiv.parentElement.insertBefore( previewsArea, refSelectedDiv );
     };
 
-    pthis.stopSelectedDivObserver = function() {
-      if (undefined != pthis.sdMutationObserver) {
-        pthis.sdMutationObserver.disconnect();
-        pthis.sdMutationObserver = undefined;
+    filePreview.stopSelectedDivObserver = function() {
+      if (undefined != filePreview.sdMutationObserver) {
+        filePreview.sdMutationObserver.disconnect();
+        filePreview.sdMutationObserver = undefined;
       };
     };
-    pthis.startSelectedDivObserver = function() {
+    filePreview.startSelectedDivObserver = function() {
       var selectedDiv = document.getElementById("selectedDiv");
       if (null == selectedDiv) {
         return;
       };
       var options = { childList: true};
-      pthis.sdMutationObserver = new MutationObserver( pthis.selectedDivOnChange );
-      pthis.insertPreviewsArea(selectedDiv);
-      pthis.sdMutationObserver.observe( selectedDiv, options );
+      filePreview.sdMutationObserver = new MutationObserver( filePreview.selectedDivOnChange );
+      filePreview.insertPreviewsArea(selectedDiv);
+      filePreview.sdMutationObserver.observe( selectedDiv, options );
     };
 
-    pthis.stopQuickReplyObserver = function() {
-      if (undefined != pthis.qrMutationObserver) {
-        pthis.qrMutationObserver.disconnect();
-        pthis.qrMutationObserver = undefined;
+    filePreview.stopQuickReplyObserver = function() {
+      if (undefined != filePreview.qrMutationObserver) {
+        filePreview.qrMutationObserver.disconnect();
+        filePreview.qrMutationObserver = undefined;
       };
     };
 
-    pthis.startQuickReplyObserver = function() {
-      if (pthis.qrMutationObserver !== undefined && ! window.show_quick_reply) {
+    filePreview.startQuickReplyObserver = function() {
+      if (filePreview.qrMutationObserver !== undefined && ! window.show_quick_reply) {
         return;
       };
       var qrOptions = { childList: true};
-      pthis.qrMutationObserver = new MutationObserver( pthis.quickReplyOnLoad );
-      pthis.qrMutationObserver.observe( document.body, qrOptions);
+      filePreview.qrMutationObserver = new MutationObserver( filePreview.quickReplyOnLoad );
+      filePreview.qrMutationObserver.observe( document.body, qrOptions);
     };
 
-    pthis.trigger = function() {
-      pthis.enable();
+    filePreview.trigger = function() {
+      filePreview.enable();
     };
 
-    pthis.enable = function() {
+    filePreview.enable = function() {
       /* 公式対応したら動かない */
       if (undefined != window.addSelectedFile &&
           0 <= window.addSelectedFile.toString().indexOf("dragAndDropThumb")) {
         return;
       };
-      pthis.startSelectedDivObserver();
-      pthis.startQuickReplyObserver();
+      filePreview.startSelectedDivObserver();
+      filePreview.startQuickReplyObserver();
     };
 
-    pthis.disable = function() {
-      pthis.stopSelectedDivObserver();
-      pthis.stopQuickReplyObserver();
-      var elts = document.getElementsByClassName( pthis.PREVIEWS_AREA_CLASSNAME );
+    filePreview.disable = function() {
+      filePreview.stopSelectedDivObserver();
+      filePreview.stopQuickReplyObserver();
+      var elts = document.getElementsByClassName( filePreview.PREVIEWS_AREA_CLASSNAME );
       for (var idx = elts.length - 1; idx > -1 ; --idx) {
         elts[ idx ].parentElement.removeChild( elts[ idx ] );
       };
     };
 
-    return pthis;
-  };
-  /* end modFilePreview */
+    /***************
+     * CatalogSort *
+     ***************/
+    catalogSort.SPAN_ID = "toshakiiiCatalogSortSpan";
+    catalogSort.SELECT_ID = "toshakiiiCatalogSortSelect";
+    catalogSort.SETTINGS_ID = "toshakiiiCatalogSortSettings";
+    catalogSort.REFRESH_STATUS_ID = "toshakiiiCatalogSortRefreshStatus";
 
-  /**********************************
-   * CatalogSorter                  *
-   **********************************/
-  function modCatalogSorter() {
-    window.toshakiii = window.toshakiii || {};
-    window.toshakiii.settings = window.toshakiii.settings || {};
-    var toshakiii = window.toshakiii;
-    var settings = window.toshakiii.settings;
+    catalogSort.boardUri = document.location.pathname.replace(/\/([^\/]*).*/,"$1");
 
-    var sthis = {};
-    var utils = window.toshakiii.utils;
+    catalogSort.catalogLastModified = new Date( document.lastModified );
+    catalogSort.nowRefreshing = false;
 
-    window.toshakiii.catalogSorter = sthis;
-
-    sthis.SPAN_ID = "toshakiiiCatalogSortSpan";
-    /*sthis.LABEL_ID = "toshakiiiCatalogSortLabel";*/
-    sthis.SELECT_ID = "toshakiiiCatalogSortSelect";
-    sthis.SETTINGS_ID = "toshakiiiCatalogSortSettings";
-    sthis.REFRESH_STATUS_ID = "toshakiiiCatalogSortRefreshStatus";
-
-    sthis.boardUri = document.location.pathname.replace(/\/([^\/]*).*/,"$1");
-
-    sthis.catalogLastModified = new Date( document.lastModified );
-    sthis.nowRefreshing = false;
-
-    sthis.cmpfBumpOrder = function(x,y) {
-      var a = sthis.bumpOrderOfId[ sthis.getCatalogCellId(x) ];
-      var b = sthis.bumpOrderOfId[ sthis.getCatalogCellId(y) ];
+    catalogSort.cmpfBumpOrder = function(x,y) {
+      var a = catalogSort.bumpOrderOfId[ catalogSort.getCatalogCellId(x) ];
+      var b = catalogSort.bumpOrderOfId[ catalogSort.getCatalogCellId(y) ];
       return a - b;
     };
 
-    sthis.cmpfCreationData = function(x,y) {
-      var a = parseInt( sthis.getCatalogCellId(y) );
-      var b = parseInt( sthis.getCatalogCellId(x) );
+    catalogSort.cmpfCreationData = function(x,y) {
+      var a = parseInt( catalogSort.getCatalogCellId(y) );
+      var b = parseInt( catalogSort.getCatalogCellId(x) );
       return a - b;
     };
 
-    sthis.cmpfReplyCount = function(x,y) {
+    catalogSort.cmpfReplyCount = function(x,y) {
       var f = function(elt) {
         return parseInt( elt.getElementsByClassName("labelReplies")[0].innerHTML );
       };
@@ -1127,7 +1039,7 @@
       return a - b;
     };
 
-    sthis.cmpfImageCount = function(x,y) {
+    catalogSort.cmpfImageCount = function(x,y) {
       var f = function(elt) {
         return parseInt( elt.getElementsByClassName("labelImages")[0].innerHTML );
       };
@@ -1136,12 +1048,12 @@
       return a - b;
     };
 
-    sthis.cmpfRevBumpOrder    = function(x,y) { return -sthis.cmpfBumpOrder   (x,y);};
-    sthis.cmpfRevCreationData = function(x,y) { return -sthis.cmpfCreationData(x,y);};
-    sthis.cmpfRevReplyCount   = function(x,y) { return -sthis.cmpfReplyCount  (x,y);};
-    sthis.cmpfRevImageCount   = function(x,y) { return -sthis.cmpfImageCount  (x,y);};
+    catalogSort.cmpfRevBumpOrder    = function(x,y) { return -catalogSort.cmpfBumpOrder   (x,y);};
+    catalogSort.cmpfRevCreationData = function(x,y) { return -catalogSort.cmpfCreationData(x,y);};
+    catalogSort.cmpfRevReplyCount   = function(x,y) { return -catalogSort.cmpfReplyCount  (x,y);};
+    catalogSort.cmpfRevImageCount   = function(x,y) { return -catalogSort.cmpfImageCount  (x,y);};
 
-    sthis.shuffle =
+    catalogSort.shuffle =
       function(array) {
         var n = array.length;
         var t;
@@ -1157,30 +1069,30 @@
         return array;
       };
 
-    sthis.tableOrderType = undefined;
+    catalogSort.tableOrderType = undefined;
 
-    sthis.initTableOrderType =
+    catalogSort.initTableOrderType =
       function() {
         /*
          * funcType == undefined は funcType == 0 と同義とする。
          */
-        sthis.tableOrderType =
+        catalogSort.tableOrderType =
           [
-            { name: "Bump order"      , compareFunction: sthis.cmpfBumpOrder }
-            , { name: "Creation date" , compareFunction: sthis.cmpfCreationData }
-            , { name: "Reply count"   , compareFunction: sthis.cmpfReplyCount }
-            , { name: "Image count"   , compareFunction: sthis.cmpfImageCount }
-            , { name: "Random", funcType: 1, sortFunction: sthis.shuffle }
-            , { name: "Bump order(reverse)",    compareFunction: sthis.cmpfRevBumpOrder }
-            , { name: "Creation date(reverse)", compareFunction: sthis.cmpfRevCreationData }
-            , { name: "Reply count(reverse)",   compareFunction: sthis.cmpfRevReplyCount }
-            , { name: "Image count(reverse)",   compareFunction: sthis.cmpfRevImageCount }
+            { name: "Bump order"      , compareFunction: catalogSort.cmpfBumpOrder }
+            , { name: "Creation date" , compareFunction: catalogSort.cmpfCreationData }
+            , { name: "Reply count"   , compareFunction: catalogSort.cmpfReplyCount }
+            , { name: "Image count"   , compareFunction: catalogSort.cmpfImageCount }
+            , { name: "Random", funcType: 1, sortFunction: catalogSort.shuffle }
+            , { name: "Bump order(reverse)",    compareFunction: catalogSort.cmpfRevBumpOrder }
+            , { name: "Creation date(reverse)", compareFunction: catalogSort.cmpfRevCreationData }
+            , { name: "Reply count(reverse)",   compareFunction: catalogSort.cmpfRevReplyCount }
+            , { name: "Image count(reverse)",   compareFunction: catalogSort.cmpfRevImageCount }
           ];
       };
 
-    sthis.bumpOrderOfId = {};
+    catalogSort.bumpOrderOfId = {};
 
-    sthis.loadSettingsSageHidedThreads = function() {
+    catalogSort.loadSettingsSageHidedThreads = function() {
       if (undefined === settings.sageHidedThreads) {
         if ("1" == localStorage.getItem( 'toshakiii.settings.sageHidedThreads' )) {
           settings.sageHidedThreads = true;
@@ -1191,7 +1103,7 @@
       return settings.sageHidedThreads;
     };
 
-    sthis.saveSettingsSageHidedThreads = function(value) {
+    catalogSort.saveSettingsSageHidedThreads = function(value) {
       if (value) {
         settings.sageHidedThreads = true;
         localStorage.setItem( 'toshakiii.settings.sageHidedThreads', "1");
@@ -1202,7 +1114,7 @@
     };
 
     /* 元 HTML の catalogCell に id は設定されていない */
-    sthis.getCatalogCellId = function(catalogCell) {
+    catalogSort.getCatalogCellId = function(catalogCell) {
       if (0 != catalogCell.id.length )
         return catalogCell.id;
       var s = catalogCell.getElementsByClassName( "linkThumb" )[0].href;
@@ -1214,42 +1126,42 @@
       return undefined;
     };
 
-    sthis.recordBumpOrder = function() {
+    catalogSort.recordBumpOrder = function() {
       var divThreads = document.getElementById( "divThreads" );
       if (null == divThreads) {
         return false;
       };
 
       for (var idx = 0, len = divThreads.children.length; idx < len ; ++idx) {
-        var id = sthis.getCatalogCellId( divThreads.children[idx] );
+        var id = catalogSort.getCatalogCellId( divThreads.children[idx] );
         if (id.length != 0) {
-          sthis.bumpOrderOfId[ id ] = idx;
+          catalogSort.bumpOrderOfId[ id ] = idx;
         };
       };
       return true;
     };
 
-    sthis.recordBumpOrderFromJson = function(catalogJson) {
+    catalogSort.recordBumpOrderFromJson = function(catalogJson) {
       /* json : catalog.json をパースしたもの */
       var bumpOrderOfId = {};
       for (var idx = 0, len = catalogJson.length; idx < len ; ++idx) {
         var id = catalogJson[ idx ].threadId;
         bumpOrderOfId[ id ] = idx;
       };
-      sthis.bumpOrderOfId = bumpOrderOfId;
+      catalogSort.bumpOrderOfId = bumpOrderOfId;
     };
 
-    sthis.circulateOrderType = function() {
-      var selectElt = document.getElementById( sthis.SELECT_ID );
+    catalogSort.circulateOrderType = function() {
+      var selectElt = document.getElementById( catalogSort.SELECT_ID );
       var n = 1 + parseInt(selectElt.value);
       if (n >= selectElt.length) {
         n = 0;
       }
       selectElt.value = n;
-      sthis.sortCatalogCells();
+      catalogSort.sortCatalogCells();
     };
 
-    sthis.MeasuringPerformanceSortCatalogCells = function() {
+    catalogSort.MeasuringPerformanceSortCatalogCells = function() {
       /*
        うーｎ。直接 appendChild した場合と、DocumentFragment を使った場合。
        そもそも全体 Firefox の方が遅いから、DocumentFragment は不採用。
@@ -1270,11 +1182,11 @@
       var count = 0;
       while( end > (+new Date())) {
         var time = (+new Date());
-        sthis.sortCatalogCells(false);
+        catalogSort.sortCatalogCells(false);
         tottimed += (+new Date()) - time;
 
         time = (+new Date());
-        sthis.sortCatalogCells(true);
+        catalogSort.sortCatalogCells(true);
         tottimef += (+new Date()) - time;
         ++count;
       };
@@ -1282,18 +1194,18 @@
           document.body.firstChild );
     };
 
-    sthis.shuffleCatalogCells = function() {
-      for (var idx = 0, len = sthis.tableOrderType.length; idx < len ; ++idx) {
-        if (sthis.tableOrderType[ idx ].sortFunction == sthis.shuffle) {
-          var selectElt = document.getElementById( sthis.SELECT_ID );
+    catalogSort.shuffleCatalogCells = function() {
+      for (var idx = 0, len = catalogSort.tableOrderType.length; idx < len ; ++idx) {
+        if (catalogSort.tableOrderType[ idx ].sortFunction == catalogSort.shuffle) {
+          var selectElt = document.getElementById( catalogSort.SELECT_ID );
           selectElt.value = idx;
-          sthis.sortCatalogCells();
+          catalogSort.sortCatalogCells();
           break;
         };
       };
     };
 
-    sthis.CatalogCell =
+    catalogSort.CatalogCell =
       (function() {
         var ccthis = this;
         var ref = function( array, index, defval) {
@@ -1487,9 +1399,9 @@
 
         return ccthis;
       })();
-    /* end: sthis.CatalogCell = (function() {...}()) */
+    /* end: catalogSort.CatalogCell = (function() {...}()) */
 
-    sthis.sortCatalogCells = function() {
+    catalogSort.sortCatalogCells = function() {
       var time = (+new Date());
       var parentElt = document.getElementById("divThreads");
       var children = parentElt.children;
@@ -1514,16 +1426,16 @@
       };
       children = undefined;
 
-      var selectElt = document.getElementById( sthis.SELECT_ID );
+      var selectElt = document.getElementById( catalogSort.SELECT_ID );
       var oIdx = parseInt(selectElt.value);
       localStorage.setItem( "toshakiii.settings.catalogOrderType", oIdx );
 
-      var funcType = sthis.tableOrderType[oIdx].funcType;
+      var funcType = catalogSort.tableOrderType[oIdx].funcType;
       if (0 ==  funcType || undefined == funcType) {
-        catalogCells.sort( sthis.tableOrderType[oIdx].compareFunction );
+        catalogCells.sort( catalogSort.tableOrderType[oIdx].compareFunction );
       }
       else if (1 == funcType) {
-        catalogCells = sthis.tableOrderType[oIdx].sortFunction(catalogCells);
+        catalogCells = catalogSort.tableOrderType[oIdx].sortFunction(catalogCells);
       };
 
       /* var cookie = '; ' + document.cookie + "; "; */
@@ -1540,7 +1452,7 @@
           parentElt.appendChild( showButtonElts[ catalogCell.id ] );
         }
         else if (settings.sageHidedThreads &&
-                 utils.getSetting('hide' + sthis.boardUri + 'Thread' + catalogCell.id)) {
+                 utils.getSetting('hide' + catalogSort.boardUri + 'Thread' + catalogCell.id)) {
           sageElts.push(catalogCell);
           continue;
         };
@@ -1552,15 +1464,15 @@
       };
     };
 
-    sthis.getCatalogJsonUri = function() {
-      if (undefined == sthis.CatalogJsonUri) {
-        sthis.CatalogJsonUri = document.URL.replace(/\.html.*/,"") + ".json";
+    catalogSort.getCatalogJsonUri = function() {
+      if (undefined == catalogSort.CatalogJsonUri) {
+        catalogSort.CatalogJsonUri = document.URL.replace(/\.html.*/,"") + ".json";
       };
-      return sthis.CatalogJsonUri;
+      return catalogSort.CatalogJsonUri;
     };
 
-    sthis.showRefreshStatus = function(msg) {
-      var refreshStatus = document.getElementById( sthis.REFRESH_STATUS_ID );
+    catalogSort.showRefreshStatus = function(msg) {
+      var refreshStatus = document.getElementById( catalogSort.REFRESH_STATUS_ID );
       var text = document.createTextNode(msg);
       if (refreshStatus.firstChild) {
         refreshStatus.replaceChild( text, refreshStatus.firstChild );
@@ -1569,13 +1481,13 @@
       };
     };
 
-    sthis.refreshCatalogCells = function(callback) {
-      if (sthis.nowRefreshing) {
+    catalogSort.refreshCatalogCells = function(callback) {
+      if (catalogSort.nowRefreshing) {
         return;
       };
-      sthis.nowRefreshing = true;
-      sthis.showRefreshStatus("loading");
-      var uri = sthis.getCatalogJsonUri();
+      catalogSort.nowRefreshing = true;
+      catalogSort.showRefreshStatus("loading");
+      var uri = catalogSort.getCatalogJsonUri();
 
       var loadingBody = false;
       var xhr = new XMLHttpRequest();
@@ -1584,38 +1496,38 @@
           switch( this.readyState) {
           case 0:
           case 1:
-            sthis.showRefreshStatus("requesting");
+            catalogSort.showRefreshStatus("requesting");
             break;
           case 2:
-            sthis.showRefreshStatus("header");
+            catalogSort.showRefreshStatus("header");
             break;
           case 3:
             if (! loadingBody) {
-              sthis.showRefreshStatus("body");
+              catalogSort.showRefreshStatus("body");
               loadingBody = true;
             };
             break;
           case 4:
             switch( this.status) {
             case 304:
-              sthis.showRefreshStatus("not modified");
-              sthis.nowRefreshing = false;
+              catalogSort.showRefreshStatus("not modified");
+              catalogSort.nowRefreshing = false;
               if (callback) callback(false);
               return;
             case 200:
-              sthis.showRefreshStatus("applying");
-              sthis.catalogLastModified = new Date( this.getResponseHeader("Last-Modified") );
-              sthis.applyJsonToCatalog( this.responseText, sthis.showRefreshStatus,
+              catalogSort.showRefreshStatus("applying");
+              catalogSort.catalogLastModified = new Date( this.getResponseHeader("Last-Modified") );
+              catalogSort.applyJsonToCatalog( this.responseText, catalogSort.showRefreshStatus,
                   function() { if (callback) callback(true); } );
               return;
             default:
-              sthis.showRefreshStatus("error(HTTP "+this.status+")");
-              sthis.nowRefreshing = false;
+              catalogSort.showRefreshStatus("error(HTTP "+this.status+")");
+              catalogSort.nowRefreshing = false;
               if (callback) callback(false);
             };
           default:
-            sthis.nowRefreshing = false;
-            sthis.showRefreshStatus("error(unknown)");
+            catalogSort.nowRefreshing = false;
+            catalogSort.showRefreshStatus("error(unknown)");
             if (callback) callback(false);
           };
         };
@@ -1624,27 +1536,27 @@
       /*
        catalog.html の lastModified は catalog.json のそれより 1秒過去の場合がしばしば。
        */
-      var ifModifiedSince = sthis.catalogLastModified.toUTCString();
+      var ifModifiedSince = catalogSort.catalogLastModified.toUTCString();
       xhr.setRequestHeader('If-Modified-Since', ifModifiedSince);
 
       var catalogCells = document.getElementsByClassName("catalogCell");
       if (0 < catalogCells.length &&
           "" == catalogCells[0].id) {
         for (var idx = 0, len = catalogCells.length ; idx < len ; ++idx) {
-          sthis.CatalogCell.prepareId( catalogCells[ idx ] );
+          catalogSort.CatalogCell.prepareId( catalogCells[ idx ] );
         };
       };
       xhr.send(null);
     };
 
-    sthis.applyJsonToCatalog = function( jsontext, msgfunc, callback) {
+    catalogSort.applyJsonToCatalog = function( jsontext, msgfunc, callback) {
       var json = undefined;
       try {
         json = JSON.parse(jsontext);
         window.catalogThreads = json;
       } catch(o) {
         msgfunc("JSON error");
-        sthis.nowRefreshing = false;
+        catalogSort.nowRefreshing = false;
         return;
       };
 
@@ -1655,14 +1567,14 @@
       var threadProcedCount = 0;
       iloops.push
       (function() {
-        var threadsToDelete = utils.differenceSet( sthis.bumpOrderOfId, json );
+        var threadsToDelete = utils.differenceSet( catalogSort.bumpOrderOfId, json );
         for (var threadId in threadsToDelete) {
           var catalogCell = document.getElementById(threadId);
           catalogCell.parentElement.removeChild(catalogCell);
         };
       } ).push
       (function() {
-        sthis.recordBumpOrderFromJson(json);
+        catalogSort.recordBumpOrderFromJson(json);
       } );
       var catalogCellInfoOfId = {};
       iloops.push( function() {
@@ -1686,12 +1598,12 @@
           msgfunc( p + "0%" );
           beforeProgress = p;
         };
-        return sthis.applyInfoToCatalogCellLoop( catalogCellInfoOfId, newThreadIds, msgfunc );
+        return catalogSort.applyInfoToCatalogCellLoop( catalogCellInfoOfId, newThreadIds, msgfunc );
       } ).push
       ( function() {
         msgfunc("succeeded");
-        sthis.sortCatalogCells();
-        sthis.nowRefreshing = false;
+        catalogSort.sortCatalogCells();
+        catalogSort.nowRefreshing = false;
       } );
 
       if (undefined != window.enableHideThreadLink) {
@@ -1721,7 +1633,7 @@
      わざわざ既存の DOM を変更するのは、
      他のスクリプトが catalogCell に何か仕込んでいるかも知れないから。
      */
-    sthis.applyInfoToCatalogCellLoop =
+    catalogSort.applyInfoToCatalogCellLoop =
       function( catalogCellInfoOfId, out_newThreadIds, msgfunc) {
         var break_ = false;
         var continue_ = true;
@@ -1737,66 +1649,66 @@
         var catalogCell = document.getElementById(id);
         if (null == catalogCell) {
           out_newThreadIds.push( info.threadId );
-          var newCatalogCell = sthis.makeCatalogCell(info);
+          var newCatalogCell = catalogSort.makeCatalogCell(info);
           document.getElementById("divThreads").appendChild(newCatalogCell);
         } else {
-          sthis.applyInfoToCatalogCell( info, catalogCell );
+          catalogSort.applyInfoToCatalogCell( info, catalogCell );
         };
         delete catalogCellInfoOfId[ id ];
         return continue_;
       };
 
-    sthis.applyInfoToCatalogCell =
+    catalogSort.applyInfoToCatalogCell =
       function( catalogCellInfo, catalogCell) {
         var info = catalogCellInfo;
-        sthis.CatalogCell.changeRepliesNum( catalogCell, info.postCount );
-        sthis.CatalogCell.changeImagesNum ( catalogCell, info.fileCount );
-        sthis.CatalogCell.changePageNum   ( catalogCell, info.page );
-        sthis.CatalogCell.changeLock      ( catalogCell, info.locked );
-        sthis.CatalogCell.changePin       ( catalogCell, info.pinned );
-        sthis.CatalogCell.changeCyclic    ( catalogCell, info.cyclic );
-        sthis.CatalogCell.changeBumpLock  ( catalogCell, info.autoSage );
+        catalogSort.CatalogCell.changeRepliesNum( catalogCell, info.postCount );
+        catalogSort.CatalogCell.changeImagesNum ( catalogCell, info.fileCount );
+        catalogSort.CatalogCell.changePageNum   ( catalogCell, info.page );
+        catalogSort.CatalogCell.changeLock      ( catalogCell, info.locked );
+        catalogSort.CatalogCell.changePin       ( catalogCell, info.pinned );
+        catalogSort.CatalogCell.changeCyclic    ( catalogCell, info.cyclic );
+        catalogSort.CatalogCell.changeBumpLock  ( catalogCell, info.autoSage );
       };
 
 
-    sthis.catalogCellTemplateHTML = '<div id="00" class="catalogCell"><a class="linkThumb" href="/"><img src="/"></a><p class="threadStats">R:<span class="labelReplies">00</span>/ I:<span class="labelImages">00</span>/ P:<span class="labelPage">00</span></p><p><span class="labelSubject">00</span></p><div class="divMessage">00</div></div>';
-    sthis.catalogCellTemplateElement = undefined;
-    sthis.makeCatalogCell = function(catalogCellInfo) {
-      if (sthis.catalogCellTemplateElement == undefined) {
+    catalogSort.catalogCellTemplateHTML = '<div id="00" class="catalogCell"><a class="linkThumb" href="/"><img src="/"></a><p class="threadStats">R:<span class="labelReplies">00</span>/ I:<span class="labelImages">00</span>/ P:<span class="labelPage">00</span></p><p><span class="labelSubject">00</span></p><div class="divMessage">00</div></div>';
+    catalogSort.catalogCellTemplateElement = undefined;
+    catalogSort.makeCatalogCell = function(catalogCellInfo) {
+      if (catalogSort.catalogCellTemplateElement == undefined) {
         var span = document.createElement('SPAN');
-        span.innerHTML = sthis.catalogCellTemplateHTML;
-        sthis.catalogCellTemplateElement = span.removeChild ( span.firstChild );
+        span.innerHTML = catalogSort.catalogCellTemplateHTML;
+        catalogSort.catalogCellTemplateElement = span.removeChild ( span.firstChild );
         span = undefined;
       };
       var info = catalogCellInfo;
-      var catalogCell = sthis.catalogCellTemplateElement.cloneNode(true);
+      var catalogCell = catalogSort.catalogCellTemplateElement.cloneNode(true);
 
       catalogCell.id = catalogCellInfo.threadId;
 
-      sthis.CatalogCell.changeURL( catalogCell,
-          "/" + sthis.boardUri + "/res/" + catalogCellInfo.threadId + ".html" );
-      sthis.CatalogCell.changeThumb( catalogCell,
+      catalogSort.CatalogCell.changeURL( catalogCell,
+          "/" + catalogSort.boardUri + "/res/" + catalogCellInfo.threadId + ".html" );
+      catalogSort.CatalogCell.changeThumb( catalogCell,
           catalogCellInfo.thumb );
 
-      sthis.CatalogCell.changeRepliesNum( catalogCell, info.postCount );
-      sthis.CatalogCell.changeImagesNum ( catalogCell, info.fileCount );
-      sthis.CatalogCell.changePageNum   ( catalogCell, info.page );
-      sthis.CatalogCell.changeLock      ( catalogCell, info.locked );
-      sthis.CatalogCell.changePin       ( catalogCell, info.pinned );
-      sthis.CatalogCell.changeCyclic    ( catalogCell, info.cyclic );
-      sthis.CatalogCell.changeBumpLock  ( catalogCell, info.autoSage );
+      catalogSort.CatalogCell.changeRepliesNum( catalogCell, info.postCount );
+      catalogSort.CatalogCell.changeImagesNum ( catalogCell, info.fileCount );
+      catalogSort.CatalogCell.changePageNum   ( catalogCell, info.page );
+      catalogSort.CatalogCell.changeLock      ( catalogCell, info.locked );
+      catalogSort.CatalogCell.changePin       ( catalogCell, info.pinned );
+      catalogSort.CatalogCell.changeCyclic    ( catalogCell, info.cyclic );
+      catalogSort.CatalogCell.changeBumpLock  ( catalogCell, info.autoSage );
 
-      sthis.CatalogCell.changeSubject   ( catalogCell, info.subject );
-      sthis.CatalogCell.changeMessage   ( catalogCell, info.message );
+      catalogSort.CatalogCell.changeSubject   ( catalogCell, info.subject );
+      catalogSort.CatalogCell.changeMessage   ( catalogCell, info.message );
       /*catalogCell.getElementsByClassName("hideButton")[0].id =
-       'hide' + sthis.boardUri + 'Thread' + info.threadID;*/
+       'hide' + catalogSort.boardUri + 'Thread' + info.threadID;*/
 
       return catalogCell;
     };
 
-    sthis.makeSortElement = function() {
+    catalogSort.makeSortElement = function() {
       var eltSpan = document.createElement('SPAN');
-      eltSpan.id = sthis.SPAN_ID;
+      eltSpan.id = catalogSort.SPAN_ID;
 
       /* [So] [r] [t by:] */
       var eltASo = document.createElement('A');
@@ -1806,20 +1718,20 @@
       var eltAtby = document.createElement('A');
       eltAtby.appendChild( document.createTextNode("t by:") );
 
-      eltASo.addEventListener( 'click', sthis.circulateOrderType );
-      eltAr.addEventListener( 'click', sthis.shuffleCatalogCells );
-      eltAtby.addEventListener( 'click', sthis.circulateOrderType );
+      eltASo.addEventListener( 'click', catalogSort.circulateOrderType );
+      eltAr.addEventListener( 'click', catalogSort.shuffleCatalogCells );
+      eltAtby.addEventListener( 'click', catalogSort.circulateOrderType );
 
       var eltSelect = document.createElement('SELECT');
-      eltSelect.id = sthis.SELECT_ID;
-      eltSelect.addEventListener( "change", sthis.sortCatalogCells );
+      eltSelect.id = catalogSort.SELECT_ID;
+      eltSelect.addEventListener( "change", catalogSort.sortCatalogCells );
 
       var option;
       var optionText;
-      for (var idx = 0, len = sthis.tableOrderType.length; idx < len ; ++idx) {
+      for (var idx = 0, len = catalogSort.tableOrderType.length; idx < len ; ++idx) {
         option = document.createElement('OPTION');
         option.setAttribute("value", idx );
-        optionText = document.createTextNode( sthis.tableOrderType[idx].name );
+        optionText = document.createTextNode( catalogSort.tableOrderType[idx].name );
         option.appendChild(optionText);
         eltSelect.appendChild(option);
       }
@@ -1828,16 +1740,16 @@
        var eltLSB = document.createTextNode("[");
        var eltARefresh = document.createElement('A');
        eltARefresh.appendChild( document.createTextNode('Refresh') );
-       eltARefresh.addEventListener('click', sthis.refreshCatalogCells);
+       eltARefresh.addEventListener('click', catalogSort.refreshCatalogCells);
        var eltRSB = document.createTextNode("]");
        */
 
       var eltConfig = document.createElement('A');
       eltConfig.appendChild( document.createTextNode("⚙") );
-      eltConfig.addEventListener('click', sthis.showCloseDivSettings );
+      eltConfig.addEventListener('click', catalogSort.showCloseDivSettings );
 
       var eltStatus = document.createElement('SPAN');
-      eltStatus.id = sthis.REFRESH_STATUS_ID;
+      eltStatus.id = catalogSort.REFRESH_STATUS_ID;
 
       eltSpan.appendChild(eltASo);
       eltSpan.appendChild(eltAr);
@@ -1854,27 +1766,27 @@
       return eltSpan;
     };
 
-    sthis.closeDivSettings = function() {
-      var divSettings = document.getElementById( sthis.SETTINGS_ID );
+    catalogSort.closeDivSettings = function() {
+      var divSettings = document.getElementById( catalogSort.SETTINGS_ID );
       if (null == divSettings) {
         return;
       };
       divSettings.parentElement.removeChild(divSettings);
     };
 
-    sthis.showCloseDivSettings = function() {
-      if (null != document.getElementById( sthis.SETTINGS_ID )) {
-        sthis.closeDivSettings();
+    catalogSort.showCloseDivSettings = function() {
+      if (null != document.getElementById( catalogSort.SETTINGS_ID )) {
+        catalogSort.closeDivSettings();
         return;
       };
       var divSettings = document.createElement('DIV');
-      divSettings.id = sthis.SETTINGS_ID;
+      divSettings.id = catalogSort.SETTINGS_ID;
       divSettings.style.border = '1px solid black';
       divSettings.style.display = 'inline-block';
       var checkboxSageHidedThreads = document.createElement('INPUT');
       checkboxSageHidedThreads.addEventListener('change',
           function() {
-            sthis.saveSettingsSageHidedThreads( this.checked );
+            catalogSort.saveSettingsSageHidedThreads( this.checked );
           });
       checkboxSageHidedThreads.type = 'checkbox';
       checkboxSageHidedThreads.value = 'sageHidedThreads';
@@ -1882,7 +1794,7 @@
 
       var closeButton = document.createElement('INPUT');
       closeButton.type = 'button';
-      closeButton.addEventListener('click', sthis.closeDivSettings );
+      closeButton.addEventListener('click', catalogSort.closeDivSettings );
       closeButton.value = "Close";
 
       divSettings.appendChild(checkboxSageHidedThreads);
@@ -1890,12 +1802,12 @@
       divSettings.appendChild( document.createElement('BR') );
       divSettings.appendChild(closeButton);
 
-      document.getElementById( sthis.SPAN_ID ).appendChild(divSettings);
+      document.getElementById( catalogSort.SPAN_ID ).appendChild(divSettings);
     };
 
-    sthis.loadSettings =
+    catalogSort.loadSettings =
       function() {
-        sthis.loadSettingsSageHidedThreads();
+        catalogSort.loadSettingsSageHidedThreads();
         if (undefined == window.toshakiii.settings.catalogOrderType) {
           var n = "toshakiii.settings.catalogOrderType";
           var v = localStorage.getItem(n);
@@ -1912,7 +1824,7 @@
         };
       };
 
-    sthis.override = function override() {
+    catalogSort.override = function override() {
       if (undefined === window.refreshCatalog) {
         if ('complete' === document.readyState) {
           return;
@@ -1920,11 +1832,11 @@
         setTimeout( override, 0 );
       };
 
-      sthis.overrideRefreshCatalog();
-      /* sthis.overrideSetCell(); */
+      catalogSort.overrideRefreshCatalog();
+      /* catalogSort.overrideSetCell(); */
     };
 
-    sthis.overrideRefreshCatalog = function overrideRefreshCatalog() {
+    catalogSort.overrideRefreshCatalog = function overrideRefreshCatalog() {
       if ('function' !== typeof( window.refreshCatalog )) {
         return;
       };
@@ -1934,7 +1846,7 @@
           clearInterval( window.refreshTimer );
         };
 
-        sthis.refreshCatalogCells( function done(changed) {
+        catalogSort.refreshCatalogCells( function done(changed) {
           if (window.autoRefresh) {
             window.startTimer(manual || changed ? 5 : window.lastRefresh * 2);
           };
@@ -1968,7 +1880,7 @@
       };
     };
 
-    sthis.overrideSetCell = function overrideSetCell() {
+    catalogSort.overrideSetCell = function overrideSetCell() {
       if ('function' !== typeof( window.setCell ) ||
           'function' !== typeof( window.enableHideThreadLink )) {
         return;
@@ -1982,7 +1894,7 @@
         window.enableHideThreadLink(element);
 
         /* var cookie = '; ' + document.cookie + "; "; */
-        if (utils.getSetting('hide' + sthis.boardUri + 'Thread' + element.id)) {
+        if (utils.getSetting('hide' + catalogSort.boardUri + 'Thread' + element.id)) {
           element.style.display = "none";
           var fragment = document.createDocumentFragment();
           fragment.appendChild( createShowThreadLink(element) );
@@ -1995,7 +1907,7 @@
     };
 
     function getShowThreadLink(threadElem) {
-      return document.getElementById('Show'+sthis.boardUri+'Thread'+threadElem.id);
+      return document.getElementById('Show'+catalogSort.boardUri+'Thread'+threadElem.id);
     };
 
     function createShowThreadLink(threadElem) {
@@ -2005,7 +1917,7 @@
       /* add show thread link if we don't already have one */
 
       var div = document.createElement(threadElem.catalog?'span':'div');
-      div.id = 'Show'+sthis.boardUri+'Thread'+threadID;
+      div.id = 'Show'+catalogSort.boardUri+'Thread'+threadID;
       var link = document.createElement('a');
       link.textContent = '[Show hidden thread '+threadID+'] ';
       link.href = '#';
@@ -2013,7 +1925,7 @@
         console.log('showing thread', threadID);
         threadElem.style.display = threadElem.catalog ? 'inline-block' : 'block';
         if (window.deleteSetting) {
-          window.deleteSetting('hide'+sthis.boardUri+'Thread'+threadID);
+          window.deleteSetting('hide'+catalogSort.boardUri+'Thread'+threadID);
         };
         div.style.display = 'none';
         window.enableHideThreadLink(threadElem);
@@ -2023,83 +1935,68 @@
       return div;
     };
 
-    sthis.disable = function() {
-      var elt = document.getElementById( sthis.SPAN_ID );
+    catalogSort.disable = function() {
+      var elt = document.getElementById( catalogSort.SPAN_ID );
       if (null != elt) {
-        var selectElt = document.getElementById( sthis.SELECT_ID );
+        var selectElt = document.getElementById( catalogSort.SELECT_ID );
         selectElt.value = 0;
-        sthis.sortCatalogCells();
+        catalogSort.sortCatalogCells();
         elt.parentElement.removeChild(elt);
       };
     };
 
-    sthis.isHereCatalogPage = function() {
+    catalogSort.isHereCatalogPage = function() {
       var divThreads = document.getElementById( "divThreads" );
       return null != divThreads &&
         0 < document.getElementsByClassName("catalogCell").length;
     };
 
-    sthis.trigger = function() {
-      if (! sthis.isHereCatalogPage()) {
+    catalogSort.trigger = function() {
+      if (! catalogSort.isHereCatalogPage()) {
         return;
       };
 
-      if (! sthis.recordBumpOrder()) {
+      if (! catalogSort.recordBumpOrder()) {
         return;
       };
-      sthis.initTableOrderType();
-      sthis.loadSettings();
-      sthis.enable();
+      catalogSort.initTableOrderType();
+      catalogSort.loadSettings();
+      catalogSort.enable();
     };
 
-    sthis.enable = function() {
-      if (! sthis.isHereCatalogPage()) {
+    catalogSort.enable = function() {
+      if (! catalogSort.isHereCatalogPage()) {
         return;
       };
 
-      sthis.override();
+      catalogSort.override();
 
       var divThreads = document.getElementById("divThreads");
       if (null == divThreads) {
         return;
       };
-      var elt = sthis.makeSortElement();
+      var elt = catalogSort.makeSortElement();
 
       divThreads.parentElement.insertBefore( elt, divThreads );
 
       if (undefined !== window.toshakiii.settings.catalogOrderType) {
-        var selectElt = document.getElementById( sthis.SELECT_ID );
+        var selectElt = document.getElementById( catalogSort.SELECT_ID );
         if (selectElt.length <= window.toshakiii.settings.catalogOrderType) {
           window.toshakiii.settings.catalogOrderType = 0;
         };
         selectElt.value = window.toshakiii.settings.catalogOrderType;
 
-        sthis.sortCatalogCells();
+        catalogSort.sortCatalogCells();
       };
     };
 
-    return sthis;
-  };
+    /**********************************
+     * etCetera                       *
+     **********************************/
+    etCetera.maskFilename = false;
+    etCetera.hideLibrejpBottomLeftMascot = false;
 
-  /**********************************
-   * etCetera                       *
-   **********************************/
-  function modEtCetera() {
-    window.toshakiii = window.toshakiii || {};
-    window.toshakiii.settings = window.toshakiii.settings || {};
-    var toshakiii = window.toshakiii;
-    var settings = window.toshakiii.settings;
-
-    var feWrapper = window.toshakiii.feWrapper;
-    var utils = window.toshakiii.utils;
-    var etcthis = {};
-
-    window.toshakiii.etCetera = etcthis;
-
-    etcthis.maskFilename = false;
-    etcthis.hideLibrejpBottomLeftMascot = false;
-
-    etcthis.insertMiscCSS = function() {
+    etCetera.insertMiscCSS = function() {
       var s = "";
       s += '.ymncMarkdownToolButton { cursor: pointer; border: 1px solid }';
       s += '.ymncMarkdownToolButton:hover { border: 1px solid white }';
@@ -2139,7 +2036,7 @@
       document.head.appendChild(style);
     };
 
-    etcthis.autoPostingPassowrd = function() {
+    etCetera.autoPostingPassowrd = function() {
       var fieldPostingPassword = document.getElementById("fieldPostingPassword");
 
       if (undefined === localStorage.deletionPassword &&
@@ -2162,7 +2059,7 @@
       };
     };
 
-    etcthis.markdowns = [
+    etCetera.markdowns = [
       { name: "Spo",  title: "spoiler",   beg: "[spoiler]", end: "[/spoiler]",
         className: "spoiler", style: { fontWeight: "normal" } },
       { name: "Red",  title: "red",       beg: "==",        end: "==",
@@ -2185,26 +2082,26 @@
         style: { fontWeight: "normal" } }
     ];
 
-    etcthis.markdownTool = function() {
-      etcthis.setMarkdownToolForMainForm();
-      etcthis.contextMenuOnMarkdownTool();
+    etCetera.markdownTool = function() {
+      etCetera.setMarkdownToolForMainForm();
+      etCetera.contextMenuOnMarkdownTool();
     };
 
-    etcthis.contextMenuOnMarkdownTool = function() {
+    etCetera.contextMenuOnMarkdownTool = function() {
       var fieldMessage = document.getElementById('fieldMessage');
       if (fieldMessage) {
-        etcthis.setMarkdownToolOnTextAreaContextMenu(fieldMessage, fieldMessage.id);
+        etCetera.setMarkdownToolOnTextAreaContextMenu(fieldMessage, fieldMessage.id);
 
-        feWrapper.quickReplyOnLoadHandlers.push( etcthis.setMarkdownToolOnQrBodyContextMenu );
+        feWrapper.quickReplyOnLoadHandlers.push( etCetera.setMarkdownToolOnQrBodyContextMenu );
       };
     };
 
-    etcthis.setMarkdownToolOnQrBodyContextMenu = function() {
+    etCetera.setMarkdownToolOnQrBodyContextMenu = function() {
       var qrBody = document.getElementById("qrbody");
-      etcthis.setMarkdownToolOnTextAreaContextMenu(qrBody, qrBody.id);
+      etCetera.setMarkdownToolOnTextAreaContextMenu(qrBody, qrBody.id);
     };
 
-    etcthis.setMarkdownToolForMainForm = function() {
+    etCetera.setMarkdownToolForMainForm = function() {
       var fieldMessage = document.getElementById('fieldMessage');
       if (!fieldMessage) {
         return false;
@@ -2218,18 +2115,18 @@
       };
 
       commentTh.style.width = "5em";
-      etcthis.setMarkdownToolButton( commentTh, fieldMessage );
+      etCetera.setMarkdownToolButton( commentTh, fieldMessage );
 
       return true;
     };
 
-    etcthis.setMarkdownToolButton = function( container, textarea) {
+    etCetera.setMarkdownToolButton = function( container, textarea) {
 
-      for (var markdownIndex = 0, markdownLen = etcthis.markdowns.length;
+      for (var markdownIndex = 0, markdownLen = etCetera.markdowns.length;
            markdownIndex < markdownLen ; ++markdownIndex) {
 
         var Anchor = document.createElement("A");
-        var markdown = etcthis.markdowns[ markdownIndex ];
+        var markdown = etCetera.markdowns[ markdownIndex ];
         if (markdown.className)
           Anchor.className = markdown.className;
         Anchor.className = Anchor.className + " ymncMarkdownToolButton";
@@ -2246,7 +2143,7 @@
         (function() {
           var index = markdownIndex;
           Anchor.addEventListener("click", (function closure() {
-            etcthis.applyMarkdown( textarea, etcthis.markdowns[index]);
+            etCetera.applyMarkdown( textarea, etCetera.markdowns[index]);
           } ) );
         })();
 
@@ -2255,7 +2152,7 @@
       };
     };
 
-    etcthis.applyMarkdown = function(textarea, markdown) {
+    etCetera.applyMarkdown = function(textarea, markdown) {
       var originalSelectionEnd = +textarea.selectionEnd;
       var originalSelectionStart = +textarea.selectionStart;
       var begTag = markdown.beg;
@@ -2273,7 +2170,7 @@
 
     };
 
-    etcthis.setMarkdownToolOnTextAreaContextMenu = function(textarea, textareaId) {
+    etCetera.setMarkdownToolOnTextAreaContextMenu = function(textarea, textareaId) {
       var menuId = "markdownToolMenu" + textareaId;
       textarea.setAttribute('contextmenu', menuId);
 
@@ -2291,10 +2188,10 @@
 
       markdownMenu.setAttribute('label', "Markdown");
 
-      for (var markdownIndex = 0, markdownLength = etcthis.markdowns.length;
+      for (var markdownIndex = 0, markdownLength = etCetera.markdowns.length;
            markdownIndex < markdownLength; ++markdownIndex) {
 
-        var markdown = etcthis.markdowns[ markdownIndex ];
+        var markdown = etCetera.markdowns[ markdownIndex ];
         var menuitem = document.createElement('MENUITEM');
 
         if (markdown.className)
@@ -2312,7 +2209,7 @@
         (function() {
           var markdownN = markdown;
           menuitem.addEventListener('click', function() {
-            etcthis.applyMarkdown( textarea, markdownN);
+            etCetera.applyMarkdown( textarea, markdownN);
           } );
         })();
 
@@ -2321,7 +2218,7 @@
       document.body.appendChild(menu);
     };
 
-    etcthis.makeCanvasFromImg = function(imgElement) {
+    etCetera.makeCanvasFromImg = function(imgElement) {
       var canvas = document.createElement('CANVAS');
       canvas.width  = imgElement.width;
       canvas.height = imgElement.height;
@@ -2330,7 +2227,7 @@
       return canvas;
     };
 
-    etcthis.uploadFileFromClipboard = function() {
+    etCetera.uploadFileFromClipboard = function() {
       var fieldMessage = document.getElementById("fieldMessage");
       if (fieldMessage) {
         fieldMessage.contentEditable = true;
@@ -2366,27 +2263,24 @@
       };
     };
 
-    etcthis.UserJs = function() {
-      etcthis.setButtonToEditUserJs();
-      etcthis.excuteUserJs();
+    etCetera.UserJs = function() {
+      etCetera.setButtonToEditUserJs();
+      etCetera.excuteUserJs();
     };
 
-    etcthis.setButtonToEditUserJs = function() {
-      var anchor = document.createElement("A");
-      anchor.style.cursor = "pointer";
-      anchor.appendChild( document.createTextNode(" [(山仮)UserJS]") );
-      anchor.onclick = etcthis.showHideEditBoxForUserJs;
-
+    etCetera.setButtonToEditUserJs = function() {
       var navList = document.getElementsByTagName("NAV");
       if (0 < navList.length) {
-        navList[0].appendChild(anchor);
-      } else {
-        document.body.appendChild(anchor);
-      };
+        var anchor = document.createElement("A");
+        anchor.style.cursor = "pointer";
+        anchor.appendChild( document.createTextNode(" [(山仮)UserJS]") );
+        anchor.onclick = etCetera.showHideEditBoxForUserJs;
 
+        navList[0].appendChild(anchor);
+      };
     };
 
-    etcthis.showHideEditBoxForUserJs = function() {
+    etCetera.showHideEditBoxForUserJs = function() {
       var editboxUserJsContainer = document.getElementById("editboxUserJsContainer");
       if (editboxUserJsContainer) {
         if ("none" !== editboxUserJsContainer.style.display) {
@@ -2395,12 +2289,12 @@
           editboxUserJsContainer.style.display = "block";
         };
       } else {
-        var element = etcthis.createUserJsControls();
+        var element = etCetera.createUserJsControls();
         document.body.appendChild(element);
       };
     };
 
-    etcthis.createUserJsControls = function() {
+    etCetera.createUserJsControls = function() {
       /* TODO: CSSに書き換える */
       var editboxUserJsContainer = document.createElement("DIV");
       editboxUserJsContainer.id = "editboxUserJsContainer";
@@ -2428,13 +2322,13 @@
       blackoutCurtain.style.maxWidth = "100%";
       blackoutCurtain.style.height = "100%";
       blackoutCurtain.style.zIndex = "-1";
-      blackoutCurtain.onclick = etcthis.showHideEditBoxForUserJs;
+      blackoutCurtain.onclick = etCetera.showHideEditBoxForUserJs;
 
       var editboxUserJsDiv = document.createElement("DIV");
       editboxUserJsDiv.id = "editboxUserJsDiv";
       editboxUserJsDiv.style.background = "#f0e0d6";
       editboxUserJsDiv.style.borderColor = "#d9bfb7";
-      etcthis.setInnerPostStyle( editboxUserJsDiv.style );
+      etCetera.setInnerPostStyle( editboxUserJsDiv.style );
       editboxUserJsDiv.style.opacity = "1";
       editboxUserJsDiv.style.resize = "both";
       editboxUserJsDiv.style.overflow = "auto";
@@ -2453,7 +2347,7 @@
       editboxUserJsCloseButton.style.float = "right";
       editboxUserJsCloseButton.style.margin = "0.5em";
       editboxUserJsCloseButton.style.cursor = "pointer";
-      editboxUserJsCloseButton.onclick = etcthis.showHideEditBoxForUserJs;
+      editboxUserJsCloseButton.onclick = etCetera.showHideEditBoxForUserJs;
       editboxUserJsCloseButton.appendChild( document.createTextNode("×") );
 
       var editboxUserJs = document.createElement("TEXTAREA");
@@ -2470,7 +2364,7 @@
 
       var editboxUserJsSaveButton = document.createElement("BUTTON");
       editboxUserJsSaveButton.appendChild( document.createTextNode("save custom Javascript" ) );
-      editboxUserJsSaveButton.onclick = etcthis.saveAndRunUserJs;
+      editboxUserJsSaveButton.onclick = etCetera.saveAndRunUserJs;
 
       editboxUserJsContainer.appendChild(blackoutCurtain);
       editboxUserJsContainer.appendChild(editboxUserJsDiv);
@@ -2482,7 +2376,7 @@
       return editboxUserJsContainer;
     };
 
-    etcthis.saveAndRunUserJs = function() {
+    etCetera.saveAndRunUserJs = function() {
       var editboxUserJs = document.getElementById("editboxUserJs");
       if (!editboxUserJs) {
         return;
@@ -2490,17 +2384,17 @@
 
       localStorage.user_js = editboxUserJs.value;
 
-      etcthis.excuteUserJs();
+      etCetera.excuteUserJs();
     };
 
-    etcthis.excuteUserJs = function() {
+    etCetera.excuteUserJs = function() {
       if (localStorage.user_js) {
         try { eval( localStorage.user_js ); }
         catch(e) { alert(e); };
       };
     };
 
-    etcthis.setInnerPostStyle = function(destStyle) {
+    etCetera.setInnerPostStyle = function(destStyle) {
       var innerPostList = document.getElementsByClassName("innerPost");
       var srcStyle;
       if (0 < innerPostList.length) {
@@ -2517,7 +2411,7 @@
       };
     };
 
-    etcthis.movePostBox = function() {
+    etCetera.movePostBox = function() {
       if (0 <= document.location.href.indexOf("/res/")) {
         var postBox = document.getElementById("postBox");
         if (postBox) {
@@ -2526,15 +2420,15 @@
       };
     };
 
-    etcthis.setCheckboxOfDancingMascot = function() {
-      etcthis.hideLibrejpBottomLeftMascot =
+    etCetera.setCheckboxOfDancingMascot = function() {
+      etCetera.hideLibrejpBottomLeftMascot =
         'true' === utils.getSetting('ymncLibrejpBottomLeftMascot');
 
       var input = document.createElement('INPUT');
       input.type = 'checkbox';
       input.id = 'myHideLibrejpBottomLeftMascot';
-      input.onclick = etcthis.updateShowHideLibrejpBottomLeftMascot;
-      input.checked = etcthis.hideLibrejpBottomLeftMascot;
+      input.onclick = etCetera.updateShowHideLibrejpBottomLeftMascot;
+      input.checked = etCetera.hideLibrejpBottomLeftMascot;
 
       var label = document.createElement('LABEL');
       label.style.display = 'inline';
@@ -2547,21 +2441,21 @@
         origin.parentElement.appendChild(label);
       };
 
-      etcthis.updateShowHideLibrejpBottomLeftMascot();
+      etCetera.updateShowHideLibrejpBottomLeftMascot();
     };
 
-    etcthis.updateShowHideLibrejpBottomLeftMascot = function(ev) {
+    etCetera.updateShowHideLibrejpBottomLeftMascot = function(ev) {
 
       var style_id = "styleHideLibrejpBottomLeftMascot";
 
       if (ev) {
-        etcthis.hideLibrejpBottomLeftMascot = ev.target.checked;
-        utils.setSetting('ymncLibrejpBottomLeftMascot', etcthis.hideLibrejpBottomLeftMascot );
+        etCetera.hideLibrejpBottomLeftMascot = ev.target.checked;
+        utils.setSetting('ymncLibrejpBottomLeftMascot', etCetera.hideLibrejpBottomLeftMascot );
       };
 
       var style = document.getElementById( style_id );
 
-      if (etcthis.hideLibrejpBottomLeftMascot) {
+      if (etCetera.hideLibrejpBottomLeftMascot) {
 
         if (null === style) {
           style = document.createElement('STYLE');
@@ -2580,16 +2474,16 @@
       };
     };
 
-    etcthis.setCheckboxOfMaskFilenameMode = function() {
+    etCetera.setCheckboxOfMaskFilenameMode = function() {
 
-      etcthis.maskFilename =
+      etCetera.maskFilename =
         'true' === utils.getSetting('ymncMaskFilename');
 
       var input = document.createElement('INPUT');
       input.type = 'checkbox';
       input.id = 'ymncMaskFilenameCheckbox';
-      input.onclick = etcthis.updateMaskFilenameMode;
-      input.checked = etcthis.maskFilename;
+      input.onclick = etCetera.updateMaskFilenameMode;
+      input.checked = etCetera.maskFilename;
 
       var label = document.createElement('LABEL');
       label.style.display = 'block';
@@ -2602,21 +2496,21 @@
       };
     };
 
-    etcthis.updateMaskFilenameMode = function(ev) {
+    etCetera.updateMaskFilenameMode = function(ev) {
 
       if (ev) {
-        etcthis.maskFilename = ev.target.checked;
-        utils.setSetting('ymncMaskFilename', etcthis.maskFilename );
+        etCetera.maskFilename = ev.target.checked;
+        utils.setSetting('ymncMaskFilename', etCetera.maskFilename );
       };
 
-      etcthis.maskAllFilename( etcthis.maskFilename );
+      etCetera.maskAllFilename( etCetera.maskFilename );
     };
 
     /* filename から拡張子を得る。
      * 拡張子の長さが"."を含めずにmaxExtLen以上の長さの場合は、拡張子とみなさず空白を返す。
      * maxExtLen: 省略時は4
      */
-    etcthis.getFilenameExtension = function( filename, maxExtLen) {
+    etCetera.getFilenameExtension = function( filename, maxExtLen) {
 
       if (! maxExtLen) {
         maxExtLen = 4;
@@ -2637,7 +2531,7 @@
       return lastPart;
     };
 
-    etcthis.defineProperty = function( obj, propertyName, propertyValue) {
+    etCetera.defineProperty = function( obj, propertyName, propertyValue) {
 
       Object.defineProperty( obj, propertyName,
           { enumerable: false,
@@ -2647,7 +2541,7 @@
     };
 
     /* 設定によりFile名を自動的に設定する時の関数 */
-    etcthis.maskAllFilename = function(doMaskIfTrue) {
+    etCetera.maskAllFilename = function(doMaskIfTrue) {
 
       if (null == window.selectedFiles) {
         return;
@@ -2669,8 +2563,8 @@
         if (doMaskIfTrue && file.ymncFilenameMaskMode === undefined) {
           /* マスク要求、現在マスクしていないからマスクする */
           file.ymncOriginalName = file.name.toString(); /* cloneがわりのtoString */
-          etcthis.defineProperty( file, 'name',
-              randomNum.toString() + etcthis.getFilenameExtension( file.name ) );
+          etCetera.defineProperty( file, 'name',
+              randomNum.toString() + etCetera.getFilenameExtension( file.name ) );
           file.ymncFilenameMaskMode = "random";
 
         } else if (doMaskIfTrue && file.ymncFilenameMaskMode !== undefined) {
@@ -2682,20 +2576,20 @@
 
         } else if (! doMaskIfTrue && file.ymncFilenameMaskMode === "random") {
           /* マスク外し要求、その通り外す */
-          etcthis.defineProperty( file, 'name', file.ymncOriginalName );
+          etCetera.defineProperty( file, 'name', file.ymncOriginalName );
           file.ymncFilenameMaskMode = undefined;
         } else {
           document.body.appendChild( document.createTextNode(
-            "yamanu-changにバグ(etcthis.maskAllFilename)" ) );
+            "yamanu-changにバグ(etCetera.maskAllFilename)" ) );
         };
 
         ++randomNum;
       };
 
-      etcthis.updateSelectedFilenameLabels();
+      etCetera.updateSelectedFilenameLabels();
     };
 
-    etcthis.updateSelectedFilenameLabels = function updateSelectedFilenameLabels() {
+    etCetera.updateSelectedFilenameLabels = function updateSelectedFilenameLabels() {
 
       var nameLabelList = document.getElementsByClassName("nameLabel");
 
@@ -2735,7 +2629,7 @@
                   window.selectedFiles[ index ].name.toString();
               };
               window.selectedFiles[ index ].ymncFilenameMaskMode = "user";
-              etcthis.defineProperty( window.selectedFiles[ index ],
+              etCetera.defineProperty( window.selectedFiles[ index ],
                   "name", ev.target.value );
               return true;
             };
@@ -2750,7 +2644,7 @@
             var index = sfIdx;
             return function (ev) {
               if (undefined !== window.selectedFiles[ index ].ymncOriginalName) {
-                etcthis.defineProperty( window.selectedFiles[ index ],
+                etCetera.defineProperty( window.selectedFiles[ index ],
                     "name", window.selectedFiles[ index ].ymncOriginalName );
                 window.selectedFiles[ index ].ymncFilenameMaskMode = undefined;
               };
@@ -2770,9 +2664,9 @@
                 window.selectedFiles[ index ].ymncOriginalName =
                   window.selectedFiles[ index ].name.toString();
               };
-              etcthis.defineProperty( window.selectedFiles[ index ],
+              etCetera.defineProperty( window.selectedFiles[ index ],
                   "name", (+new Date()).toString()
-                  + etcthis.getFilenameExtension(
+                  + etCetera.getFilenameExtension(
                     window.selectedFiles[ index ].ymncOriginalName ) );
               window.selectedFiles[ index ].ymncFilenameMaskMode = "random";
 
@@ -2794,7 +2688,7 @@
       };
     };
 
-    etcthis.ymncSetPlayer = function setPlayer(link, mime) {
+    etCetera.ymncSetPlayer = function setPlayer(link, mime) {
 
       var videoTypes = [ 'video/webm', 'video/mp4', 'video/ogg' ];
       var path = link.href;
@@ -2848,7 +2742,7 @@
 
     };
 
-    etcthis.overrideSetPlayer = function overrideSetPlayer() {
+    etCetera.overrideSetPlayer = function overrideSetPlayer() {
 
       if (undefined === window.setPlayer) {
         if ('complete' === document.readyState) {
@@ -2859,12 +2753,12 @@
       };
 
       if ('function' === typeof( window.setPlayer )) {
-        window.setPlayer = etcthis.ymncSetPlayer;
+        window.setPlayer = etCetera.ymncSetPlayer;
       };
 
     };
 
-    etcthis.setVideosLoopMode = function() {
+    etCetera.setVideosLoopMode = function() {
       var videos = document.getElementsByTagName('VIDEO');
 
       for (var idx = 0, len = videos.length; idx < len ; ++idx) {
@@ -2872,7 +2766,7 @@
       };
     };
 
-    etcthis.overrideEmbedYoutubeButton = function( youtube_wrapper) {
+    etCetera.overrideEmbedYoutubeButton = function( youtube_wrapper) {
       if ("1" === youtube_wrapper.getAttribute("data-tsk-overrode")) {
         return 0;
       };
@@ -2882,13 +2776,13 @@
       };
       var embedButton = embedButtons[0];
       embedButton.onclick = null;
-      embedButton.addEventListener("click", etcthis.onYoutubeEmbedButtonClick );
+      embedButton.addEventListener("click", etCetera.onYoutubeEmbedButtonClick );
       embedButton.replaceChild( document.createTextNode("embeD") , embedButton.firstChild );
       youtube_wrapper.setAttribute("data-tsk-overrode","1");
       return 1;
     };
 
-    etcthis.overrideEmbedNiconicoButton = function( niconico_wrapper) {
+    etCetera.overrideEmbedNiconicoButton = function( niconico_wrapper) {
       if ("1" === niconico_wrapper.getAttribute("data-tsk-overrode")) {
         return 0;
       };
@@ -2898,13 +2792,13 @@
       };
       var embedButton = embedButtons[0];
       embedButton.onclick = null;
-      embedButton.addEventListener("click", etcthis.onNiconicoEmbedButtonClick );
+      embedButton.addEventListener("click", etCetera.onNiconicoEmbedButtonClick );
       embedButton.replaceChild( document.createTextNode("embeD") , embedButton.firstChild );
       niconico_wrapper.setAttribute("data-tsk-overrode","1");
       return 1;
     };
 
-    etcthis.onYoutubeEmbedButtonClick = function(ev) {
+    etCetera.onYoutubeEmbedButtonClick = function(ev) {
       var iframes = this.parentElement.getElementsByTagName('IFRAME');
       if (0 < iframes.length) {
         var brs = this.parentElement.getElementsByTagName('BR');
@@ -2936,7 +2830,7 @@
       return false;
     };
 
-    etcthis.getAncestorPostCellId = function(elt) {
+    etCetera.getAncestorPostCellId = function(elt) {
       for (;; elt = elt.parentElement) {
         if (elt.parentElement.tagName == 'BODY') {
           return null;
@@ -2949,7 +2843,7 @@
       return null;
     };
 
-    etcthis.onNiconicoEmbedButtonClick = function(ev) {
+    etCetera.onNiconicoEmbedButtonClick = function(ev) {
       var iframes = this.parentElement.getElementsByTagName('IFRAME');
       var divs = this.parentElement.getElementsByTagName('DIV');
       if (0 < iframes.length || 0 < divs.length) {
@@ -3003,7 +2897,7 @@
       return false;
     };
 
-    etcthis.overrideWrapperAll = function() {
+    etCetera.overrideWrapperAll = function() {
       var IntermittentLoops = utils.IntermittentLoops;
       var iloops = IntermittentLoops();
       var idx = 0;
@@ -3019,7 +2913,7 @@
         if (-1 >= idx) {
           return break_;
         };
-        etcthis.overrideEmbedYoutubeButton( youtubeWrappers[ idx ] );
+        etCetera.overrideEmbedYoutubeButton( youtubeWrappers[ idx ] );
         --idx;
         return continue_;
       } ).push( function() {
@@ -3029,13 +2923,13 @@
         if (-1 >= idx) {
           return break_;
         };
-        etcthis.overrideEmbedNiconicoButton( niconicoWrappers[ idx ] );
+        etCetera.overrideEmbedNiconicoButton( niconicoWrappers[ idx ] );
         --idx;
         return continue_;
       } ).beginAsync();
     };
 
-    etcthis.defaultEmbedOpen = function( embedButton, playerWrapper, options) {
+    etCetera.defaultEmbedOpen = function( embedButton, playerWrapper, options) {
       var iframe = document.createElement('IFRAME');
       iframe.width = options.width || 560;
       iframe.height = options.height || 315;
@@ -3047,7 +2941,7 @@
       playerWrapper.appendChild(iframe);
     };
 
-    etcthis.appendEmbedControl = function(anchor, options) {
+    etCetera.appendEmbedControl = function(anchor, options) {
       var wrapper = document.createElement('SPAN');
       var button = document.createElement('A');
       var playerWrapper = document.createElement('SPAN');
@@ -3066,7 +2960,7 @@
         if ("false" === button.getAttribute('data-embeded')) {
           button.setAttribute('data-embeded', "true");
           button.textContent = "closE";
-          etcthis.defaultEmbedOpen( button, playerWrapper, options );
+          etCetera.defaultEmbedOpen( button, playerWrapper, options );
           playerWrapper.style.display = 'inline';
           return;
         };
@@ -3084,9 +2978,9 @@
       anchor.parentNode.insertBefore( wrapper, anchor.nextSibling );
     };
 
-    etcthis.enableSoundcloudEmbed = function(anchor) {
+    etCetera.enableSoundcloudEmbed = function(anchor) {
       if (( 0 !== anchor.href.lastIndexOf( "https://soundcloud.com/", 0 ) &&
-          0 !== anchor.href.lastIndexOf( "http://soundcloud.com/", 0 ) ) ||
+            0 !== anchor.href.lastIndexOf( "http://soundcloud.com/", 0 ) ) ||
           anchor.href == "https://soundcloud.com/" ||
           utils.endsWith( anchor.pathname, "/tracks" ) ||
           3 >= anchor.href.toString().split("/").length) {
@@ -3102,11 +2996,11 @@
         + "&auto_play=true";
       o.closeStyle = 'remove';
 
-      etcthis.appendEmbedControl(anchor, o );
+      etCetera.appendEmbedControl(anchor, o );
       return true;
     };
 
-    etcthis.enableYoutubeEmbed = function(anchor) {
+    etCetera.enableYoutubeEmbed = function(anchor) {
       if ( 0 !== anchor.href.lastIndexOf("https://youtu.be/", 0) &&
            0 !== anchor.href.lastIndexOf("https://www.youtube.com/watch?") &&
            0 !== anchor.href.lastIndexOf("http://youtu.be/", 0 ) &&
@@ -3135,11 +3029,11 @@
       o.closeStyle = 'remove';
       o.allowfullscreen = "true";
 
-      etcthis.appendEmbedControl(anchor, o );
+      etCetera.appendEmbedControl(anchor, o );
       return true;
     };
 
-    etcthis.insertFakeRefreshButton = function() {
+    etCetera.insertFakeRefreshButton = function() {
       var refreshButton = document.getElementById("refreshButton");
       if (null == refreshButton) {
         return;
@@ -3151,7 +3045,7 @@
       } );
     };
 
-    etcthis.presetImageGeometry = function() {
+    etCetera.presetImageGeometry = function() {
       var iloops = utils.IntermittentLoops();
       var imgLinks;
       var idx = 0;
@@ -3178,7 +3072,7 @@
 
     };
 
-    etcthis.jaDateFormat = function jaDateFormat(d) {
+    etCetera.jaDateFormat = function jaDateFormat(d) {
       /* 2016/12/31(Sat)13:59:59 形式 */
       var leftpad = utils.leftpad;
       var year, month, date, hours, minutes, seconds, day;
@@ -3197,14 +3091,14 @@
       return text;
     };
 
-    etcthis.firstLanguage =
+    etCetera.firstLanguage =
       (window.navigator.languages && window.navigator.languages[0]) ||
       window.navigator.language ||
       window.navigator.userLanguage ||
       window.navigator.browserLanguage;
 
-    etcthis.dateFromStringForOverride = function dateFromStringForOverride(str) {
-      var firstLanguage = etcthis.firstLanguage;
+    etCetera.dateFromStringForOverride = function dateFromStringForOverride(str) {
+      var firstLanguage = etCetera.firstLanguage;
 
       var m = str.match(/(\d+)\/(\d+)\/(\d+)\s+\([A-Za-z]+\)\s+(\d+):(\d+):(\d+)/);
       if (m) {
@@ -3218,7 +3112,7 @@
 
         if ('ja' === firstLanguage ||
             'ja-JP' === firstLanguage) {
-          return etcthis.jaDateFormat(d);
+          return etCetera.jaDateFormat(d);
         };
         return d.toLocaleString(firstLanguage)
           + ' ('+d.toLocaleString(firstLanguage, {weekday:"short"} )+')';
@@ -3226,7 +3120,7 @@
       return undefined;
     };
 
-    etcthis.overrideDateFromString = function overrideDateFromString() {
+    etCetera.overrideDateFromString = function overrideDateFromString() {
 
       if (undefined === window.dateFromString) {
         if ('complete' === document.readyState) {
@@ -3240,13 +3134,13 @@
         return;
       };
 
-      window.dateFromString = etcthis.dateFromStringForOverride;
+      window.dateFromString = etCetera.dateFromStringForOverride;
       if ('function' === typeof( window.updateTimes )) {
         window.updateTimes();
       };
     };
 
-    etcthis.fixGoogleChromeMp3Mime = function fixGoogleChromeMp3Mime() {
+    etCetera.fixGoogleChromeMp3Mime = function fixGoogleChromeMp3Mime() {
       if (undefined === window.sendReplyData) {
         if ('complete' === document.readyState) {
           return;
@@ -3307,7 +3201,7 @@
       };
     };
 
-    etcthis.addConsecutiveNumberStyle = function() {
+    etCetera.addConsecutiveNumberStyle = function() {
       var style = document.createElement('style');
       style.type = "text/css";
       style.id = "postsConsecutiveNumberStyle";
@@ -3327,8 +3221,8 @@
       document.head.appendChild(style);
     };
 
-    etcthis.isHiddenCDAName = 'data-is-hidden';
-    etcthis.insertButtonShowHidePostingForm = function() {
+    etCetera.isHiddenCDAName = 'data-is-hidden';
+    etCetera.insertButtonShowHidePostingForm = function() {
       var postingForm = document.getElementById('postingForm');
       var topAnchorElement = document.getElementById('top');
       if (null === postingForm ||
@@ -3339,30 +3233,30 @@
       var showText = document.createTextNode('[Show hidden posting form]');
       showHideAnchor.appendChild(showText);
 
-      showHideAnchor.setAttribute( etcthis.isHiddenCDAName, '1' );
-      showHideAnchor.addEventListener('click', etcthis.showHidePostingForm);
+      showHideAnchor.setAttribute( etCetera.isHiddenCDAName, '1' );
+      showHideAnchor.addEventListener('click', etCetera.showHidePostingForm);
       postingForm.style.display = 'none';
 
       topAnchorElement.parentElement.insertBefore( showHideAnchor, topAnchorElement.nextSibling );
     };
 
-    etcthis.showHidePostingForm = function() {
+    etCetera.showHidePostingForm = function() {
       var showHideAnchor = this;
       var postingForm = document.getElementById('postingForm');
-      if ('0' === showHideAnchor.getAttribute( etcthis.isHiddenCDAName )) {
-        showHideAnchor.setAttribute( etcthis.isHiddenCDAName, '1' );
+      if ('0' === showHideAnchor.getAttribute( etCetera.isHiddenCDAName )) {
+        showHideAnchor.setAttribute( etCetera.isHiddenCDAName, '1' );
         postingForm.style.display = 'none';
         showHideAnchor.replaceChild( document.createTextNode('[Show hidden posting form]'),
             showHideAnchor.firstChild );
       } else {
-        showHideAnchor.setAttribute( etcthis.isHiddenCDAName, '0' );
+        showHideAnchor.setAttribute( etCetera.isHiddenCDAName, '0' );
         postingForm.style.display = '';
         showHideAnchor.replaceChild( document.createTextNode('[Hide a posting form]'),
             showHideAnchor.firstChild );
       };
     };
 
-    etcthis.getContentActionElement = function() {
+    etCetera.getContentActionElement = function() {
       var reportFieldReason = document.getElementById('reportFieldReason');
       if (null == reportFieldReason ||
           null == reportFieldReason.parentElement ||
@@ -3373,43 +3267,43 @@
       return reportFieldReason.parentElement.parentElement;
     };
 
-    etcthis.insertButtonShowHideContentAction = function() {
-      var contentAction = etcthis.getContentActionElement();
+    etCetera.insertButtonShowHideContentAction = function() {
+      var contentAction = etCetera.getContentActionElement();
       if (null == contentAction) {
         return;
       };
       var showHideAnchor = document.createElement('A');
       showHideAnchor.appendChild( document.createTextNode('[+report/del form]') );
-      showHideAnchor.setAttribute( etcthis.isHiddenCDAName, '1' );
-      showHideAnchor.addEventListener('click', etcthis.showHideContentAction);
+      showHideAnchor.setAttribute( etCetera.isHiddenCDAName, '1' );
+      showHideAnchor.addEventListener('click', etCetera.showHideContentAction);
 
       contentAction.parentElement.insertBefore( showHideAnchor, contentAction );
       contentAction.style.visibility = 'hidden';
     };
 
-    etcthis.showHideContentAction = function() {
+    etCetera.showHideContentAction = function() {
       var showHideAnchor = this;
-      var target = etcthis.getContentActionElement();
+      var target = etCetera.getContentActionElement();
       var toShowText = '[+report/del form]';
       var toHideText = '[-report/del form]';
 
       if (null == target) {
         return;
       };
-      if ('0' === showHideAnchor.getAttribute( etcthis.isHiddenCDAName )) {
-        showHideAnchor.setAttribute( etcthis.isHiddenCDAName, '1' );
+      if ('0' === showHideAnchor.getAttribute( etCetera.isHiddenCDAName )) {
+        showHideAnchor.setAttribute( etCetera.isHiddenCDAName, '1' );
         target.style.visibility = 'hidden';
         showHideAnchor.replaceChild( document.createTextNode(toShowText),
             showHideAnchor.firstChild );
       } else {
-        showHideAnchor.setAttribute( etcthis.isHiddenCDAName, '0' );
+        showHideAnchor.setAttribute( etCetera.isHiddenCDAName, '0' );
         target.style.visibility = 'visible';
         showHideAnchor.replaceChild( document.createTextNode(toHideText),
             showHideAnchor.firstChild );
       };
     };
 
-    etcthis.getAutoRefreshCheckboxElement = function() {
+    etCetera.getAutoRefreshCheckboxElement = function() {
       var labelRefresh = document.getElementById('labelRefresh');
       if (null === labelRefresh) {
         return null;
@@ -3436,8 +3330,8 @@
       return target;
     };
 
-    etcthis.autoRefreshCheckboxPersistent = function() {
-      var autoRefreshCheckbox = etcthis.getAutoRefreshCheckboxElement();
+    etCetera.autoRefreshCheckboxPersistent = function() {
+      var autoRefreshCheckbox = etCetera.getAutoRefreshCheckboxElement();
       if (null === autoRefreshCheckbox ||
           undefined === window.changeRefresh ||
           undefined === window.autoRefresh) {
@@ -3464,10 +3358,10 @@
 
         window.changeRefresh();
       };
-      autoRefreshCheckbox.addEventListener('change', etcthis.autoRefreshCheckboxOnChange );
+      autoRefreshCheckbox.addEventListener('change', etCetera.autoRefreshCheckboxOnChange );
     };
 
-    etcthis.autoRefreshCheckboxOnChange = function() {
+    etCetera.autoRefreshCheckboxOnChange = function() {
       var autoRefreshCheckbox = this;
       if (autoRefreshCheckbox.checked) {
         settings.setMiniData('ThreadAutoRefresh', 1);
@@ -3476,11 +3370,11 @@
       };
     };
 
-    etcthis.titleNewReplysCountReg = /^([(]\d*[)] ).*$/;
-    etcthis.procTitle = function procTitle() {
+    etCetera.titleNewReplysCountReg = /^([(]\d*[)] ).*$/;
+    etCetera.procTitle = function procTitle() {
       var boardUri = feWrapper.getBoardUri();
       var title = document.title;
-      var newReplys = title.match( etcthis.titleNewReplysCountReg );
+      var newReplys = title.match( etCetera.titleNewReplysCountReg );
       if (null === newReplys) {
         newReplys = "";
       } else {
@@ -3495,7 +3389,7 @@
 
     /* override と言いつつ、新規設置も行う。
      * 引数は、postCell でなくてもかまわない */
-    etcthis.overrideInlinePlayers = function overrideInlinePlayers(postCell) {
+    etCetera.overrideInlinePlayers = function overrideInlinePlayers(postCell) {
       var uploadCellList = postCell.getElementsByClassName('uploadCell');
       var idx = uploadCellList.length;
       var iloops = utils.IntermittentLoops();
@@ -3503,13 +3397,13 @@
       iloops.push( function() {
         --idx;
         if (-1 >= idx) { return break_; };
-        etcthis.addHookToAudioInlinePlayer( uploadCellList[ idx ] );
-        /*etcthis.overrideInlinePlayer( uploadCellList[ idx ] );*/
+        etCetera.addHookToAudioInlinePlayer( uploadCellList[ idx ] );
+        /*etCetera.overrideInlinePlayer( uploadCellList[ idx ] );*/
         return continue_;
       } ).beginAsync();
     };
 
-    etcthis.addHookToAudioInlinePlayer = function addHookToAudioInlinePlayer(uploadCell) {
+    etCetera.addHookToAudioInlinePlayer = function addHookToAudioInlinePlayer(uploadCell) {
       var audioList = uploadCell.getElementsByTagName('AUDIO');
       var imgList = uploadCell.getElementsByTagName('IMG');
       if (0 >= audioList.length ||
@@ -3521,7 +3415,7 @@
       img.addEventListener('click', function() { this.style.display = 'inline'; } );
     };
 
-    etcthis.addQuote = function addQuote() {
+    etCetera.addQuote = function addQuote() {
       var postIdToQuote = this.hash.substring(2);
 
       if (typeof window.add_quick_reply_quote != "undefined") {
@@ -3531,7 +3425,7 @@
       document.getElementById('fieldMessage').value += '>>' + postIdToQuote + '\n';
     };
 
-    etcthis.insertDeleteCookiesButton = function insertDeleteCookiesButton() {
+    etCetera.insertDeleteCookiesButton = function insertDeleteCookiesButton() {
       if (document.title.toLowerCase() == "400 request header or cookie too large") {
         var ButtonDeleteCookies = document.createElement("button");
         ButtonDeleteCookies.type = "button";
@@ -3556,7 +3450,7 @@
       };
     };
 
-    etcthis.removeNonJsSendButton = function removeNonJsSendButton() {
+    etCetera.removeNonJsSendButton = function removeNonJsSendButton() {
       /* エンターキーで送信暴発しちゃうのを防ぐために */
       var formButton = document.getElementById('formButton');
 
@@ -3565,15 +3459,15 @@
       };
     };
 
-    etcthis.disable = function disable() {
+    etCetera.disable = function disable() {
       var style = document.getElementById("postsConsecutiveNumberStyle");
       if (null != style) {
         style.parentElement.removeChild(style);
       };
     };
 
-    etcthis.maxRetries = 5;
-    etcthis.retryLoading = function (event) {
+    etCetera.maxRetries = 5;
+    etCetera.retryLoading = function (event) {
       /* event.target だけを使う */
 
       /* 連続アクセスが原因で503が起きているらしい。時間をあけてから処理する */
@@ -3582,19 +3476,19 @@
         var target = event.target;
         var count = parseInt(target.getAttribute("data-yamanu-retries-count"));
 
-        if (count < etcthis.maxRetries) {
+        if (count < etCetera.maxRetries) {
           ++count;
           target.setAttribute("data-yamanu-retries-count", count.toString());
           event.target.src = event.target.src + "?t=" + (+new Date());
 
         } else {
           /* count が NaN の場合もここ */
-          target.removeEventListener("error", etcthis.retryLoading);
+          target.removeEventListener("error", etCetera.retryLoading);
         };
       }, 1500 );
     };
 
-    etcthis.retryFailedImgTags = function() {
+    etCetera.retryFailedImgTags = function() {
       var imgList = Array.apply(null, document.getElementsByTagName("IMG"));
       var imgIndex = 0, imgLength = imgList.length;
 
@@ -3608,34 +3502,34 @@
 
         if (! img.complete) {
           img.setAttribute("data-yamanu-retries-count", "0");
-          img.addEventListener("error", etcthis.retryLoading );
+          img.addEventListener("error", etCetera.retryLoading );
 
         } else if (0 === img.naturalWidth && 0 === img.naturalHeight) {
           img.setAttribute("data-yamanu-retries-count", "0");
-          img.addEventListener("error", etcthis.retryLoading );
-          etcthis.retryLoading( { "target": img} );
+          img.addEventListener("error", etCetera.retryLoading );
+          etCetera.retryLoading( { "target": img} );
         };
       };
     };
 
-    etcthis.qrJsRetriesCount = 0;
-    etcthis.reloadQrJs = function() {
-      if (5 <= etcthis.qrJsRetriesCount ||
+    etCetera.qrJsRetriesCount = 0;
+    etCetera.reloadQrJs = function() {
+      if (5 <= etCetera.qrJsRetriesCount ||
           undefined !== window.show_quick_reply) {
-        etcthis.uploadFileFromClipboard();
+        etCetera.uploadFileFromClipboard();
         window.toshakiii.filePreview.startQuickReplyObserver();
         return;
       };
-      etcthis.qrJsRetriesCount = 1 + etcthis.qrJsRetriesCount;
+      etCetera.qrJsRetriesCount = 1 + etCetera.qrJsRetriesCount;
       var script = document.createElement("SCRIPT");
       script.src = "/.static/qr.js?t=" + (+new Date());
 
       document.head.appendChild(script);
 
-      setTimeout( etcthis.reloadQrJs, 1500 );
+      setTimeout( etCetera.reloadQrJs, 1500 );
     };
 
-    etcthis.retryFailedScriptSources = function() {
+    etCetera.retryFailedScriptSources = function() {
       /* 読み込みに失敗したjavascript sourcesを再読み込みする。
        * 2017年7月からある 503/502 エラー対策
        * DOMContentLoaded時点で読み込みエラーをキャッチすることはできない
@@ -3654,16 +3548,16 @@
         };
       };
       if (needToReloadQrJs) {
-        setTimeout( etcthis.reloadQrJs, 1500 );
+        setTimeout( etCetera.reloadQrJs, 1500 );
       };
     };
 
-    etcthis.retryFailedTags = function() {
-      etcthis.retryFailedImgTags();
-      etcthis.retryFailedScriptSources();
+    etCetera.retryFailedTags = function() {
+      etCetera.retryFailedImgTags();
+      etCetera.retryFailedScriptSources();
     };
 
-    etcthis.getFileExtension = function(mime) {
+    etCetera.getFileExtension = function(mime) {
       var mimeExt = {
         "image/jpeg": "jpg", "image/png": "png", "image/gif": "gif",
         "audio/mp3": "mp3", "audio/mp4": "mp4", "audio/mpeg": "mp3",
@@ -3679,14 +3573,14 @@
       return ext;
     };
 
-    etcthis.getNormalizedMime = function(mime) {
+    etCetera.getNormalizedMime = function(mime) {
       if ("audio/mp3"===mime) {
         return "audio/mpeg";
       };
       return mime;
     };
 
-    etcthis.addHashToMessage = function() {
+    etCetera.addHashToMessage = function() {
       if (null === window.selectedFiles || "true" !== localStorage["addHashToMessage"]) {
         return;
       };
@@ -3702,9 +3596,9 @@
             var qrBody = document.getElementById("qrbody");
 
             reader.onloadend = function(e) {
-              var mime = etcthis.getNormalizedMime(file.type);
+              var mime = etCetera.getNormalizedMime(file.type);
               var md5 = window.SparkMD5.ArrayBuffer.hash(reader.result);
-              var ext = etcthis.getFileExtension(mime);
+              var ext = etCetera.getFileExtension(mime);
               var str = "https://endchan.xyz/.media/" + md5 + '-' + mime.replace('/', '') + "." + ext + "\n";
 
               fieldMessage.value += str;
@@ -3719,12 +3613,12 @@
       };
     };
 
-    etcthis.insertPostOptionCheckbox = function(settingName, labelString) {
+    etCetera.insertPostOptionCheckbox = function(settingName, labelString) {
       var input = document.createElement('INPUT');
       input.type = 'checkbox';
       input.id = settingName + "Checkbox";
       input.setAttribute("data-setting-name", settingName);
-      input.onclick = etcthis.updatePostOptionCheckbox;
+      input.onclick = etCetera.updatePostOptionCheckbox;
       input.checked = "true" === localStorage[settingName];
 
       var label = document.createElement('LABEL');
@@ -3738,12 +3632,12 @@
       };
     };
 
-    etcthis.updatePostOptionCheckbox = function(e) {
+    etCetera.updatePostOptionCheckbox = function(e) {
       var settingName = e.target.getAttribute("data-setting-name");
       localStorage[settingName] = e.target.checked;
     };
 
-    etcthis.interDomainLink = function() {
+    etCetera.interDomainLink = function() {
       switch(document.location.host) {
       default: return;
       case "endchan.xyz": case "endchan.net": case "infinow.net":
@@ -3758,26 +3652,26 @@
       var boardHeaderList = document.getElementsByClassName("boardHeader");
 
       if (top) {
-        top.parentElement.insertBefore(etcthis.createInterDomainLinkButton(), top.nextSibling);
+        top.parentElement.insertBefore(etCetera.createInterDomainLinkButton(), top.nextSibling);
         top.parentElement.insertBefore(document.createTextNode(" | "), top.nextSibling);
       };
       if (bottom) {
-        bottom.parentElement.insertBefore(etcthis.createInterDomainLinkButton(), bottom.nextSibling);
+        bottom.parentElement.insertBefore(etCetera.createInterDomainLinkButton(), bottom.nextSibling);
         bottom.parentElement.insertBefore(document.createTextNode(" | "), bottom.nextSibling);
       };
 
       for (var tnIdx = 0, tnLen = topNavList.length; tnIdx < tnLen; ++tnIdx) {
         topNavList[tnIdx].appendChild(document.createTextNode(" | "));
-        topNavList[tnIdx].appendChild(etcthis.createInterDomainLinkButton());
+        topNavList[tnIdx].appendChild(etCetera.createInterDomainLinkButton());
       };
 
       for (var bnIdx = 0, bnLen = bottomNavList.length; bnIdx < bnLen; ++bnIdx) {
         bottomNavList[bnIdx].appendChild(document.createTextNode(" | "));
-        bottomNavList[bnIdx].appendChild(etcthis.createInterDomainLinkButton());
+        bottomNavList[bnIdx].appendChild(etCetera.createInterDomainLinkButton());
       };
     };
 
-    etcthis.createInterDomainLinkButton = function() {
+    etCetera.createInterDomainLinkButton = function() {
       var button = document.createElement("A");
       var openingText = "[-Domain]";
       var closingText = "[+Domain]";
@@ -3797,7 +3691,7 @@
           button.setAttribute("data-expanded", "true");
           button.textContent = openingText;
 
-          button.domainLinksElement = etcthis.createInterDomainLinks();
+          button.domainLinksElement = etCetera.createInterDomainLinks();
           event.target.parentElement.insertBefore(button.domainLinksElement,
               event.target.nextSibling);
         };
@@ -3808,7 +3702,7 @@
       return button;
     };
 
-    etcthis.createInterDomainLinks = function() {
+    etCetera.createInterDomainLinks = function() {
       /* .onion.to には案内しない */
       var hosts = [ "https://endchan.xyz", "https://endchan.net", "http://endchan5doxvprs5.onion",
                     "http://s6424n4x4bsmqs27.onion"];
@@ -3847,84 +3741,69 @@
     };
 
 
-    etcthis.enable = function enable() {
-      etcthis.retryFailedTags();
+    etCetera.enable = function enable() {
+      etCetera.retryFailedTags();
 
-      feWrapper.postCellCP.appendAfterCP( etcthis.overrideWrapperAll );
+      feWrapper.postCellCP.appendAfterCP( etCetera.overrideWrapperAll );
 
-      feWrapper.messageUriHandlers.push( etcthis.enableSoundcloudEmbed );
-      feWrapper.messageUriHandlers.push( etcthis.enableYoutubeEmbed );
+      feWrapper.messageUriHandlers.push( etCetera.enableSoundcloudEmbed );
+      feWrapper.messageUriHandlers.push( etCetera.enableYoutubeEmbed );
 
-      feWrapper.postCellCP.appendCP( etcthis.overrideInlinePlayers );
+      feWrapper.postCellCP.appendCP( etCetera.overrideInlinePlayers );
 
-      feWrapper.titleCP.appendAfterCP( etcthis.procTitle );
+      feWrapper.titleCP.appendAfterCP( etCetera.procTitle );
 
-      /* setTimeout( etcthis.insertButtonShowHidePostingForm, 0 ); */
-      setTimeout( etcthis.insertButtonShowHideContentAction, 0 );
+      /* setTimeout( etCetera.insertButtonShowHidePostingForm, 0 ); */
+      setTimeout( etCetera.insertButtonShowHideContentAction, 0 );
 
-      setTimeout( etcthis.fixGoogleChromeMp3Mime, 0 );
+      setTimeout( etCetera.fixGoogleChromeMp3Mime, 0 );
 
-      setTimeout( etcthis.autoRefreshCheckboxPersistent, 0 );
+      setTimeout( etCetera.autoRefreshCheckboxPersistent, 0 );
 
-      setTimeout( etcthis.overrideDateFromString, 0 );
+      setTimeout( etCetera.overrideDateFromString, 0 );
 
       if (0 <= document.location.href.indexOf("/res/")) {
-        setTimeout( etcthis.addConsecutiveNumberStyle, 0 );
+        setTimeout( etCetera.addConsecutiveNumberStyle, 0 );
       };
 
-      etcthis.insertDeleteCookiesButton();
+      etCetera.insertDeleteCookiesButton();
 
-      setTimeout( etcthis.overrideSetPlayer, 0 );
-      setTimeout( etcthis.setVideosLoopMode, 0 );
+      setTimeout( etCetera.overrideSetPlayer, 0 );
+      setTimeout( etCetera.setVideosLoopMode, 0 );
 
 
       if (0 > document.location.href.indexOf("/catalog.html")) {
-        etcthis.setCheckboxOfMaskFilenameMode();
+        etCetera.setCheckboxOfMaskFilenameMode();
 
-        feWrapper.selectedDivOnChangeHandlers.push(etcthis.updateMaskFilenameMode);
+        feWrapper.selectedDivOnChangeHandlers.push(etCetera.updateMaskFilenameMode);
       };
-      etcthis.removeNonJsSendButton();
+      etCetera.removeNonJsSendButton();
 
       if (0 <= document.location.href.indexOf("/librejp/")) {
-        etcthis.setCheckboxOfDancingMascot();
+        etCetera.setCheckboxOfDancingMascot();
       };
 
-      /* etcthis.movePostBox(); */
-      etcthis.UserJs();
-      etcthis.uploadFileFromClipboard();
-      etcthis.markdownTool();
-      etcthis.insertMiscCSS();
-      etcthis.autoPostingPassowrd();
+      /* etCetera.movePostBox(); */
+      etCetera.UserJs();
+      etCetera.uploadFileFromClipboard();
+      etCetera.markdownTool();
+      etCetera.insertMiscCSS();
+      etCetera.autoPostingPassowrd();
 
-      feWrapper.selectedDivOnChangeHandlers.push(etcthis.addHashToMessage);
-      etcthis.insertPostOptionCheckbox("addHashToMessage", "メッセージにファイルURLを含める");
+      feWrapper.selectedDivOnChangeHandlers.push(etCetera.addHashToMessage);
+      etCetera.insertPostOptionCheckbox("addHashToMessage", "メッセージにファイルURLを含める");
 
-      setTimeout(etcthis.interDomainLink, 0);
+      setTimeout(etCetera.interDomainLink, 0);
     };
 
-    etcthis.trigger = function() {
-      etcthis.enable();
+    etCetera.trigger = function() {
+      etCetera.enable();
     };
-    return etcthis;
-  };
 
-  /**********************************
-   * MultiPopup                    *
-   **********************************/
-  function modMultiPopup() {
-    window.toshakiii = window.toshakiii || {};
-    window.toshakiii.settings = window.toshakiii.settings || {};
-    window.toshakiii.multiPopup = window.toshakiii.multiPopup || {};
-    var toshakiii = window.toshakiii;
-    var settings = window.toshakiii.settings;
-    var mthis = window.toshakiii.multiPopup;
-    var feWrapper = window.toshakiii.feWrapper;
-    var utils = window.toshakiii.utils;
-
-    window.toshakiii.multiPopup = mthis;
-    var etCetera = window.toshakiii.etCetera;
-
-    mthis.popups = {};
+    /**********************************
+     * MultiPopup                    *
+     **********************************/
+    multiPopup.popups = {};
     /* { <Element Unique Id>: <Popup Info>, ... }
      *
      * <Popup Info>: {
@@ -3940,22 +3819,22 @@
      *   brothers: (reseved)[ <ElementUniqueId>, ... ],
      * }
      */
-    mthis.POPUP_PHASE = {
+    multiPopup.POPUP_PHASE = {
       DO_NOTHING               : 0,
       COUNTDOWN_FOR_SHOW_POPUP : 1,
       NOW_SHOWING              : 2,
       COUNTDOWN_FOR_CLOSE_POPUP: 3
     };
-    mthis.cache = {};
+    multiPopup.cache = {};
     /* { <URI> : { element: <HTMLElement>, message: <string> } } */
-    mthis.defaultSettings = {
+    multiPopup.defaultSettings = {
       'timeToPopup': 250/*ms*/,
       'timeToClosePopup': 350/*ms*/
     };
-    mthis.panelBacklinksObservers = {};
-    mthis.mouseClientPos = {x:0,y:0};
+    multiPopup.panelBacklinksObservers = {};
+    multiPopup.mouseClientPos = {x:0,y:0};
 
-    mthis.preparePopupInfo = function(popups, arg2) {
+    multiPopup.preparePopupInfo = function(popups, arg2) {
 
       var uid, quoteAnchor;
       if ("string" === typeof(arg2)) {
@@ -3975,7 +3854,7 @@
         'closeTimer'    : undefined,
         'element'       : undefined,
         'parent'        : undefined,
-        'phase'         : mthis.POPUP_PHASE.DO_NOTHING,
+        'phase'         : multiPopup.POPUP_PHASE.DO_NOTHING,
         'quoteAnchor'   : quoteAnchor,
         'showTimer'     : undefined,
         'targetPosition': undefined,
@@ -3984,14 +3863,14 @@
       return popups[ uid ];
     };
 
-    mthis.setUidOfPopupParent = function( element, parentUid) {
+    multiPopup.setUidOfPopupParent = function( element, parentUid) {
       /* no parent‐child relation of DOM. parent-child relation of popups. */
       var cdaName = 'data-tsk-parent-popup-uid';
       element.setAttribute( cdaName, parentUid );
       return true;
     };
 
-    mthis.getUidOfPopupParent = function(element) {
+    multiPopup.getUidOfPopupParent = function(element) {
       var cdaName = 'data-tsk-parent-popup-uid';
       var parentUid = element.getAttribute(cdaName);
       if (undefined == parentUid) {
@@ -4000,29 +3879,29 @@
       return parentUid;
     };
 
-    mthis.getSettings = function(name) {
+    multiPopup.getSettings = function(name) {
       if (undefined === settings[ name ]) {
-        return mthis.defaultSettings[ name ];
+        return multiPopup.defaultSettings[ name ];
       };
       return settings[ name ];
     };
 
-    mthis.startCountdownForClosePopup = function(popupInfo) {
-      if (mthis.POPUP_PHASE.NOW_SHOWING != popupInfo['phase']) {
+    multiPopup.startCountdownForClosePopup = function(popupInfo) {
+      if (multiPopup.POPUP_PHASE.NOW_SHOWING != popupInfo['phase']) {
         return false;
       };
-      var timeToClosePopup = mthis.getSettings('timeToClosePopup');
-      popupInfo['phase'] = mthis.POPUP_PHASE.COUNTDOWN_FOR_CLOSE_POPUP;
+      var timeToClosePopup = multiPopup.getSettings('timeToClosePopup');
+      popupInfo['phase'] = multiPopup.POPUP_PHASE.COUNTDOWN_FOR_CLOSE_POPUP;
       popupInfo['closeTimer'] =
-        setTimeout( function() { mthis.popupHasExpired( popupInfo, true ); },
+        setTimeout( function() { multiPopup.popupHasExpired( popupInfo, true ); },
             timeToClosePopup );
       return true;
     };
 
-    mthis.startCountdownForShowPopup = function(popupInfo) {
+    multiPopup.startCountdownForShowPopup = function(popupInfo) {
       var uid = popupInfo['uid'];
 
-      if (mthis.POPUP_PHASE.DO_NOTHING != popupInfo['phase']) {
+      if (multiPopup.POPUP_PHASE.DO_NOTHING != popupInfo['phase']) {
         return false;
       };
 
@@ -4030,21 +3909,21 @@
         return true;
       };
 
-      popupInfo['phase'] = mthis.POPUP_PHASE.COUNTDOWN_FOR_SHOW_POPUP;
-      var timeToPopup = mthis.getSettings( 'timeToPopup' );
+      popupInfo['phase'] = multiPopup.POPUP_PHASE.COUNTDOWN_FOR_SHOW_POPUP;
+      var timeToPopup = multiPopup.getSettings( 'timeToPopup' );
 
       popupInfo['showTimer'] = setTimeout( function() {
         popupInfo['showTimer'] = undefined;
-        mthis.showPopup(popupInfo);
+        multiPopup.showPopup(popupInfo);
       }, timeToPopup );
 
       return true;
     };
 
-    mthis.extendExpirationDate = function extendExpirationDate(popupInfo) {
-      var timeToClosePopup = mthis.getSettings('timeToClosePopup');
+    multiPopup.extendExpirationDate = function extendExpirationDate(popupInfo) {
+      var timeToClosePopup = multiPopup.getSettings('timeToClosePopup');
 
-      if (mthis.POPUP_PHASE.COUNTDOWN_FOR_CLOSE_POPUP != popupInfo['phase']) {
+      if (multiPopup.POPUP_PHASE.COUNTDOWN_FOR_CLOSE_POPUP != popupInfo['phase']) {
         return false;
       };
       var timer = popupInfo['closeTimer'];
@@ -4052,13 +3931,13 @@
         clearTimeout( popupInfo['closeTimer'] );
       };
       popupInfo['closeTimer'] = undefined;
-      popupInfo['phase'] = mthis.POPUP_PHASE.NOW_SHOWING;
+      popupInfo['phase'] = multiPopup.POPUP_PHASE.NOW_SHOWING;
 
       if (undefined == popupInfo['parent']) {
         return true;
       };
 
-      var parentPopupInfo = mthis.popups[ popupInfo['parent'] ];
+      var parentPopupInfo = multiPopup.popups[ popupInfo['parent'] ];
       if (undefined == parentPopupInfo) {
         popupInfo['parent'] = undefined;
       } else {
@@ -4067,17 +3946,17 @@
       return true;
     };
 
-    mthis.touchElement = function(event) {
+    multiPopup.touchElement = function(event) {
       var quoteLink = event.target;
-      var popupInfo = mthis.preparePopupInfo( mthis.popups, quoteLink );
+      var popupInfo = multiPopup.preparePopupInfo( multiPopup.popups, quoteLink );
 
-      var PP = mthis.POPUP_PHASE;
+      var PP = multiPopup.POPUP_PHASE;
       var rect;
       switch(popupInfo['phase']) {
       default:
       case PP.DO_NOTHING:
         popupInfo['targetPosition'] = {'x': event.pageX, 'y':event.pageY };
-        mthis.startCountdownForShowPopup(popupInfo);
+        multiPopup.startCountdownForShowPopup(popupInfo);
         return true;
       case PP.COUNTDOWN_FOR_SHOW_POPUP:
         popupInfo['targetPosition'] = {'x': event.pageX, 'y':event.pageY };
@@ -4085,17 +3964,17 @@
       case PP.NOW_SHOWING:
         return true;
       case PP.COUNTDOWN_FOR_CLOSE_POPUP:
-        mthis.extendExpirationDate(popupInfo);
+        multiPopup.extendExpirationDate(popupInfo);
         return true;
       };
       return true;
     };
 
-    mthis.untouchElement = function(event) {
+    multiPopup.untouchElement = function(event) {
       var quoteLink = event.target;
-      var popupInfo = mthis.preparePopupInfo( mthis.popups, quoteLink );
+      var popupInfo = multiPopup.preparePopupInfo( multiPopup.popups, quoteLink );
 
-      var PP = mthis.POPUP_PHASE;
+      var PP = multiPopup.POPUP_PHASE;
       if (PP.COUNTDOWN_FOR_SHOW_POPUP == popupInfo['phase']) {
         var timer = popupInfo['showTimer'];
         if (undefined != timer) {
@@ -4106,13 +3985,13 @@
         return true;
       }
       else if (PP.NOW_SHOWING == popupInfo['phase']) {
-        mthis.startCountdownForClosePopup(popupInfo);
+        multiPopup.startCountdownForClosePopup(popupInfo);
       };
       return true;
     };
 
 
-    mthis.getRelatedPostCell = function getAncientPostCell(element) {
+    multiPopup.getRelatedPostCell = function getAncientPostCell(element) {
       if (null == element) {
         return null;
       };
@@ -4125,8 +4004,8 @@
       return getAncientPostCell( element.parentElement );
     };
 
-    mthis.getRelatedDivMessage = function(element) {
-      var postCell = mthis.getRelatedPostCell(element);
+    multiPopup.getRelatedDivMessage = function(element) {
+      var postCell = multiPopup.getRelatedPostCell(element);
       if (null == postCell) {
         return null;
       };
@@ -4138,7 +4017,7 @@
 
     };
 
-    mthis.downloadPostCell = function(popupInfo, callback) {
+    multiPopup.downloadPostCell = function(popupInfo, callback) {
       var quoteAnchor = popupInfo['quoteAnchor'];
       var msg;
       if (quoteAnchor.host != location.host) {
@@ -4164,12 +4043,12 @@
       uri = "//" + quoteAnchor.host + uri;
       /* ex. "//yamanu.org/chan/preview/123.html" */
 
-      if (undefined != mthis.cache[ uri ]) {
-        var postCell = mthis.cache[ uri ]['element'];
+      if (undefined != multiPopup.cache[ uri ]) {
+        var postCell = multiPopup.cache[ uri ]['element'];
         if (null != postCell) {
           postCell = postCell.cloneNode(true);
         };
-        callback( popupInfo, postCell, mthis.cache[ uri ]['message'] );
+        callback( popupInfo, postCell, multiPopup.cache[ uri ]['message'] );
         return;
       };
 
@@ -4188,7 +4067,7 @@
               300 >  this.status) {
             if ('document' != this.responseType) {
               msg = "unknown response contents(1): + " + this.responseType;
-              mthis.cache[ uri ] = { 'message': msg };
+              multiPopup.cache[ uri ] = { 'message': msg };
               callback( popupInfo, null, msg );
               return;
             };
@@ -4198,7 +4077,7 @@
             var postCellList = this.response.getElementsByClassName('postCell');
             if (0 >= postCellList.length) {
               msg = "unknown response contents: postCell not found: " + fullUri;
-              mthis.cache[ uri ] = { 'message': msg };
+              multiPopup.cache[ uri ] = { 'message': msg };
               window.lastPanelContent = this.response;
               callback( popupInfo, null, msg );
               /*callback( popupInfo, null, msg );*/
@@ -4206,12 +4085,12 @@
             };
             var postCell = postCellList[0];
             postCell = utils.removeIdAll( document.importNode( postCell, true ) );
-            mthis.cache[ uri ] = { 'element': postCell };
+            multiPopup.cache[ uri ] = { 'element': postCell };
             callback( popupInfo, postCell );
             return;
           };
           msg = 'not found(HTTP ' + this.status + '): ' + fullUri;
-          mthis.cache[ uri ] = { 'message': msg };
+          multiPopup.cache[ uri ] = { 'message': msg };
           callback( popupInfo, null, msg );
           return;
         };
@@ -4223,11 +4102,11 @@
       return;
     };
 
-    mthis.postCellContainsText = function(postCell, text) {
+    multiPopup.postCellContainsText = function(postCell, text) {
       return 0 <= postCell.textContent.indexOf(text);
     };
 
-    mthis.lookForPostCellByGreenText = function(popupInfo, callback) {
+    multiPopup.lookForPostCellByGreenText = function(popupInfo, callback) {
       var text = popupInfo['quoteAnchor'].textContent.replace(/> */,"");
       var postCell = utils.getElementByClassNameFromAncestor(popupInfo['quoteAnchor'], "postCell");
 
@@ -4239,15 +4118,15 @@
       for (; null !== postCell; postCell = postCell.previousElementSibling) {
 
         if (0 <= postCell.className.indexOf("postCell") &&
-            mthis.postCellContainsText(postCell, text)) {
+            multiPopup.postCellContainsText(postCell, text)) {
 
-          return callback(popupInfo, mthis.clonePostCellForPopup(postCell));
+          return callback(popupInfo, multiPopup.clonePostCellForPopup(postCell));
         };
       };
       return callback(popupInfo, null, "現在ページにはないよ");
     };
 
-    mthis.clonePostCellForPopup = function(postCell) {
+    multiPopup.clonePostCellForPopup = function(postCell) {
       var clone = postCell.cloneNode(true);
 
       var divPostsList = clone.getElementsByClassName("divPosts");
@@ -4260,7 +4139,7 @@
       return clone;
     };
 
-    mthis.lookForPostCellFromDocument = function(popupInfo, callback) {
+    multiPopup.lookForPostCellFromDocument = function(popupInfo, callback) {
       var quoteAnchor = popupInfo['quoteAnchor'];
       var postId = quoteAnchor.hash;
 
@@ -4282,21 +4161,21 @@
         return callback(popupInfo, null, "no such post:No." + postId);
       };
 
-      return callback(popupInfo, mthis.clonePostCellForPopup(postCell));
+      return callback(popupInfo, multiPopup.clonePostCellForPopup(postCell));
     };
 
-    mthis.lookForPostCell = function(popupInfo, callback) {
+    multiPopup.lookForPostCell = function(popupInfo, callback) {
       var here = location;
       var quoteAnchor = popupInfo['quoteAnchor'];
       var postCell;
       if (here.host == quoteAnchor.host &&
           here.port == quoteAnchor.port) {
 
-        return mthis.lookForPostCellFromDocument(popupInfo, function( popupInfo, postCell,
+        return multiPopup.lookForPostCellFromDocument(popupInfo, function( popupInfo, postCell,
             errorMessage) {
 
           if (null === postCell) {
-            return mthis.downloadPostCell(popupInfo, callback);
+            return multiPopup.downloadPostCell(popupInfo, callback);
           } else {
             return callback(popupInfo, postCell, errorMessage);
           };
@@ -4304,17 +4183,17 @@
       };
 
       if ("A" === quoteAnchor.tagName) {
-        return mthis.downloadPostCell(popupInfo, callback);
+        return multiPopup.downloadPostCell(popupInfo, callback);
       } else {
-        return mthis.lookForPostCellByGreenText(popupInfo, callback);
+        return multiPopup.lookForPostCellByGreenText(popupInfo, callback);
       };
     };
 
-    mthis.showPopup = function( popupInfo, postCell, errorMessage) {
+    multiPopup.showPopup = function( popupInfo, postCell, errorMessage) {
 
       var quoteAnchor = popupInfo['quoteAnchor'];
       if (undefined == postCell && undefined == errorMessage) {
-        mthis.lookForPostCell(popupInfo, mthis.showPopup);
+        multiPopup.lookForPostCell(popupInfo, multiPopup.showPopup);
         return;
       };
       if (undefined != errorMessage) {
@@ -4323,7 +4202,7 @@
       };
 
       /* ポップアップの基準位置 */
-      var originElement = mthis.getRelatedDivMessage(quoteAnchor);
+      var originElement = multiPopup.getRelatedDivMessage(quoteAnchor);
       if (null == originElement) {
         originElement = quoteAnchor;
       };
@@ -4344,24 +4223,24 @@
 
       quoteblock.className = "tskQuoteblock";
       var uid = popupInfo['uid'];
-      mthis.processPostCell(postCell);
+      multiPopup.processPostCell(postCell);
 
       var setParentUid = function(quoteLinkOrGreenText) {
         quoteLinkOrGreenText.setAttribute('data-tsk-parent-popup-uid', uid);
       };
 
-      mthis.overridePostCellQuotePopups(postCell, setParentUid);
-      mthis.enableGreenTextPopup(postCell, setParentUid);
+      multiPopup.overridePostCellQuotePopups(postCell, setParentUid);
+      multiPopup.enableGreenTextPopup(postCell, setParentUid);
 
       quoteblock.addEventListener("mouseout", function() {
-        mthis.startCountdownForClosePopup(popupInfo); } );
+        multiPopup.startCountdownForClosePopup(popupInfo); } );
 
       quoteblock.addEventListener("mousemove", function() {
-        mthis.extendExpirationDate(popupInfo);
+        multiPopup.extendExpirationDate(popupInfo);
         return true; } );
 
       quoteblock.addEventListener("click", function() {
-        mthis.extendExpirationDate(popupInfo);
+        multiPopup.extendExpirationDate(popupInfo);
         return true; } );
 
       quoteblock.style.position = "absolute";
@@ -4389,8 +4268,8 @@
       var targetPosition = popupInfo['targetPosition'];
       var top, left;
       if (undefined === originElement) {
-        left = mthis.mouseClientPos.x;
-        top = mthis.mouseClientPos.y;
+        left = multiPopup.mouseClientPos.x;
+        top = multiPopup.mouseClientPos.y;
       } else {
         var rect = originElement.getBoundingClientRect();
         left = rect.left + rect.height + scrollLeft;
@@ -4420,45 +4299,45 @@
       quoteblock.style.top  = ( top + 5 ) + "px";
       quoteblock.style.left = ( left + 5 ) + "px";
 
-      var parentUid = mthis.getUidOfPopupParent(quoteAnchor);
+      var parentUid = multiPopup.getUidOfPopupParent(quoteAnchor);
       if (undefined != parentUid) {
         popupInfo['parent']  = parentUid;
-        var parentPopupInfo = mthis.popups[ parentUid ];
+        var parentPopupInfo = multiPopup.popups[ parentUid ];
         if (undefined != parentPopupInfo) {
           parentPopupInfo['children'].push( popupInfo['uid'] );
         };
       };
-      popupInfo['phase']   = mthis.POPUP_PHASE.NOW_SHOWING;
+      popupInfo['phase']   = multiPopup.POPUP_PHASE.NOW_SHOWING;
       popupInfo['element'] = quoteblock;
 
       /* parent の期限を伸ばす: */
-      mthis.extendExpirationDate(popupInfo);
+      multiPopup.extendExpirationDate(popupInfo);
 
       return;
     };
-    /* end mthis.showPopup */
+    /* end multiPopup.showPopup */
 
-    mthis.popupHasExpired = function(popupInfo, deleteP) {
+    multiPopup.popupHasExpired = function(popupInfo, deleteP) {
       var rect = popupInfo['element'].getBoundingClientRect();
-      var mcx = mthis.mouseClientPos.x;
-      var mcy = mthis.mouseClientPos.y;
+      var mcx = multiPopup.mouseClientPos.x;
+      var mcy = multiPopup.mouseClientPos.y;
       if (rect.left   <= mcx &&
           rect.right  >  mcx &&
           rect.top    <= mcy &&
           rect.bottom >  mcy  ) {
         popupInfo['closeTimer'] = undefined;
-        popupInfo['phase'] = mthis.POPUP_PHASE.NOW_SHOWING;
+        popupInfo['phase'] = multiPopup.POPUP_PHASE.NOW_SHOWING;
         return;
       };
-      mthis.closePopup( popupInfo, deleteP);
+      multiPopup.closePopup( popupInfo, deleteP);
     };
 
-    mthis.closePopup = function(popupInfo, deleteP) {
+    multiPopup.closePopup = function(popupInfo, deleteP) {
       for (var childIdx in popupInfo['children']) {
         var childUid = popupInfo['children'][ childIdx ];
-        var child = mthis.popups[ childUid ];
+        var child = multiPopup.popups[ childUid ];
         if (undefined != child) {
-          mthis.closePopup(child);
+          multiPopup.closePopup(child);
         };
       };
       var element = popupInfo['element'];
@@ -4468,42 +4347,42 @@
         };
         utils.toMarkElementDiscarded(element);
       };
-      popupInfo['phase'] = mthis.POPUP_PHASE.DO_NOTHING;
+      popupInfo['phase'] = multiPopup.POPUP_PHASE.DO_NOTHING;
 
       if (deleteP) {
-        delete mthis.popups[popupInfo['uid']];
+        delete multiPopup.popups[popupInfo['uid']];
       };
     };
 
-    mthis.dateToLastCheckMouseIsIn = 0;
-    mthis.onBodyMouseMove = function(event) {
+    multiPopup.dateToLastCheckMouseIsIn = 0;
+    multiPopup.onBodyMouseMove = function(event) {
       var now = (+new Date());
       var intervalToCheck = 150;
 
-      if (now >= (intervalToCheck + mthis.dateToLastCheckMouseIsIn)) {
-        mthis.checkMouseIsIn(event);
-        mthis.dateToLastCheckMouseIsIn = now;
+      if (now >= (intervalToCheck + multiPopup.dateToLastCheckMouseIsIn)) {
+        multiPopup.checkMouseIsIn(event);
+        multiPopup.dateToLastCheckMouseIsIn = now;
       };
 
-      mthis.mouseClientPos = {x:event.clientX, y:event.clientY};
+      multiPopup.mouseClientPos = {x:event.clientX, y:event.clientY};
       return;
     };
 
-    mthis.checkMouseIsIn = function(event) {
-      mthis.mouseClientPos = {x:event.clientX, y:event.clientY};
+    multiPopup.checkMouseIsIn = function(event) {
+      multiPopup.mouseClientPos = {x:event.clientX, y:event.clientY};
 
       var uidsToClosePopup = [];
       var popupInfo;
-      for (var key in mthis.popups) {
-        popupInfo = mthis.popups[key];
-        if (mthis.POPUP_PHASE.NOW_SHOWING != popupInfo['phase']) {
+      for (var key in multiPopup.popups) {
+        popupInfo = multiPopup.popups[key];
+        if (multiPopup.POPUP_PHASE.NOW_SHOWING != popupInfo['phase']) {
           continue;
         };
 
         var rect2 = popupInfo['quoteAnchor'].getBoundingClientRect();
         var rect = popupInfo['element'].getBoundingClientRect();
-        var mcx = mthis.mouseClientPos.x;
-        var mcy = mthis.mouseClientPos.y;
+        var mcx = multiPopup.mouseClientPos.x;
+        var mcy = multiPopup.mouseClientPos.y;
         if ((rect.left   <= mcx &&
              rect.right  >  mcx &&
              rect.top    <= mcy &&
@@ -4519,48 +4398,48 @@
 
       for (var idx in uidsToClosePopup) {
         key = uidsToClosePopup[idx];
-        popupInfo = mthis.popups[key];
+        popupInfo = multiPopup.popups[key];
         if (undefined === popupInfo) {
           continue;
         };
-        var descList = mthis.getPopupDescendants(popupInfo);
+        var descList = multiPopup.getPopupDescendants(popupInfo);
         var close = true;
         for (var deIdx in descList) {
-          if (mthis.POPUP_PHASE.NOW_SHOWING === descList[deIdx]['phase']) {
+          if (multiPopup.POPUP_PHASE.NOW_SHOWING === descList[deIdx]['phase']) {
             close = false;
             break;
           };
         };
         if (close) {
-          mthis.closePopup(popupInfo, true);
+          multiPopup.closePopup(popupInfo, true);
         };
       };
     };
 
-    mthis.disablePopup = function(anchor) {
-      anchor.removeEventListener("mousemove", mthis.touchElement);
-      anchor.removeEventListener("mouseout" , mthis.untouchElement);
+    multiPopup.disablePopup = function(anchor) {
+      anchor.removeEventListener("mousemove", multiPopup.touchElement);
+      anchor.removeEventListener("mouseout" , multiPopup.untouchElement);
     };
 
-    mthis.removeOriginalPopupFeature = function(quoteAnchor) {
+    multiPopup.removeOriginalPopupFeature = function(quoteAnchor) {
       /* click でその場所に飛ぶのは残す */
       quoteAnchor.onmouseenter = null;
       quoteAnchor.onmouseout = null;
     };
 
-    mthis.enablePopup = function(element) {
-      mthis.disablePopup(element);
-      element.addEventListener("mousemove", mthis.touchElement);
-      element.addEventListener("mouseout" , mthis.untouchElement);
+    multiPopup.enablePopup = function(element) {
+      multiPopup.disablePopup(element);
+      element.addEventListener("mousemove", multiPopup.touchElement);
+      element.addEventListener("mouseout" , multiPopup.untouchElement);
     };
 
-    mthis.processPostCell = function(postCell) {
+    multiPopup.processPostCell = function(postCell) {
       var linkQuoteList = postCell.getElementsByClassName('linkQuote');
       for (var lqIdx = linkQuoteList.length - 1; -1 < lqIdx ; --lqIdx) {
         var linkQuote = linkQuoteList[ lqIdx ];
-        linkQuote.removeEventListener( "click", mthis.add_reply_quote );
+        linkQuote.removeEventListener( "click", multiPopup.add_reply_quote );
         linkQuote.onclick = null;
-        linkQuote.addEventListener( "click", mthis.add_reply_quote );
+        linkQuote.addEventListener( "click", multiPopup.add_reply_quote );
       };
 
       var imgList = postCell.getElementsByTagName("IMG");
@@ -4570,11 +4449,11 @@
       };
     };
 
-    mthis.sharpQRegexp = new RegExp("^#q[0-9]*");
-    mthis.add_reply_quote = function() {
+    multiPopup.sharpQRegexp = new RegExp("^#q[0-9]*");
+    multiPopup.add_reply_quote = function() {
       var linkQuote = this;
 
-      if (! mthis.sharpQRegexp.test( linkQuote.hash )) {
+      if (! multiPopup.sharpQRegexp.test( linkQuote.hash )) {
         return true;
       };
       var toQuote = linkQuote.hash.substring(2);
@@ -4591,10 +4470,10 @@
       return true;
     };
 
-    mthis.enableGreenTextPopup = function(postCell, afterOverrideHook) {
+    multiPopup.enableGreenTextPopup = function(postCell, afterOverrideHook) {
       var greenTextList = postCell.getElementsByClassName('greenText');
       for (var gtIdx = 0, gtLen = greenTextList.length; gtIdx < gtLen; ++gtIdx) {
-        mthis.enablePopup(greenTextList[gtIdx]);
+        multiPopup.enablePopup(greenTextList[gtIdx]);
         if (afterOverrideHook != undefined) {
           afterOverrideHook(greenTextList[gtIdx]);
         };
@@ -4602,10 +4481,10 @@
     };
 
 
-    mthis.overridePostCellQuotePopups = function(postCell, afterOverrideHook) {
+    multiPopup.overridePostCellQuotePopups = function(postCell, afterOverrideHook) {
       var quoteLinks = postCell.getElementsByClassName('quoteLink');
       for (var qlIdx = 0, qlLen = quoteLinks.length; qlIdx < qlLen ; ++qlIdx) {
-        mthis.overrideQuotePopup( quoteLinks[ qlIdx ] );
+        multiPopup.overrideQuotePopup( quoteLinks[ qlIdx ] );
         if (afterOverrideHook != undefined) {
           afterOverrideHook(quoteLinks[qlIdx]);
         };
@@ -4613,16 +4492,16 @@
 
       var panelBacklinksList = postCell.getElementsByClassName('panelBacklinks');
       for (var pbIdx = 0, pbLen = panelBacklinksList.length; pbIdx < pbLen ; ++pbIdx) {
-        mthis.overrideChildrenQuotePopup(panelBacklinksList[pbIdx], afterOverrideHook);
+        multiPopup.overrideChildrenQuotePopup(panelBacklinksList[pbIdx], afterOverrideHook);
       };
     };
 
-    mthis.overrideChildrenQuotePopup = function(panelBacklinks, afterOverrideHook) {
+    multiPopup.overrideChildrenQuotePopup = function(panelBacklinks, afterOverrideHook) {
       if (undefined !== panelBacklinks.children) {
         for (var anIdx = 0, anLen = panelBacklinks.children.length; anIdx < anLen ; ++anIdx) {
           var child = panelBacklinks.children[anIdx];
-          mthis.removeOriginalPopupFeature(child);
-          mthis.enablePopup(child);
+          multiPopup.removeOriginalPopupFeature(child);
+          multiPopup.enablePopup(child);
           if (afterOverrideHook != undefined) {
             afterOverrideHook(child);
           };
@@ -4630,7 +4509,7 @@
       };
     };
 
-    mthis.getPopupDescendants = function getPopupDescendants(obj, descList) {
+    multiPopup.getPopupDescendants = function getPopupDescendants(obj, descList) {
       if (undefined == descList) {
         descList = [];
       };
@@ -4638,7 +4517,7 @@
         return descList;
       };
       for (var i in obj.children) {
-        var child = mthis.popups[obj.children[i]];
+        var child = multiPopup.popups[obj.children[i]];
         if (undefined == child) {
           continue;
         };
@@ -4648,29 +4527,29 @@
       return descList;
     };
 
-    mthis.addBodyEvents = function() {
-      mthis.removeBodyEvents();
-      document.body.addEventListener("click"    , mthis.checkMouseIsIn );
-      document.body.addEventListener("mousemove", mthis.onBodyMouseMove );
+    multiPopup.addBodyEvents = function() {
+      multiPopup.removeBodyEvents();
+      document.body.addEventListener("click"    , multiPopup.checkMouseIsIn );
+      document.body.addEventListener("mousemove", multiPopup.onBodyMouseMove );
     };
-    mthis.removeBodyEvents = function() {
-      document.body.removeEventListener("click"    , mthis.checkMouseIsIn );
-      document.body.removeEventListener("mousemove", mthis.onBodyMouseMove );
-    };
-
-    mthis.overrideQuotePopup = function(quoteLink) {
-      mthis.removeOriginalPopupFeature(quoteLink);
-      mthis.enablePopup(quoteLink);
+    multiPopup.removeBodyEvents = function() {
+      document.body.removeEventListener("click"    , multiPopup.checkMouseIsIn );
+      document.body.removeEventListener("mousemove", multiPopup.onBodyMouseMove );
     };
 
-    mthis.startObservePanelBacklinks = function(panelBacklinks) {
+    multiPopup.overrideQuotePopup = function(quoteLink) {
+      multiPopup.removeOriginalPopupFeature(quoteLink);
+      multiPopup.enablePopup(quoteLink);
+    };
+
+    multiPopup.startObservePanelBacklinks = function(panelBacklinks) {
       var cdaName = "data-tsk-observing";
       var nid = utils.getElementUniqueId(panelBacklinks);
-      var mo = mthis.panelBacklinksObservers[ nid ];
+      var mo = multiPopup.panelBacklinksObservers[ nid ];
       var opts = { childList: true };
       if (undefined == mo) {
-        mo = new MutationObserver( mthis.overrideChildrenQuotePopup );
-        mthis.panelBacklinksObservers[ nid ] = mo;
+        mo = new MutationObserver( multiPopup.overrideChildrenQuotePopup );
+        multiPopup.panelBacklinksObservers[ nid ] = mo;
         mo.observe( panelBacklinks, { childList: true } );
       };
       mo.observe( panelBacklinks, opts );
@@ -4678,29 +4557,29 @@
       return;
     };
 
-    mthis.stopObservePanelBacklinks = function(panelBacklinks) {
+    multiPopup.stopObservePanelBacklinks = function(panelBacklinks) {
       var cdaName = "data-tsk-observing";
       var nid = utils.getElementUniqueId(panelBacklinks);
-      var mo = mthis.panelBacklinksObservers[ nid ];
+      var mo = multiPopup.panelBacklinksObservers[ nid ];
       if (undefined != mo) {
         mo.disconnect();
-        delete mthis.panelBacklinksObservers[ nid ];
+        delete multiPopup.panelBacklinksObservers[ nid ];
       };
       panelBacklinks.setAttribute( cdaName, "0" );
       return;
     };
 
-    mthis.trigger = function() {
-      mthis.enable();
+    multiPopup.trigger = function() {
+      multiPopup.enable();
     };
 
-    mthis.enable = function() {
-      mthis.addBodyEvents();
+    multiPopup.enable = function() {
+      multiPopup.addBodyEvents();
       /* etCetera の監視対象は .divPosts。Popup の挿入場所は .divPosts の親の親の中。
        * だから Popup 挿入時に冗長呼び出しにはならない */
 
-      feWrapper.postCellCP.appendCP( mthis.overridePostCellQuotePopups );
-      feWrapper.postCellCP.appendCP( mthis.enableGreenTextPopup );
+      feWrapper.postCellCP.appendCP( multiPopup.overridePostCellQuotePopups );
+      feWrapper.postCellCP.appendCP( multiPopup.enableGreenTextPopup );
 
       var iloops = utils.IntermittentLoops();
       var links;
@@ -4714,7 +4593,7 @@
         idx = links.length - 1;
       } ).push( function() {
         if (-1 >= idx) { return break_; };
-        mthis.overrideQuotePopup( links[ idx ] );
+        multiPopup.overrideQuotePopup( links[ idx ] );
         --idx;
         return continue_;
       } ).push( function() {
@@ -4723,8 +4602,8 @@
       } ).push( function() {
         if (-1 >= idx) { return break_; };
         var panelBacklinks = links[ idx ];
-        mthis.overrideChildrenQuotePopup(panelBacklinks);
-        mthis.startObservePanelBacklinks(panelBacklinks);
+        multiPopup.overrideChildrenQuotePopup(panelBacklinks);
+        multiPopup.startObservePanelBacklinks(panelBacklinks);
         --idx;
         return continue_;
       } ).push( function() {
@@ -4740,39 +4619,28 @@
         return continue_;
       } ).beginAsync();
     };
-    mthis.disable = function() {
-      mthis.removeBodyEvents();
+
+    multiPopup.disable = function() {
+      multiPopup.removeBodyEvents();
     };
 
-    return mthis;
-  };
 
-  /**********************************
-   * LynxChan Front-End Wrapper     *
-   **********************************/
-  function modFeWrapper() {
-    window.toshakiii = window.toshakiii || {};
-    window.toshakiii.settings = window.toshakiii.settings || {};
-    var toshakiii = window.toshakiii;
-    var settings = window.toshakiii.settings;
-    var utils = window.toshakiii.utils;
-
-    var fewrapper = {};
-    window.toshakiii.feWrapper = fewrapper;
-
-    fewrapper.selectedDivOnChangeHandlers = [];
-    fewrapper.postCellCP = undefined;
-    fewrapper.titleCP = undefined;
-    fewrapper.quickReplyOnLoadHandlers = [];
+    /**********************************
+     * LynxChan Front-End Wrapper     *
+     **********************************/
+    feWrapper.selectedDivOnChangeHandlers = [];
+    feWrapper.postCellCP = undefined;
+    feWrapper.titleCP = undefined;
+    feWrapper.quickReplyOnLoadHandlers = [];
 
     /*
      * 投稿内のURIアンカーを引数に渡される関数のリスト。
      * あるアンカーに対して、あるハンドラーが true を返した場合は、
      * 他のハンドラーを呼ばない
      */
-    fewrapper.messageUriHandlers = [];
+    feWrapper.messageUriHandlers = [];
 
-    fewrapper.postCellCPInit = function postCellCPInit(postCellCP) {
+    feWrapper.postCellCPInit = function postCellCPInit(postCellCP) {
       var divPostsList = document.getElementsByClassName('divPosts');
       if (0 >= divPostsList.length) {
         return;
@@ -4786,12 +4654,12 @@
       postCellCP.setPreProc( utils.CompulsoryProcessing.prototype.preProc_enumAddedNodes );
     };
 
-    fewrapper.callMessageUriHandlers = function(anchor) {
+    feWrapper.callMessageUriHandlers = function(anchor) {
 
-      for (var hndIdx = 0, hndLen = fewrapper.messageUriHandlers.length;
+      for (var hndIdx = 0, hndLen = feWrapper.messageUriHandlers.length;
            hndIdx < hndLen ; ++hndIdx) {
 
-        if (fewrapper.messageUriHandlers[hndIdx](anchor)) {
+        if (feWrapper.messageUriHandlers[hndIdx](anchor)) {
           /* like stopImmediatePropagation */
           return true;
         };
@@ -4799,7 +4667,7 @@
       return false;
     };
 
-    fewrapper.callMessageUriHandlersWithMessageUri = function(postCell) {
+    feWrapper.callMessageUriHandlersWithMessageUri = function(postCell) {
       var divMessageList = postCell.getElementsByClassName('divMessage');
       for (var idx = 0, len = divMessageList.length; idx < len ; ++idx) {
         var divMessage = divMessageList[idx];
@@ -4809,25 +4677,25 @@
           /* レスアンカーとか他で処理されたリンクを除外する
            * いい加減すぎるような、十分であるような。*/
           if (anchor.textContent === anchor.href) {
-            fewrapper.callMessageUriHandlers(anchor);
+            feWrapper.callMessageUriHandlers(anchor);
           };
         };
       };
     };
 
-    fewrapper.titleCPInit = function(titleCP) {
+    feWrapper.titleCPInit = function(titleCP) {
       titleCP.setObservingElement( document.head.getElementsByTagName('TITLE')[0] );
       titleCP.setObservingOptions( { childList: true} );
       titleCP.setFuncEnumExistingTargets( function() { return [titleCP.observingElement]; } );
     };
 
-    fewrapper.enable = function() {
-      fewrapper.titleCP = new utils.CompulsoryProcessing( fewrapper.titleCPInit );
-      fewrapper.postCellCP = new utils.CompulsoryProcessing( fewrapper.postCellCPInit );
-      fewrapper.postCellCP.appendCP( fewrapper.callMessageUriHandlersWithMessageUri );
+    feWrapper.enable = function() {
+      feWrapper.titleCP = new utils.CompulsoryProcessing( feWrapper.titleCPInit );
+      feWrapper.postCellCP = new utils.CompulsoryProcessing( feWrapper.postCellCPInit );
+      feWrapper.postCellCP.appendCP( feWrapper.callMessageUriHandlersWithMessageUri );
     };
 
-    fewrapper.getBoardUri = function() {
+    feWrapper.getBoardUri = function() {
       /* /b/ の "b" とか、 /librejp/ の "librejp" とかを返す */
       if (undefined !== window.boardUri) {
         return window.boardUri;
@@ -4835,10 +4703,16 @@
       return document.location.pathname.replace(/\/([^\/]*).*/,"$1");
     };
 
-    fewrapper.disable = function() {};
-    fewrapper.trigger = function() { fewrapper.enable(); };
+    feWrapper.disable = function() {};
+    feWrapper.trigger = function() { feWrapper.enable(); };
 
-    return fewrapper;
+    utils.trigger();
+    settings.trigger();
+    feWrapper.trigger();
+    etCetera.trigger();
+    filePreview.trigger();
+    catalogSort.trigger();
+    multiPopup.trigger();
   };
 
   /**********************************
@@ -4848,25 +4722,15 @@
     var lowerCaseUA = window.navigator.userAgent.toLowerCase();
     if (0 <= lowerCaseUA.indexOf("gecko") ||
         0 <= lowerCaseUA.indexOf("edge")) {
-      modUtils().trigger();
-      modSettings().trigger();
-      modFeWrapper().trigger();
-      modEtCetera().trigger();
-      modFilePreview().trigger();
-      modCatalogSorter().trigger();
-      modMultiPopup().trigger();
+      modYamanuchang();
     } else {
       var script = document.createElement('SCRIPT');
       script.innerText =
-        "var toshakiii_errors = [];" +
-        "try{("+modUtils        .toString() +")().trigger();}catch(e) {toshakiii_errors.push(e);};" +
-        "try{("+modSettings     .toString() +")().trigger();}catch(e) {toshakiii_errors.push(e);};" +
-        "try{("+modFeWrapper    .toString() +")().trigger();}catch(e) {toshakiii_errors.push(e);};" +
-        "try{("+modEtCetera     .toString() +")().trigger();}catch(e) {toshakiii_errors.push(e);};" +
-        "try{("+modCatalogSorter.toString() +")().trigger();}catch(e) {toshakiii_errors.push(e);};" +
-        "try{("+modFilePreview  .toString() +")().trigger();}catch(e) {toshakiii_errors.push(e);};" +
-        "try{("+modMultiPopup   .toString() +")().trigger();}catch(e) {toshakiii_errors.push(e);};" +
-        "if (0 != toshakiii_errors.length) { alert( toshakiii_errors ); };" +
+        "var toshakiii_errors = [];"
+        + "try{"
+        + "("+modYamanuchang.toString() +")();"
+        + "}catch(e) {toshakiii_errors.push(e);};"
+        + "if (0 != toshakiii_errors.length) { alert( toshakiii_errors ); };" +
         "";
       document.head.appendChild(script);
     };
