@@ -1,23 +1,25 @@
 // ==UserScript==
-// @name        yamanu-chang
+// @name        yamanu-chang:endchan用script
 // @author      to_sha_ki_ii
 // @namespace   to_sha_ki_ii
 //
-// @include    http://endchan.xyz*
-// @include    https://endchan.xyz*
-// @include    http://endchan.net*
-// @include    https://endchan.net*
-// @include    http://infinow.net*
-// @include    https://infinow.net*
-// @exclude    */.media/*
+// @include     http://endchan.xyz*
+// @include     https://endchan.xyz*
+// @include     http://endchan.net*
+// @include     https://endchan.net*
+// @include     http://infinow.net*
+// @include     https://infinow.net*
+// @exclude     */.media/*
 //
-// @include    /https?://endchan5doxvprs5\.onion/.*$/
-// @include    /https?://s6424n4x4bsmqs27\.onion/.*$/
-// @include    /https?://endchan5doxvprs5\.onion.to/.*$/
-// @include    /https?://s6424n4x4bsmqs27\.onion.to/.*$/
+// @include     /https?://endchan5doxvprs5\.onion/.*$/
+// @include     /https?://s6424n4x4bsmqs27\.onion/.*$/
+// @include     /https?://endchan5doxvprs5\.onion.to/.*$/
+// @include     /https?://s6424n4x4bsmqs27\.onion.to/.*$/
 //
-// @version      2.42
-// @description v2.42: endchan用の再帰的レスポップアップ、Catalogソート、添付ファイルプレビュー
+// @run-at      document-start
+//
+// @version      2.43
+// @description v2.43: endchan用の再帰的レスポップアップ、Catalogソート、添付ファイルプレビュー
 // @grant       none
 // ==/UserScript==
 
@@ -31,132 +33,9 @@
  *  CSSを利用しました : http://endchan.xyz/librejp/res/5273.html#8133
  */
 
-/*
- * yamanu-chang(山ぬちゃん)です
- * ・(v2.42 2017.11.25) 修正: 実行タイミングの問題でカタログで動作不良を起こす問題を修正
- * ・(v2.40 2017.11.05) 機能追加: ドメイン間リンク
- * ・(v2.39 2017.10.29) 機能追加: ファイルハッシュをメッセージへ追加する機能
- * ・(v2.38 2017.10.18) 機能追加: 自動投稿パスワード
- * ・(v2.37 2017.10.16) 修正: マークダウン支援が動作しなかったのを修正
- * ・(v2.36 2017.10.09) 機能追加: 引用テキストポップアップ機能を追加
- * ・(v2.35 2017.09.27) 修正: 再帰的ポップアップの表示CSSを改善
- * ・(v2.34 2017.09.20) コード整理。プレビューの'POINTER'機構を削除して、'Element Unique Id'を使うように変更
- * ・(v2.33 2017.09.20) 機能追加: 右クリックマークダウン支援を追加
- * ・(v2.32 2017.09.06) 修正: 再帰的ポップアップの表示CSSを改善
- * ・(v2.31 2017.08.31) 機能追加: qr.js 失敗時に再読み込みする機能を追加。
- * ・(v2.30 2017.08.27) 対応: マークダウン支援で Red 周りの表示が崩れるのを修正。原因は global.css で .redText に position: absolute が指定されていたから。
- * ・(v2.29 2017.08.27) 機能追加: 読み込み失敗した画像を再読み込みさせる補助機能を追加
- * ・(v2.28 2017.08.22) getElementUniqueIdのタイプミスを修正
- * ・(v2.27 2017.08.22) 変更: 通報/削除フォームム非表示機能を再有効化
- * ・(v2.26 2017.08.22)
- *   ・HTML Element Unique ID のインフラを変更
- *   ・Board CSS で通報フォームを透明化したので、通報/削除フォームム非表示機能を停止
- * ・(v2.25 2017.07.25) 微調整: マークダウン支援UI
- * ・(v2.24 2017.07.25) 機能追加: マークダウン支援(タグ追加)
- * ・(v2.23 2017.07.17) 機能追加: クリップボードのデータを添付ファイルにする機能
- * ・(v2.22 2017.07.17) 微調整
- * ・(v2.21 2017.07.17) 機能追加: UserJS(仮)
- * ・(v2.20 2017.07.10)
- *   ・調整: ポップアップが縦幅100%でクリップされるのを撤廃
- *   ・調整: 縦に大きなポップアップの場合の出現位置を調整
- * ・(v2.19 2017.07.09) 機能追加: 右下ダンスを非表示にする機能
- * ・(v2.18 2017.07.02) ファイル名を自由に変更できる機能を追加
- * ・(v2.17 2017.06.28) 微調整
- * ・(v2.16) ファイル名をランダムな名前に変更するオプションを追加。
- * ・(v2.15) 引用ポップアップの大きさ調整
- * ・(v2.14) 動画ループ補助機能
- * ・(v2.13) 通し番号CSSを調整。(v2.12は余計な対処だった)
- * ・(v2.12) 通し番号CSSを調整。
- * ・(v2.11) 補助機能:「400 Bad Request」ページにクッキー削除ボタンを設置
- * ・(v2.10)
- * ・(v2.10の修正:スクリプトを実行させる方法の選択を、「Firefox と Edge または、それ以外」という風に変更
- * ・(v2.09) スクリプトを実行させる方法の選択を、「Firefox または、それ以外」という風に変更(MS Edge対応用)
- * ・(v2.08) hideの仕様を公式にあわせる
- * ・(v2.07) ミス修正
- * ・(v2.06 2017.04.02 14:43 JST)
- * ・endchan公式でカタログリフレッシュが導入され、公式のカタhideが動いていない。
- *   ・カタログhideを有効にする補助機能を追加
- * ・(v2.05 2017.03.08 07:44 JST)
- *   ・endchan公式に入ったため、delと[X]を設置する補助機能を削除
- * ・(v2.04 2017.02.26 JST)
- *   ・Youtube埋め込みをautoplyに
- *   ・soundcloudの埋め込み対応
- *   ・endchanがEmbedを表示しないURIの埋め込みにも対応
- * ・(v2.03 2017.02.21 JST) デバッグコードが消えていなかったのを修正
- * ・(v2.02 2017.02.21.01.09 JST)
- *   ・endchan公式に入ったため、複数行引用機能削除
- *   ・名前変更: CompulsoryProcesses → CompulsoryProcessing
- *   ・変数名調整多数
- *   ・endchan公式の変化に追従し、日付ローカライズ方法を縮小。公式の「Use Local Time」に寄生する形式に。
- * ・(v2.01 2017.01.22 03:15 JST) 複数行引用の引用方法の微修正
- * ・(v2.00 2017.01.22 03:03 JST) クイックリプライの複数行引用の補助機能を追加。
- * ・(v1.99 2017.01.02.19.05 JST)
- *     オブザーバーパターンを歪めて統一した扱いができるようなコードに変更。(CompulsoryProcesses周り)
- *     Audioファイルのインライン再生時にサムネを残す補助機能を追加。
- * ・(v1.98 2016.12.30.05.25 JST) 引用ポップアップで画像が表示できなかったのを修正
- * ・(v1.97 2016.12.30.02.53 JST) Tor用アドレスに対応してみる(動作未確認)
- * ・(v1.96 2016.12.30.02.34 JST)
- *   ・endchan が http を廃止して https に全面移行したみたいだから
- *     https に対応していないニコニコの埋め込みメッセージを変更
- * ・(v1.95)
- *   ・Refresh時にタイトルの順番が戻ってしまうのを修正。
- *   ・対象サイトを追記
- * ・(v1.94)
- *   ・ページタイトルを "<何々> - /<板名>/" にする補助機能を追加。
- *   ・Google Chrome で mp3 を貼れるようにする機能の実装を変更。
- * ・(v1.93) Refresh読み込み分のレスにも、[X] と del を設置する補助機能を追加。
- * ・(v1.92) autoRefresh の状態を記憶する補助機能を追加。
- * ・(v1.91)
- *   ・カタログのスレ立てフォームを表示/非表示できるように。初期値は非表示。
- *   ・通報/削除フォームを表示/非表示できるように。初期値は非表示。
- * ・(v1.90)
- *   ・div.markedPost にも通し番号が出るように
- *   ・endchan のカタログ hide の新仕様に対応。hide したスレが下に溜まるように。
- *   ・再帰的ポップアップのクイック引用に対応。レス番部分を押すと Quick Reply が開きます。
- * ・(v1.89 2016.11.30 15:08 JST) バグ修正
- * ・(v1.88 2016.11.30 14:44 JST) Google Chrome でも mp3 が貼れるようにハックを追加。
- * ・(v1.87 2016.11.28 21:43 JST)
- *   ・freech.net で再帰的ポップアップが動かないのを修正
- *   ・ポップアップ待機中の「now loading」表示を追加
- * ・(v1.86 2016.11.28 21:43 JST)
- *   ・再帰的ポップアップで、OP引用時にレス全部が出てくる不具合を修正。
- *   ・スレ内通し番号が出て来る場所を修正。引用ブロック内で出ないように。
- * ・(v1.85 2016.11.25 14:22 JST)
- *   ・再帰的ポップアップをとりあえず実装。
- *     ポップアップ内の色々をクリックした時の動作が甘い。
- * ・(v1.84 2016.11.23 03:37 JST)
- *   ・[Refresh]読み込み分の[Embed]ボタンが効くようにする補助機能を追加
- *   ・既存の Embed 機能を上書きして、closeできるように
- *     (endchan既存機能を抑えつけているから、上書き漏れが発生するかも)
- *   ・v1.84現在、ニコニコ動画とYoutubeに対応してます。
- *     山ぬちゃん書き換え分は[embeD]と[closE]と表示します。
- * ・(v1.82 2016.11.19 04:25 JST)
- *   ・スレ[Refresh]分で読み込んだ文のレス日時が、ローカライズされないのを修正。
- * ・(v1.81)
- *   ・通し番号に対応
- *   ・v1.80 が Chrome で動かなかったのを修正
- *   ・こっそりとLynxChan系の他掲示板に対応。
- * ・(vその前)
- *   ・レス時間をローカルタイム表記にします。
- *   ・カタログソートと、ファイルプレビューをひとつにまとめました。
- *   ・mp3 とか mp4 とか webm のプレビューに対応しました。
- *     ( Chrome でたまにページごと落ちるけれど、回避方法は分からない )
- *   ・カタログに[Refresh]ボタンを追加しました。
- *   ・カタログソート。カタログに Sort By: セレクトボックスを設置します。
- *      ・選ぶと、カタログがその順でソートされます。
- *      ・localStorage上にどのソート方法を選んでいるか記録し、開き直した際もそのソートを適用します。
- *      ・「Sort by:」の部分を押してもソートが切り替わります。
- *      ・「r」の部分を押すとランダムにソートします。
- *      ・歯車ボタンを押すと設定が出ます
- *          ・Hideしたスレは下げる(ソート変更後に適用)
- *              (endchan の機能である)カタログ hide したあとに出る [Show hidden thread 0000]
- *              を常に一番下に置きます。
- *      ・厳密なレス新着順は、カタログにある情報だけでは構築できないため実装していません。
- *        (全スレの取得すればできるけど負荷がかかっちゃう)
- *      ・同順位についての扱いがブラウザによってマチマチかも
- *  ----------------------------------------
- */
-
+/*******************************
+ * yamanu-chang(山ぬちゃん)です *
+ *******************************/
 
 /*
  * ・1行100文字幅
@@ -169,9 +48,7 @@
 /*
  * TODO:
  * ・sendReplyData の hack をオフにできるオプションを追加すること。
- * ・サウロンの目にも対応
  * ・Youtubeのリンクを有効にする補助機能を盛ること
- * ・埋め込みを一本化すること
  * ・再生開始機能を盛ること
  */
 
@@ -179,14 +56,13 @@
 
   function modYamanuchang() {
     window.toshakiii = window.toshakiii || {};
-
-    var utils = window.toshakiii.utils = window.toshakiii.utils || {};
-    var settings = window.toshakiii.settings = window.toshakiii.settings || {};
+    var utils       = window.toshakiii.utils       = window.toshakiii.utils       || {};
+    var settings    = window.toshakiii.settings    = window.toshakiii.settings    || {};
     var filePreview = window.toshakiii.filePreview = window.toshakiii.filePreview || {};
-    var feWrapper = window.toshakiii.feWrapper = window.toshakiii.feWrapper || {};
+    var feWrapper   = window.toshakiii.feWrapper   = window.toshakiii.feWrapper   || {};
     var catalogSort = window.toshakiii.catalogSort = window.toshakiii.catalogSort || {};
-    var etCetera = window.toshakiii.etCetera = window.toshakiii.etCetera || {};
-    var multiPopup = window.toshakiii.multiPopup = window.toshakiii.multiPopup || {};
+    var etCetera    = window.toshakiii.etCetera    = window.toshakiii.etCetera    || {};
+    var multiPopup  = window.toshakiii.multiPopup  = window.toshakiii.multiPopup  || {};
 
     /*********
      * utils *
@@ -213,7 +89,7 @@
         this.observingElement = element;
       };
     utils.CompulsoryProcessing.prototype.setObservingOptions =
-      function setObservingElement(options) {
+      function setObservingOptions(options) {
         this.observingOptions = options;
       };
     utils.CompulsoryProcessing.prototype.setFuncEnumExistingTargets =
@@ -226,6 +102,10 @@
       };
     utils.CompulsoryProcessing.prototype.processExistingTargets =
       function processExistingTargets( proc, procAfter) {
+        if (null === document.body) {
+          document.addEventListener("DOMContentLoaded", this.processExistingTargets.bind(this, proc, procAfter));
+          return;
+        };
 
         if (undefined === proc) {
           procAfter();
@@ -264,6 +144,11 @@
 
     utils.CompulsoryProcessing.prototype.startApply =
       function startApply() {
+        if (null === document.body) {
+          document.addEventListener("DOMContentLoaded", this.startApply.bind(this));
+          return;
+        };
+
         if (undefined !== this.initFunc) {
           this.initFunc(this);
           this.initFunc = undefined;
@@ -335,7 +220,7 @@
           this.startApply();
         };
         if (! noApplyToExistingTargets) {
-          this.processExistingTargets( func, undefined);
+          this.processExistingTargets(func, undefined);
         };
         return func;
       };
@@ -368,7 +253,7 @@
       };
 
       if (! noApplyToExistingTargets) {
-        this.processExistingTargets( undefined, func );
+        this.processExistingTargets(undefined, func);
       };
       return func;
     };
@@ -400,6 +285,7 @@
         return tlist;
       };
 
+    utils.noop = function(){};
 
     utils.endsWith = function endsWith( str, suffix) {
       return -1 !== str.indexOf(suffix, str.length - suffix.length);
@@ -956,6 +842,11 @@
       };
     };
     filePreview.startSelectedDivObserver = function() {
+      if (null === document.body) {
+        document.addEventListener("DOMContentLoaded", filePreview.startSelectedDivObserver);
+        return;
+      };
+
       var selectedDiv = document.getElementById("selectedDiv");
       if (null == selectedDiv) {
         return;
@@ -974,12 +865,16 @@
     };
 
     filePreview.startQuickReplyObserver = function() {
+      if (null === document.body) {
+        document.addEventListener("DOMContentLoaded", filePreview.startQuickReplyObserver);
+        return;
+      };
       if (filePreview.qrMutationObserver !== undefined && ! window.show_quick_reply) {
         return;
       };
       var qrOptions = { childList: true};
-      filePreview.qrMutationObserver = new MutationObserver( filePreview.quickReplyOnLoad );
-      filePreview.qrMutationObserver.observe( document.body, qrOptions);
+      filePreview.qrMutationObserver = new MutationObserver(filePreview.quickReplyOnLoad);
+      filePreview.qrMutationObserver.observe(document.body, qrOptions);
     };
 
     filePreview.trigger = function() {
@@ -987,22 +882,13 @@
     };
 
     filePreview.enable = function() {
-      /* 公式対応したら動かない */
+      /* 公式対応したら動かさない */
       if (undefined != window.addSelectedFile &&
           0 <= window.addSelectedFile.toString().indexOf("dragAndDropThumb")) {
         return;
       };
       filePreview.startSelectedDivObserver();
       filePreview.startQuickReplyObserver();
-    };
-
-    filePreview.disable = function() {
-      filePreview.stopSelectedDivObserver();
-      filePreview.stopQuickReplyObserver();
-      var elts = document.getElementsByClassName( filePreview.PREVIEWS_AREA_CLASSNAME );
-      for (var idx = elts.length - 1; idx > -1 ; --idx) {
-        elts[ idx ].parentElement.removeChild( elts[ idx ] );
-      };
     };
 
     /***************
@@ -1448,11 +1334,10 @@
             sageElts.push(spanElt);
             sageElts.push(catalogCell);
             continue;
-          }
+          };
           parentElt.appendChild( showButtonElts[ catalogCell.id ] );
-        }
-        else if (settings.sageHidedThreads &&
-                 utils.getSetting('hide' + catalogSort.boardUri + 'Thread' + catalogCell.id)) {
+        } else if (settings.sageHidedThreads &&
+                   utils.getSetting('hide' + catalogSort.boardUri + 'Thread' + catalogCell.id)) {
           sageElts.push(catalogCell);
           continue;
         };
@@ -1997,6 +1882,10 @@
     etCetera.hideLibrejpBottomLeftMascot = false;
 
     etCetera.insertMiscCSS = function() {
+      if (null === document.head) {
+        setTimeout(etCetera.insertMiscCSS, 0);
+        return;
+      };
       var s = "";
       s += '.ymncMarkdownToolButton { cursor: pointer; border: 1px solid }';
       s += '.ymncMarkdownToolButton:hover { border: 1px solid white }';
@@ -2029,6 +1918,8 @@
       s += '.tskQuoteblock .panelBacklinks + div:not(.panelUploads) {' +
         '  display: block }';
 
+      /* サイトJSのポップアップ用の要素 */
+      s += 'body div.quoteblock { display: none !important }';
       var style = document.createElement('STYLE');
       style.type = "text/css";
       style.id = "ymanuchangStyles";
@@ -2083,6 +1974,10 @@
     ];
 
     etCetera.markdownTool = function() {
+      if (null === document.body) {
+        document.addEventListener("DOMContentLoaded", etCetera.markdownTool);
+        return;
+      };
       etCetera.setMarkdownToolForMainForm();
       etCetera.contextMenuOnMarkdownTool();
     };
@@ -2228,6 +2123,10 @@
     };
 
     etCetera.uploadFileFromClipboard = function() {
+      if (null === document.body) {
+        document.addEventListener("DOMContentLoaded", etCetera.uploadFileFromClipboard);
+        return;
+      };
       var fieldMessage = document.getElementById("fieldMessage");
       if (fieldMessage) {
         fieldMessage.contentEditable = true;
@@ -2421,6 +2320,10 @@
     };
 
     etCetera.setCheckboxOfDancingMascot = function() {
+      if (null === document.body) {
+        document.addEventListener("DOMContentLoaded", etCetera.setCheckboxOfDancingMascot);
+        return;
+      };
       etCetera.hideLibrejpBottomLeftMascot =
         'true' === utils.getSetting('ymncLibrejpBottomLeftMascot');
 
@@ -2475,6 +2378,10 @@
     };
 
     etCetera.setCheckboxOfMaskFilenameMode = function() {
+      if (null === document.body) {
+        document.addEventListener("DOMContentLoaded", etCetera.setCheckboxOfMaskFilenameMode);
+        return;
+      };
 
       etCetera.maskFilename =
         'true' === utils.getSetting('ymncMaskFilename');
@@ -2776,8 +2683,8 @@
       };
       var embedButton = embedButtons[0];
       embedButton.onclick = null;
-      embedButton.addEventListener("click", etCetera.onYoutubeEmbedButtonClick );
-      embedButton.replaceChild( document.createTextNode("embeD") , embedButton.firstChild );
+      embedButton.addEventListener("click", etCetera.onYoutubeEmbedButtonClick);
+      embedButton.replaceChild(document.createTextNode("embeD") , embedButton.firstChild);
       youtube_wrapper.setAttribute("data-tsk-overrode","1");
       return 1;
     };
@@ -3001,10 +2908,10 @@
     };
 
     etCetera.enableYoutubeEmbed = function(anchor) {
-      if ( 0 !== anchor.href.lastIndexOf("https://youtu.be/", 0) &&
-           0 !== anchor.href.lastIndexOf("https://www.youtube.com/watch?") &&
-           0 !== anchor.href.lastIndexOf("http://youtu.be/", 0 ) &&
-           0 !== anchor.href.lastIndexOf("http://www.youtube.com/watch?")) {
+      if (0 !== anchor.href.lastIndexOf("https://youtu.be/", 0) &&
+          0 !== anchor.href.lastIndexOf("https://www.youtube.com/watch?") &&
+          0 !== anchor.href.lastIndexOf("http://youtu.be/", 0 ) &&
+          0 !== anchor.href.lastIndexOf("http://www.youtube.com/watch?")) {
         return false;
       };
 
@@ -3268,6 +3175,11 @@
     };
 
     etCetera.insertButtonShowHideContentAction = function() {
+      if (null === document.body) {
+        document.addEventListener("DOMContentLoaded", etCetera.insertButtonShowHideContentAction);
+        return;
+      };
+
       var contentAction = etCetera.getContentActionElement();
       if (null == contentAction) {
         return;
@@ -3397,8 +3309,7 @@
       iloops.push( function() {
         --idx;
         if (-1 >= idx) { return break_; };
-        etCetera.addHookToAudioInlinePlayer( uploadCellList[ idx ] );
-        /*etCetera.overrideInlinePlayer( uploadCellList[ idx ] );*/
+        etCetera.addHookToAudioInlinePlayer(uploadCellList[idx]);
         return continue_;
       } ).beginAsync();
     };
@@ -3638,6 +3549,10 @@
     };
 
     etCetera.interDomainLink = function() {
+      if (null === document.body) {
+        document.addEventListener("DOMContentLoaded", etCetera.interDomainLink);
+        return;
+      };
       switch(document.location.host) {
       default: return;
       case "endchan.xyz": case "endchan.net": case "infinow.net":
@@ -3744,7 +3659,7 @@
     etCetera.enable = function enable() {
       etCetera.retryFailedTags();
 
-      feWrapper.postCellCP.appendAfterCP( etCetera.overrideWrapperAll );
+      /* feWrapper.postCellCP.appendAfterCP(etCetera.overrideWrapperAll); */
 
       feWrapper.messageUriHandlers.push( etCetera.enableSoundcloudEmbed );
       feWrapper.messageUriHandlers.push( etCetera.enableYoutubeEmbed );
@@ -3790,8 +3705,10 @@
       etCetera.insertMiscCSS();
       etCetera.autoPostingPassowrd();
 
-      feWrapper.selectedDivOnChangeHandlers.push(etCetera.addHashToMessage);
-      etCetera.insertPostOptionCheckbox("addHashToMessage", "メッセージにファイルURLを含める");
+      /* feWrapper.selectedDivOnChangeHandlers.push(etCetera.addHashToMessage);
+       * etCetera.insertPostOptionCheckbox("addHashToMessage", "メッセージにファイルURLを含める");
+       */
+      localStorage.removeItem("addHashToMessage");
 
       setTimeout(etCetera.interDomainLink, 0);
     };
@@ -3949,6 +3866,8 @@
     multiPopup.touchElement = function(event) {
       var quoteLink = event.target;
       var popupInfo = multiPopup.preparePopupInfo( multiPopup.popups, quoteLink );
+
+      multiPopup.removeOriginalPopupFeature(quoteLink);
 
       var PP = multiPopup.POPUP_PHASE;
       var rect;
@@ -4569,17 +4488,31 @@
       return;
     };
 
+    multiPopup.disableLoadQuote = function() {
+      if (undefined === window.loadQuote) {
+        if ('complete' === document.readyState) {
+          return;
+        };
+        setTimeout( multiPopup.disableLoadQuote, 0 );
+      };
+    };
+
     multiPopup.trigger = function() {
       multiPopup.enable();
     };
 
     multiPopup.enable = function() {
+      if (null === document.body) {
+        document.addEventListener("DOMContentLoaded", multiPopup.enable);
+        return;
+      };
       multiPopup.addBodyEvents();
       /* etCetera の監視対象は .divPosts。Popup の挿入場所は .divPosts の親の親の中。
        * だから Popup 挿入時に冗長呼び出しにはならない */
 
       feWrapper.postCellCP.appendCP( multiPopup.overridePostCellQuotePopups );
       feWrapper.postCellCP.appendCP( multiPopup.enableGreenTextPopup );
+      multiPopup.disableLoadQuote();
 
       var iloops = utils.IntermittentLoops();
       var links;
@@ -4606,17 +4539,6 @@
         multiPopup.startObservePanelBacklinks(panelBacklinks);
         --idx;
         return continue_;
-      } ).push( function() {
-        quoteblockList = document.getElementsByClassName('quoteblock');
-        idx = quoteblockList.length - 1;
-      } ).push( function() {
-        if (-1 >= idx) { return break_; };
-        var quoteblock = quoteblockList[ idx ];
-        if (quoteblock.style.display != 'none') {
-          quoteblock.style.display = 'none';
-        };
-        --idx;
-        return continue_;
       } ).beginAsync();
     };
 
@@ -4640,7 +4562,7 @@
      */
     feWrapper.messageUriHandlers = [];
 
-    feWrapper.postCellCPInit = function postCellCPInit(postCellCP) {
+    feWrapper.postCellCPInit = function(postCellCP) {
       var divPostsList = document.getElementsByClassName('divPosts');
       if (0 >= divPostsList.length) {
         return;
@@ -4725,13 +4647,14 @@
       modYamanuchang();
     } else {
       var script = document.createElement('SCRIPT');
-      script.innerText =
-        "var toshakiii_errors = [];"
+      script.id = "yamanuchangScript";
+      script.innerText = ""
+        + "var toshakiii_errors = [];"
         + "try{"
         + "("+modYamanuchang.toString() +")();"
         + "}catch(e) {toshakiii_errors.push(e);};"
-        + "if (0 != toshakiii_errors.length) { alert( toshakiii_errors ); };" +
-        "";
+        + "if (0 != toshakiii_errors.length) { alert( toshakiii_errors ); };"
+        + "";
       document.head.appendChild(script);
     };
   };
