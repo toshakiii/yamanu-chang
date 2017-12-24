@@ -18,8 +18,8 @@
 //
 // @run-at      document-start
 //
-// @version      2.43
-// @description v2.43: endchan用の再帰的レスポップアップ、Catalogソート、添付ファイルプレビュー
+// @version     2.44
+// @description endchan用の再帰的レスポップアップ、Catalogソート、添付ファイルプレビュー、色々
 // @grant       none
 // ==/UserScript==
 
@@ -2595,85 +2595,20 @@
       };
     };
 
-    etCetera.ymncSetPlayer = function setPlayer(link, mime) {
+    etCetera.setPostCellPlayersLoopMode = function(postCell) {
 
-      var videoTypes = [ 'video/webm', 'video/mp4', 'video/ogg' ];
-      var path = link.href;
-      var parent = link.parentNode;
-
-      var src = document.createElement('source');
-      src.setAttribute('src', link.href);
-      src.setAttribute('type', mime);
-
-      var video = document.createElement(videoTypes.indexOf(mime) > -1 ? 'video'
-          : 'audio');
-      video.setAttribute('controls', true);
-      video.setAttribute('loop', true);
-      video.style.display = 'none';
-
-      var videoContainer = document.createElement('span');
-
-      var hideLink = document.createElement('a');
-      hideLink.innerHTML = '[ - ]';
-      hideLink.style.cursor = 'pointer';
-      hideLink.style.display = 'none';
-      hideLink.setAttribute('class', 'hideLink');
-      hideLink.onclick = function() {
-        newThumb.style.display = 'inline';
-        video.style.display = 'none';
-        hideLink.style.display = 'none';
-        video.pause();
+      var videos = postCell.getElementsByTagName('VIDEO');
+      for (var vIdx = videos.length - 1; -1 < vIdx; vIdx = vIdx - 1 | 0) {
+        videos[vIdx].setAttribute('loop', true);
       };
 
-      var newThumb = document.createElement('img');
-      newThumb.src = link.childNodes[0].src;
-      newThumb.width = link.childNodes[0].width;
-      newThumb.height = link.childNodes[0].height;
-      newThumb.onclick = function() {
-        if (!video.childNodes.count) {
-          video.appendChild(src);
-        };
-
-        newThumb.style.display = 'none';
-        video.style.display = 'inline';
-        hideLink.style.display = 'inline';
-        video.play();
-      };
-      newThumb.style.cursor = 'pointer';
-
-      videoContainer.appendChild(hideLink);
-      videoContainer.appendChild(video);
-      videoContainer.appendChild(newThumb);
-
-      parent.replaceChild(videoContainer, link);
-
-    };
-
-    etCetera.overrideSetPlayer = function overrideSetPlayer() {
-
-      if (undefined === window.setPlayer) {
-        if ('complete' === document.readyState) {
-          return;
-        };
-        setTimeout( overrideSetPlayer, 0 );
-        return;
-      };
-
-      if ('function' === typeof( window.setPlayer )) {
-        window.setPlayer = etCetera.ymncSetPlayer;
-      };
-
-    };
-
-    etCetera.setVideosLoopMode = function() {
-      var videos = document.getElementsByTagName('VIDEO');
-
-      for (var idx = 0, len = videos.length; idx < len ; ++idx) {
-        videos[idx].setAttribute('loop', true);
+      var audios = postCell.getElementsByTagName('AUDIO');
+      for (var aIdx = audios.length - 1; -1 < aIdx; aIdx = aIdx - 1 | 0) {
+        audios[aIdx].setAttribute('loop', true);
       };
     };
 
-    etCetera.overrideEmbedYoutubeButton = function( youtube_wrapper) {
+    etCetera.overrideEmbedYoutubeButton = function(youtube_wrapper) {
       if ("1" === youtube_wrapper.getAttribute("data-tsk-overrode")) {
         return 0;
       };
@@ -3303,22 +3238,15 @@
      * 引数は、postCell でなくてもかまわない */
     etCetera.overrideInlinePlayers = function overrideInlinePlayers(postCell) {
       var uploadCellList = postCell.getElementsByClassName('uploadCell');
-      var idx = uploadCellList.length;
-      var iloops = utils.IntermittentLoops();
-      var break_ = false, continue_ = true;
-      iloops.push( function() {
-        --idx;
-        if (-1 >= idx) { return break_; };
+      for (var idx = uploadCellList.length - 1; -1 < idx; idx = idx - 1 | 0) {
         etCetera.addHookToAudioInlinePlayer(uploadCellList[idx]);
-        return continue_;
-      } ).beginAsync();
+      };
     };
 
     etCetera.addHookToAudioInlinePlayer = function addHookToAudioInlinePlayer(uploadCell) {
       var audioList = uploadCell.getElementsByTagName('AUDIO');
       var imgList = uploadCell.getElementsByTagName('IMG');
-      if (0 >= audioList.length ||
-          0 >= imgList.length) {
+      if (0 >= audioList.length || 0 >= imgList.length) {
         return;
       };
 
@@ -3660,32 +3588,28 @@
       etCetera.retryFailedTags();
 
       /* feWrapper.postCellCP.appendAfterCP(etCetera.overrideWrapperAll); */
+      feWrapper.messageUriHandlers.push(etCetera.enableSoundcloudEmbed);
+      feWrapper.messageUriHandlers.push(etCetera.enableYoutubeEmbed);
 
-      feWrapper.messageUriHandlers.push( etCetera.enableSoundcloudEmbed );
-      feWrapper.messageUriHandlers.push( etCetera.enableYoutubeEmbed );
+      feWrapper.postCellCP.appendCP(etCetera.overrideInlinePlayers);
+      feWrapper.postCellCP.appendCP(etCetera.setPostCellPlayersLoopMode);
 
-      feWrapper.postCellCP.appendCP( etCetera.overrideInlinePlayers );
-
-      feWrapper.titleCP.appendAfterCP( etCetera.procTitle );
+      feWrapper.titleCP.appendAfterCP(etCetera.procTitle);
 
       /* setTimeout( etCetera.insertButtonShowHidePostingForm, 0 ); */
-      setTimeout( etCetera.insertButtonShowHideContentAction, 0 );
+      setTimeout(etCetera.insertButtonShowHideContentAction, 0);
 
-      setTimeout( etCetera.fixGoogleChromeMp3Mime, 0 );
+      setTimeout(etCetera.fixGoogleChromeMp3Mime, 0);
 
-      setTimeout( etCetera.autoRefreshCheckboxPersistent, 0 );
+      setTimeout(etCetera.autoRefreshCheckboxPersistent, 0);
 
-      setTimeout( etCetera.overrideDateFromString, 0 );
+      setTimeout(etCetera.overrideDateFromString, 0);
 
       if (0 <= document.location.href.indexOf("/res/")) {
-        setTimeout( etCetera.addConsecutiveNumberStyle, 0 );
+        setTimeout(etCetera.addConsecutiveNumberStyle, 0);
       };
 
       etCetera.insertDeleteCookiesButton();
-
-      setTimeout( etCetera.overrideSetPlayer, 0 );
-      setTimeout( etCetera.setVideosLoopMode, 0 );
-
 
       if (0 > document.location.href.indexOf("/catalog.html")) {
         etCetera.setCheckboxOfMaskFilenameMode();
