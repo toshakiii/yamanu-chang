@@ -18,7 +18,7 @@
 //
 // @run-at      document-start
 //
-// @version     2.44
+// @version     2.45
 // @description endchan用の再帰的レスポップアップ、Catalogソート、添付ファイルプレビュー、色々
 // @grant       none
 // ==/UserScript==
@@ -777,24 +777,26 @@
       };
     };
 
-    filePreview.selectedDivOnChange = function(mutationRecords, mutationObserver) {
+    filePreview.selectedDivOnChange = function() {
       /* 本フォームへの ".selectedCell" 追加の前に、クイックリプライへの追加が行なわれることを前提と
        * する */
-      var selectedCells = document.getElementsByClassName("selectedCell");
-      var scIdx = 0;
-      var scLen = selectedCells.length;
-      var mLen = Math.min(selectedCells.length, window.selectedFiles.length);
-      filePreview.removeOldPreviews();
+      if (undefined !== window.selectedFiles) {
+        var selectedCells = document.getElementsByClassName("selectedCell");
+        var scIdx = 0;
+        var scLen = selectedCells.length;
+        var mLen = Math.min(selectedCells.length, window.selectedFiles.length);
+        filePreview.removeOldPreviews();
 
-      for (; scIdx < mLen ; ++scIdx) {
-        if (! filePreview.hasPreviewed(selectedCells[scIdx])) {
-          filePreview.insertPreviewElement( selectedCells[scIdx], window.selectedFiles[scIdx]);
+        for (; scIdx < mLen ; ++scIdx) {
+          if (! filePreview.hasPreviewed(selectedCells[scIdx])) {
+            filePreview.insertPreviewElement(selectedCells[scIdx], window.selectedFiles[scIdx]);
+          };
         };
-      };
 
-      for (; scIdx < scLen; ++scIdx) {
-        if (! filePreview.hasPreviewed(selectedCells[scIdx])) {
-          filePreview.insertPreviewElement( selectedCells[scIdx], window.selectedFiles[scIdx - mLen]);
+        for (; scIdx < scLen; ++scIdx) {
+          if (! filePreview.hasPreviewed(selectedCells[scIdx])) {
+            filePreview.insertPreviewElement(selectedCells[scIdx], window.selectedFiles[scIdx - mLen]);
+          };
         };
       };
 
@@ -842,17 +844,21 @@
       };
     };
     filePreview.startSelectedDivObserver = function() {
+      /*
+       * 不安定な回線において、filePreview.sdMutationObserver が始まらない場合がある。
+       * DOMContentLoaded は設定されていた。selectedDiv 不在が理由ではない。
+       */
       if (null === document.body) {
         document.addEventListener("DOMContentLoaded", filePreview.startSelectedDivObserver);
         return;
       };
 
       var selectedDiv = document.getElementById("selectedDiv");
-      if (null == selectedDiv) {
+      if (null === selectedDiv) {
         return;
       };
       var options = { childList: true};
-      filePreview.sdMutationObserver = new MutationObserver( filePreview.selectedDivOnChange );
+      filePreview.sdMutationObserver = new MutationObserver(filePreview.selectedDivOnChange);
       filePreview.insertPreviewsArea(selectedDiv);
       filePreview.sdMutationObserver.observe( selectedDiv, options );
     };
@@ -889,6 +895,9 @@
       };
       filePreview.startSelectedDivObserver();
       filePreview.startQuickReplyObserver();
+
+      /* スクリプト読み込み前に追加した添付ファイルに対する処理 */
+      document.addEventListener("DOMContentLoaded", filePreview.selectedDivOnChange);
     };
 
     /***************
