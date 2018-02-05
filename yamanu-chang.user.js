@@ -18,7 +18,7 @@
 //
 // @run-at      document-start
 //
-// @version     2.45
+// @version     2.47
 // @description endchan用の再帰的レスポップアップ、Catalogソート、添付ファイルプレビュー、色々
 // @grant       none
 // ==/UserScript==
@@ -26,7 +26,7 @@
 
 /**************************************************
  *  yamanu-chang
- *  Copyright (c) 2017 "to_sha_ki_ii"
+ *  Copyright (c) 2018 "to_sha_ki_ii"
  *  This software is released under the MIT License.
  *  http://opensource.org/licenses/mit-license.php
  **************************************************
@@ -2463,7 +2463,8 @@
         return;
       };
 
-      var randomNum = (+new Date());
+      /* Tor-BrowserではDateの精度が落とされ下2桁が00になる。対策で乱数を足す */
+      var randomNum = (+new Date()) + Math.floor(Math.random() * 99);
 
       for (var idx = 0, len = window.selectedFiles.length; idx < len ; ++idx) {
 
@@ -2581,7 +2582,7 @@
                   window.selectedFiles[ index ].name.toString();
               };
               etCetera.defineProperty( window.selectedFiles[ index ],
-                  "name", (+new Date()).toString()
+                  "name", ((+new Date()) + Math.floor(Math.random() * 99)).toString()
                   + etCetera.getFilenameExtension(
                     window.selectedFiles[ index ].ymncOriginalName ) );
               window.selectedFiles[ index ].ymncFilenameMaskMode = "random";
