@@ -18,7 +18,7 @@
 //
 // @run-at      document-start
 //
-// @version     2.47
+// @version     2.48
 // @description endchan用の再帰的レスポップアップ、Catalogソート、添付ファイルプレビュー、色々
 // @grant       none
 // ==/UserScript==
@@ -3493,7 +3493,7 @@
       };
       switch(document.location.host) {
       default: return;
-      case "endchan.xyz": case "endchan.net": case "infinow.net":
+      case "endchan.xyz": case "endchan.net": case "infinow.net": case "endchan.org":
       case "endchan5doxvprs5.onion": case "s6424n4x4bsmqs27.onion":
       case "endchan5doxvprs5.onion.to": case "s6424n4x4bsmqs27.onion.to":
       };
@@ -3557,8 +3557,8 @@
 
     etCetera.createInterDomainLinks = function() {
       /* .onion.to には案内しない */
-      var hosts = [ "https://endchan.xyz", "https://endchan.net", "http://endchan5doxvprs5.onion",
-                    "http://s6424n4x4bsmqs27.onion"];
+      var hosts = [ "https://endchan.xyz", "https://endchan.net", "https://endchan.org",
+                    "http://endchan5doxvprs5.onion", "http://s6424n4x4bsmqs27.onion"];
 
       var createDomainsLinks = function(url) {
         var span = document.createElement("SPAN");
@@ -3595,7 +3595,7 @@
 
 
     etCetera.enable = function enable() {
-      etCetera.retryFailedTags();
+      /* etCetera.retryFailedTags(); */
 
       /* feWrapper.postCellCP.appendAfterCP(etCetera.overrideWrapperAll); */
       feWrapper.messageUriHandlers.push(etCetera.enableSoundcloudEmbed);
