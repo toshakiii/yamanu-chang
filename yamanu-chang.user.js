@@ -18,7 +18,7 @@
 //
 // @run-at      document-start
 //
-// @version     2.48
+// @version     2.49
 // @description endchan用の再帰的レスポップアップ、Catalogソート、添付ファイルプレビュー、色々
 // @grant       none
 // ==/UserScript==
@@ -1890,6 +1890,28 @@
     etCetera.maskFilename = false;
     etCetera.hideLibrejpBottomLeftMascot = false;
 
+    etCetera.setFavicon = function() {
+      var innerOPList = document.getElementsByClassName("innerOP");
+      if (1 !== innerOPList.length) {
+        return false;
+      };
+
+      var innerOP = innerOPList[0];
+
+      var imgList = innerOP.getElementsByTagName("IMG");
+
+      if (0 === imgList[0]) {
+        return false;
+      };
+
+      var link = document.createElement("LINK");
+      link.rel = "icon";
+      link.href = imgList[0].src;
+
+      document.head.appendChild(link);
+      return true;
+    };
+
     etCetera.insertMiscCSS = function() {
       if (null === document.head) {
         setTimeout(etCetera.insertMiscCSS, 0);
@@ -3596,6 +3618,9 @@
 
     etCetera.enable = function enable() {
       /* etCetera.retryFailedTags(); */
+      document.addEventListener("DOMContentLoaded", function() {
+        etCetera.setFavicon();
+      });
 
       /* feWrapper.postCellCP.appendAfterCP(etCetera.overrideWrapperAll); */
       feWrapper.messageUriHandlers.push(etCetera.enableSoundcloudEmbed);
