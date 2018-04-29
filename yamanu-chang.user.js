@@ -18,7 +18,7 @@
 //
 // @run-at      document-start
 //
-// @version     2.49
+// @version     2.50
 // @description endchan用の再帰的レスポップアップ、Catalogソート、添付ファイルプレビュー、色々
 // @grant       none
 // ==/UserScript==
@@ -1904,11 +1904,26 @@
         return false;
       };
 
-      var link = document.createElement("LINK");
-      link.rel = "icon";
-      link.href = imgList[0].src;
+      var img = imgList[0];
 
-      document.head.appendChild(link);
+      function appendFaviconTag() {
+        if (0 < img.naturalWidth) {
+          var link = document.createElement("LINK");
+          link.rel = "icon";
+          link.href = imgList[0].src;
+
+          document.head.appendChild(link);
+        };
+      };
+
+      /*
+       * リンク切れ画像をfaviconに設定しないための分岐
+       */
+      if (img.complete) {
+        appendFaviconTag();
+      };
+
+      img.addEventListener("load", appendFaviconTag);
       return true;
     };
 
