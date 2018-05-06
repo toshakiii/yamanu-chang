@@ -5,6 +5,8 @@
 //
 // @include     http://endchan.xyz*
 // @include     https://endchan.xyz*
+// @include     http://endchan.org*
+// @include     https://endchan.org*
 // @include     http://endchan.net*
 // @include     https://endchan.net*
 // @include     http://infinow.net*
@@ -18,7 +20,7 @@
 //
 // @run-at      document-start
 //
-// @version     2.50
+// @version     2.52
 // @description endchan用の再帰的レスポップアップ、Catalogソート、添付ファイルプレビュー、色々
 // @grant       none
 // ==/UserScript==
