@@ -2339,6 +2339,41 @@
       };
     };
 
+    etCetera.jsonLink = function() {
+      if (0 > document.location.href.indexOf("/res/")) {
+        return false;
+      };
+
+      var divRefreshList = document.getElementsByClassName("divRefresh");
+
+      if (0 === divRefreshList.length) {
+        return false;
+      };
+
+      var divRefresh = divRefreshList[0];
+      var label = divRefresh.firstElementChild;
+      if (null === label) {
+        return false;
+      };
+
+      var input = label.firstElementChild;
+      if (null === input) {
+        return false;
+      };
+
+      var AutoTextNode = input.nextSibling;
+      if (null === AutoTextNode || "#text" !== AutoTextNode.nodeName) {
+        return false;
+      };
+      var origin = AutoTextNode.nextSibling;
+      var anchor = document.createElement("A");
+      var href = document.location.pathname.replace(/\.html$/, ".json");
+      anchor.href = href;
+      anchor.appendChild(AutoTextNode);
+      label.insertBefore(anchor, origin);
+      return true;
+    };
+
     etCetera.setInnerPostStyle = function(destStyle) {
       var innerPostList = document.getElementsByClassName("innerPost");
       var srcStyle;
@@ -3635,6 +3670,7 @@
       /* etCetera.retryFailedTags(); */
       document.addEventListener("DOMContentLoaded", function() {
         etCetera.setFavicon();
+        etCetera.jsonLink();
       });
 
       /* feWrapper.postCellCP.appendAfterCP(etCetera.overrideWrapperAll); */
