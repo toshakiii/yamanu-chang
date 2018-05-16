@@ -20,7 +20,7 @@
 //
 // @run-at      document-start
 //
-// @version     2.52
+// @version     2.53
 // @description endchan用の再帰的レスポップアップ、Catalogソート、添付ファイルプレビュー、色々
 // @grant       none
 // ==/UserScript==
@@ -2342,7 +2342,8 @@
     };
 
     etCetera.jsonLink = function() {
-      if (0 > document.location.href.indexOf("/res/")) {
+      if (0 > document.location.href.indexOf("/res/")
+          && 0 > document.location.href.indexOf("catalog.html")) {
         return false;
       };
 
@@ -2371,6 +2372,7 @@
       var anchor = document.createElement("A");
       var href = document.location.pathname.replace(/\.html$/, ".json");
       anchor.href = href;
+      anchor.title = "Auto Refreshが出来なくなった時にここを開いて、エラーが消えるまでリロードを";
       anchor.appendChild(AutoTextNode);
       label.insertBefore(anchor, origin);
       return true;
@@ -3673,6 +3675,7 @@
       document.addEventListener("DOMContentLoaded", function() {
         etCetera.setFavicon();
         etCetera.jsonLink();
+        etCetera.autoPostingPassowrd();
       });
 
       /* feWrapper.postCellCP.appendAfterCP(etCetera.overrideWrapperAll); */
@@ -3715,7 +3718,6 @@
       etCetera.uploadFileFromClipboard();
       etCetera.markdownTool();
       etCetera.insertMiscCSS();
-      etCetera.autoPostingPassowrd();
 
       /* feWrapper.selectedDivOnChangeHandlers.push(etCetera.addHashToMessage);
        * etCetera.insertPostOptionCheckbox("addHashToMessage", "メッセージにファイルURLを含める");
