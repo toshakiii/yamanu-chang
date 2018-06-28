@@ -20,7 +20,7 @@
 //
 // @run-at      document-start
 //
-// @version     2.53
+// @version     2.54
 // @description endchan用の再帰的レスポップアップ、Catalogソート、添付ファイルプレビュー、色々
 // @grant       none
 // ==/UserScript==
@@ -1965,6 +1965,12 @@
 
       s += '.tskQuoteblock .panelBacklinks + div:not(.panelUploads) {' +
         '  display: block }';
+
+      s += '#toshakiiiCatalogSortRefreshStatus {' +
+        '  display: inline-block;' +
+        '  width: 6em' +
+        '  height: 2ex }';
+
 
       /* サイトJSのポップアップ用の要素 */
       s += 'body div.quoteblock { display: none !important }';
