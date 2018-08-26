@@ -20,7 +20,7 @@
 //
 // @run-at      document-start
 //
-// @version     2.54
+// @version     2.55
 // @description endchan用の再帰的レスポップアップ、Catalogソート、添付ファイルプレビュー、色々
 // @grant       none
 // ==/UserScript==
@@ -1968,7 +1968,7 @@
 
       s += '#toshakiiiCatalogSortRefreshStatus {' +
         '  display: inline-block;' +
-        '  width: 6em' +
+        '  width: 6em;' +
         '  height: 2ex }';
 
 
@@ -2157,9 +2157,15 @@
 
         (function() {
           var markdownN = markdown;
-          menuitem.addEventListener('click', function() {
-            etCetera.applyMarkdown( textarea, markdownN);
-          } );
+          var f = function() {
+            etCetera.applyMarkdown(textarea, markdownN);
+          };
+          menuitem.addEventListener('click', f);
+
+          /* keydown 素通りで登録する。Firefox 61.0時点、Enterのみで発火する。
+           * Space や文字キーでは発火しない。
+           * それを意図したコード */
+          menuitem.addEventListener('keydown', f);
         })();
 
         markdownMenu.appendChild(menuitem);
