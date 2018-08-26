@@ -20,7 +20,7 @@
 //
 // @run-at      document-start
 //
-// @version     2.55
+// @version     2.56
 // @description endchan用の再帰的レスポップアップ、Catalogソート、添付ファイルプレビュー、色々
 // @grant       none
 // ==/UserScript==
@@ -579,6 +579,48 @@
       anchor.href = uri;
       return anchor;
     };
+
+    /* textareaタグの選択範囲内側両端の改行部分を選択から除く。
+     * もし選択範囲全体が改行だった場合は、ユーザーが最後に指定した側に空選択を合わせる。
+     * (すなわち .selectionDirection が"forward"ならば空選択を .selectionEnd に合わせ、
+     *  "backward"ならば .selectionStart に合わせる。) */
+    utils.shrinkTextareaSelection = function shrinkTextareaSelection(textarea) {
+      var c;
+      var originalSelectionEnd = +textarea.selectionEnd;
+      var originalSelectionStart = +textarea.selectionStart;
+
+      for(;;) {
+        c = textarea.value.substring(textarea.selectionStart, textarea.selectionStart + 1);
+        if (c === "\r" || c === "\n") {
+          textarea.selectionStart = 1 + textarea.selectionStart;
+        } else {
+          break;
+        };
+      };
+
+      /* 選択範囲は全て空改行だった */
+      if (+textarea.selectionStart >= originalSelectionEnd) {
+        /* ユーザーが最後に指定した側にカーソルを移動する */
+        if ("forward" === textarea.selectionDirection) {
+          textarea.selectionStart = originalSelectionEnd;
+          textarea.selectionEnd = originalSelectionEnd;
+        } else {
+          textarea.selectionStart = originalSelectionStart;
+          textarea.selectionEnd = originalSelectionStart;
+        };
+        return;
+      };
+
+      for(;0 < textarea.selectionEnd;) {
+        c = textarea.value.substring(textarea.selectionEnd - 1, textarea.selectionEnd);
+        if (c === "\r" || c === "\n") {
+          textarea.selectionEnd = -1 + textarea.selectionEnd;
+        } else {
+          break;
+        };
+      };
+    };
+
 
     utils.trigger = function() {
       return;
@@ -2102,21 +2144,23 @@
     };
 
     etCetera.applyMarkdown = function(textarea, markdown) {
-      var originalSelectionEnd = +textarea.selectionEnd;
-      var originalSelectionStart = +textarea.selectionStart;
+      utils.shrinkTextareaSelection(textarea);
+
       var begTag = markdown.beg;
       var endTag = markdown.end;
 
-      textarea.value = textarea.value.substring(0, originalSelectionEnd ) + endTag +
-        textarea.value.substring(originalSelectionEnd);
+      var end = +textarea.selectionEnd;
+      var start = +textarea.selectionStart;
+      var originalSelectionLength = end - start;
+      var originalSelectionDirection = textarea.selectionDirection;
+      var str = begTag + textarea.value.substring(start, end).split(/\r?\n/).join(endTag + "\n" + begTag) + endTag;
 
-      textarea.value = textarea.value.substring(0, originalSelectionStart ) + begTag +
-        textarea.value.substring(originalSelectionStart);
+      textarea.value = textarea.value.substring(0, start) + str + textarea.value.substring(end);
 
       textarea.select();
-      textarea.selectionStart = begTag.length + originalSelectionStart;
-      textarea.selectionEnd = begTag.length + originalSelectionEnd;
-
+      textarea.selectionDirection = originalSelectionDirection;
+      textarea.selectionStart = begTag.length + start;
+      textarea.selectionEnd = end + (str.length - originalSelectionLength) - endTag.length;
     };
 
     etCetera.setMarkdownToolOnTextAreaContextMenu = function(textarea, textareaId) {
