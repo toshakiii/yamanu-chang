@@ -20,7 +20,7 @@
 //
 // @run-at      document-start
 //
-// @version     2.56
+// @version     2.57
 // @description endchan用の再帰的レスポップアップ、Catalogソート、添付ファイルプレビュー、色々
 // @grant       none
 // ==/UserScript==
@@ -2010,8 +2010,8 @@
 
       s += '#toshakiiiCatalogSortRefreshStatus {' +
         '  display: inline-block;' +
-        '  width: 6em;' +
-        '  height: 2ex }';
+        '  width: 7em;' +
+        '  height: 3ex }';
 
 
       /* サイトJSのポップアップ用の要素 */
