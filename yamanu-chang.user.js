@@ -20,7 +20,7 @@
 //
 // @run-at      document-start
 //
-// @version     2.57
+// @version     2.58
 // @description endchan用の再帰的レスポップアップ、Catalogソート、添付ファイルプレビュー、色々
 // @grant       none
 // ==/UserScript==
@@ -42,8 +42,8 @@
 /*
  * ・1行100文字幅
  * ・セミコロンは全ての場所につける。
- * ・"string_as_symbol"
- * ・'string as message'
+ * ・ダブルクオートを"処理向け文字列"とし、シングルクオートを'利用者向け文字列'としていたが、v2.58
+ *   現在一貫性に漏れがある
  * ・文字列定数は直接書く。変数を媒介しない。
  */
 
@@ -103,7 +103,7 @@
         this.preProc = value;
       };
     utils.CompulsoryProcessing.prototype.processExistingTargets =
-      function processExistingTargets( proc, procAfter) {
+      function processExistingTargets(proc, procAfter) {
         if (null === document.body) {
           document.addEventListener("DOMContentLoaded", this.processExistingTargets.bind(this, proc, procAfter));
           return;
@@ -124,24 +124,24 @@
         var obj = this;
         var tlist, idx;
 
-        iloops.push( function() {
+        iloops.push(function() {
           tlist = obj.funcEnumExistingTargets();
           idx = tlist.length;
 
-        } ).push( function() {
+        }).push(function() {
           --idx;
           if (-1 >= idx) {
             return break_;
           };
 
-          proc( tlist[ idx ] );
+          proc(tlist[idx]);
           return continue_;
 
-        } ).push( function() {
+        }).push(function() {
           if (undefined !== procAfter) {
             procAfter();
           };
-        } ).beginAsync();
+        }).beginAsync();
       };
 
     utils.CompulsoryProcessing.prototype.startApply =
@@ -158,8 +158,8 @@
         if (undefined === this.mutationObserver &&
             this.observingElement !== undefined &&
             this.observingOptions !== undefined) {
-          this.mutationObserver = new MutationObserver( this.defaultCallback.bind(this) );
-          this.mutationObserver.observe( this.observingElement, this.observingOptions );
+          this.mutationObserver = new MutationObserver(this.defaultCallback.bind(this));
+          this.mutationObserver.observe(this.observingElement, this.observingOptions);
         };
       };
 
@@ -172,7 +172,7 @@
       };
 
     utils.CompulsoryProcessing.prototype.defaultCallback =
-      function defaultCallback( mutationRecords, mutationObserver) {
+      function defaultCallback(mutationRecords, mutationObserver) {
         if (undefined === this.preProc) {
           this.process(mutationRecords);
           this.processAfter(mutationRecords);
@@ -186,24 +186,24 @@
         var obj = this;
 
         iloops.push(function() {
-          tlist = obj.preProc( mutationRecords, mutationObserver );
+          tlist = obj.preProc(mutationRecords, mutationObserver);
           tidx = tlist.length;
-        } ).push( function() {
+        }).push(function() {
           --tidx;
           if (-1 >= tidx) {
             return break_;
           };
           obj.process(tlist[tidx]);
           return continue_;
-        } ).push( function() {
+        }).push(function() {
           obj.processAfter(mutationRecords);
-        } ).beginAsync();
+        }).beginAsync();
       };
 
     utils.CompulsoryProcessing.prototype.process =
       function process(target) {
         for (var pidx = 0, plen = this.processes.length; pidx < plen ; ++pidx) {
-          this.processes[ pidx ](target);
+          this.processes[pidx](target);
         };
       };
 
@@ -211,12 +211,12 @@
     utils.CompulsoryProcessing.prototype.processAfter =
       function processAfter() {
         for (var pidx = 0, plen = this.processesAfter.length; pidx < plen ; ++pidx) {
-          this.processesAfter[ pidx ]();
+          this.processesAfter[pidx]();
         };
       };
 
     utils.CompulsoryProcessing.prototype.appendCP =
-      function appendCP( func, noStartApply, noApplyToExistingTargets) {
+      function appendCP(func, noStartApply, noApplyToExistingTargets) {
         this.processes.push(func);
         if (! noStartApply) {
           this.startApply();
@@ -228,10 +228,10 @@
       };
 
     utils.CompulsoryProcessing.prototype.removeCP =
-      function removeCP( func, noStopApply) {
+      function removeCP(func, noStopApply) {
         for (var idx = this.processes.length - 1; -1 < idx ; --idx) {
-          if (this.processes[ idx ] === func) {
-            this.processes.splice( idx, 1 );
+          if (this.processes[idx] === func) {
+            this.processes.splice(idx, 1);
 
             if (! noStopApply &&
                 0 === this.processes.length &&
@@ -245,7 +245,7 @@
         return null;
       };
 
-    utils.CompulsoryProcessing.prototype.appendAfterCP = function appendAfterCP( func, noStartApply,
+    utils.CompulsoryProcessing.prototype.appendAfterCP = function appendAfterCP(func, noStartApply,
         noApplyToExistingTargets) {
 
       this.processesAfter.push(func);
@@ -260,10 +260,10 @@
       return func;
     };
 
-    utils.CompulsoryProcessing.prototype.removeAfterCP = function removeCP( func, noStopApply) {
+    utils.CompulsoryProcessing.prototype.removeAfterCP = function removeCP(func, noStopApply) {
       for (var idx = this.processesAfter.length - 1; -1 < idx ; --idx) {
-        if (this.processesAfter[ idx ] === func) {
-          this.processesAfter.splice( idx, 1 );
+        if (this.processesAfter[idx] === func) {
+          this.processesAfter.splice(idx, 1);
           if (! noStopApply &&
               0 === this.processes.length &&
               0 === this.processesAfter.length) {
@@ -279,9 +279,9 @@
       function preProc_enumAddedNodes(mutationRecords) {
         var tlist = [];
         for (var mrIdx = 0, mrLen = mutationRecords.length; mrIdx < mrLen ; ++mrIdx) {
-          var mr = mutationRecords[ mrIdx ];
+          var mr = mutationRecords[mrIdx];
           for (var anIdx = 0, anLen = mr.addedNodes.length; anIdx < anLen ; ++anIdx) {
-            tlist.push( mr.addedNodes[ anIdx ] );
+            tlist.push(mr.addedNodes[anIdx]);
           };
         };
         return tlist;
@@ -289,28 +289,28 @@
 
     utils.noop = function(){};
 
-    utils.endsWith = function endsWith( str, suffix) {
+    utils.endsWith = function endsWith(str, suffix) {
       return -1 !== str.indexOf(suffix, str.length - suffix.length);
     };
 
-    utils.foreEachElementDescendants = function foreEachElementDescendants( element, func) {
+    utils.foreEachElementDescendants = function foreEachElementDescendants(element, func) {
       var children, idx, len;
       for (children = element.children, idx = 0, len = element.children.length; idx < len ; ++idx) {
-        if (! func( children[ idx ] )) {
+        if (! func(children[idx])) {
           return false;
         };
       };
       for (children = element.children, idx = 0, len = element.children.length; idx < len ; ++idx) {
-        if (! foreEachElementDescendants( children[ idx ], func )) {
+        if (! foreEachElementDescendants(children[idx], func)) {
           return false;
         };
       };
       return true;
     };
 
-    utils.contain = function( array, item) {
+    utils.contain = function(array, item) {
       for (var arIdx in array) {
-        if (item != array[ arIdx ]) {
+        if (item != array[arIdx]) {
           return true;
         };
       };
@@ -358,16 +358,16 @@
       return v;
     };
 
-    utils.replaceItem = function( array, fromItem, toItem) {
+    utils.replaceItem = function(array, fromItem, toItem) {
       for (var idx = 0, len = array.length ; idx < len ; ++idx) {
-        if (array[ idx ] === fromItem) {
-          array[ idx ] = toItem;
+        if (array[idx] === fromItem) {
+          array[idx] = toItem;
         };
       };
       return array;
     };
 
-    utils.leftpad = function( str, n, char) {
+    utils.leftpad = function(str, n, char) {
       str = str.toString();
       if (n <= str.length) {
         return str;
@@ -375,14 +375,14 @@
       if (undefined == char) {
         char = " ";
       };
-      return char.repeat( n - str.length ) + str;
+      return char.repeat(n - str.length) + str;
     };
 
     utils.removeIdAll = function removeIdAll(element) {
       element.id = "";
       for (var i in element.children) {
         if (undefined != element.children) {
-          removeIdAll( element.children[ i ] );
+          removeIdAll(element.children[i]);
         };
       };
       return element;
@@ -391,25 +391,25 @@
     utils.removePostCells = function() {
       var postCellList = document.getElementsByClassName('postCell');
       for (var idx = postCellList.length - 1; -1 < idx ; --idx) {
-        postCellList[idx].parentElement.removeChild( postCellList[idx] );
+        postCellList[idx].parentElement.removeChild(postCellList[idx]);
       };
       window.lastReplyId = 0;
     };
 
-    utils.differenceSet = function( lhs, rhs) {
+    utils.differenceSet = function(lhs, rhs) {
       var r = {};
       for (var key in lhs) {
         if (! key in rhs) {
-          r[ key ] = lhs[ key ];
+          r[key] = lhs[key];
         };
       };
       return r;
     };
 
     utils.getYearMonthDateDayHoursMinutesSeconds =
-      function( dateObj , useUTC) {
+      function(dateObj , useUTC) {
         /* return type: int array */
-        /* return value: [ year, month, date, day, hours, minutes, seconds] */
+        /* return value: [year, month, date, day, hours, minutes, seconds] */
         /*   month: 0 origin */
         if (useUTC) {
           return [
@@ -419,7 +419,7 @@
             dateObj.getUTCDay(),
             dateObj.getUTCHours(),
             dateObj.getUTCMinutes(),
-            dateObj.getUTCSeconds() ];
+            dateObj.getUTCSeconds()];
         };
         return [
           dateObj.getFullYear(),
@@ -428,7 +428,7 @@
           dateObj.getDay(),
           dateObj.getHours(),
           dateObj.getMinutes(),
-          dateObj.getSeconds() ];
+          dateObj.getSeconds()];
       };
 
     /* IntermittentLoops { */
@@ -447,7 +447,7 @@
       return this;
     };
 
-    /* note: the following setTimeout( [function], 0 )   */
+    /* note: the following setTimeout([function], 0)   */
     /*       I don't expect 0ms.                         */
     /*       with many browsers 0 stands for about 40ms. */
     utils.IntermittentLoops__.prototype.beginAsync = function() {
@@ -464,22 +464,22 @@
 
           var nextLoopFunc = ilThis.doNothing;;
           if (index + 1 < wrappedLoopFuncList.length) {
-            nextLoopFunc = wrappedLoopFuncList[ index + 1 ];
+            nextLoopFunc = wrappedLoopFuncList[index + 1];
           };
 
           function wrappedLoopFunc() {
             if (currentLoopFunc()) {
-              setTimeout( wrappedLoopFunc, 0 );
+              setTimeout(wrappedLoopFunc, 0);
             } else {
-              setTimeout( nextLoopFunc, 0 );
+              setTimeout(nextLoopFunc, 0);
             };
           };
           return wrappedLoopFunc;
         };
-        wrappedLoopFuncList[ index ] = createWrappedLoopFunc();
+        wrappedLoopFuncList[index] = createWrappedLoopFunc();
       };
 
-      setTimeout( wrappedLoopFuncList[0], 0 );
+      setTimeout(wrappedLoopFuncList[0], 0);
     };
 
     utils.IntermittentLoops__.prototype.doNothing = function() {};
@@ -495,7 +495,7 @@
       ++utils.elementUidCounter;
 
       var uid = "tskuid" + utils.elementUidCounter + "__";
-      element.setAttribute( "data-tsk-uid", uid );
+      element.setAttribute("data-tsk-uid", uid);
       element.thisself = element;
 
       return uid;
@@ -512,7 +512,7 @@
 
     utils.getElementByClassNameFromAncestor = function(element, className) {
       for (; element !== null; element = element.parentElement) {
-        for( var clIdx = 0, clLen = element.classList.length; clIdx < clLen; ++clIdx) {
+        for(var clIdx = 0, clLen = element.classList.length; clIdx < clLen; ++clIdx) {
           if (className === element.classList[clIdx]) {
             return element;
           };
@@ -557,7 +557,7 @@
         var expireDate = new Date();
         var expstring = (typeof days!="undefined") ?
               expireDate.setDate(expireDate.getDate() + parseInt(days)) :
-              expireDate.setDate(expireDate.getDate()-5 );
+              expireDate.setDate(expireDate.getDate()-5);
         document.cookie = name + "=" + value + "; expires=" + expireDate.toGMTString() + "; path=/";
       };
     };
@@ -575,7 +575,7 @@
       };
 
       var anchor = document.createElement("A");
-      anchor.appendChild( document.createTextNode(text) );
+      anchor.appendChild(document.createTextNode(text));
       anchor.href = uri;
       return anchor;
     };
@@ -632,14 +632,14 @@
      **********************************/
 
     /*                         [<keynames>...] */
-    settings.miniDataKeyList = [ 'ThreadAutoRefresh' ];
+    settings.miniDataKeyList = ['ThreadAutoRefresh'];
 
     settings.getMiniDataIndex = function(keyname) {
 
       for (var index = 0, length = settings.miniDataKeyList.length;
            index < length; ++index) {
 
-        if (keyname === settings.miniDataKeyList[ index ]) {
+        if (keyname === settings.miniDataKeyList[index]) {
           return index;
         };
       };
@@ -647,22 +647,22 @@
     };
 
     settings.setMiniDataContainer = function(value) {
-      localStorage.setItem('toshakiii.settings.miniData', JSON.stringify(value) );
+      localStorage.setItem('toshakiii.settings.miniData', JSON.stringify(value));
     };
 
     settings.getMiniDataContainer = function() {
       var miniDataStr = localStorage.getItem('toshakiii.settings.miniData');
       var miniData, mdIdx, mdLen;
       if (null == miniDataStr) {
-        miniData = Array( settings.miniDataKeyList.length );
+        miniData = Array(settings.miniDataKeyList.length);
         for (mdIdx = 0, mdLen = miniData.length; mdIdx < mdLen ; ++mdIdx) {
-          miniData[ mdIdx ] = 0;
+          miniData[mdIdx] = 0;
         };
       } else {
         miniData = JSON.parse(miniDataStr);
         for (mdIdx = miniData.length, mdLen = settings.miniDataKeyList.length;
              mdIdx < mdLen; ++mdIdx) {
-          miniData[ mdIdx ] = 0;
+          miniData[mdIdx] = 0;
         };
       };
       return miniData;
@@ -677,18 +677,18 @@
       };
 
       if (index < (miniDataContainer.length)) {
-        return miniDataContainer[ index ];
+        return miniDataContainer[index];
       };
 
       return null;
     };
-    settings.setMiniData = function( keyname, value) {
+    settings.setMiniData = function(keyname, value) {
       var index = settings.getMiniDataIndex(keyname);
       if (0 > index) {
         return null;
       };
       var miniDataContainer = settings.getMiniDataContainer();
-      miniDataContainer[ index ] = value;
+      miniDataContainer[index] = value;
 
       settings.setMiniDataContainer(miniDataContainer);
       return value;
@@ -710,8 +710,8 @@
     /* previewCell の className と data-rel-selected-cell に selectedCell の Element Unique Id
      * を設定する */
 
-    filePreview.insertPreviewElement = function( selectedCell, file) {
-      if (filePreview.hasPreviewed(selectedCell) )
+    filePreview.insertPreviewElement = function(selectedCell, file) {
+      if (filePreview.hasPreviewed(selectedCell))
         return true;
 
       var previewsArea = filePreview.getPreviewsAreaElement(selectedCell);
@@ -724,16 +724,16 @@
       previewsArea.appendChild(div);
 
       if ((350 * 1024 * 1024) <= file.size) {
-        previewCell = this.insertDummyElement( div, file, "OVER 350MiB");
+        previewCell = this.insertDummyElement(div, file, "OVER 350MiB");
 
-      } else if (0 <= file.type.indexOf( 'image/' )) {
-        previewCell = filePreview.insertImagePreviewElement( div, file);
+      } else if (0 <= file.type.indexOf('image/')) {
+        previewCell = filePreview.insertImagePreviewElement(div, file);
 
-      } else if (0 <= file.type.indexOf( 'audio/' ) || 0 <= file.type.indexOf( 'video/' )) {
-        previewCell = filePreview.insertAudioVideoPreviewElement( div, file);
+      } else if (0 <= file.type.indexOf('audio/') || 0 <= file.type.indexOf('video/')) {
+        previewCell = filePreview.insertAudioVideoPreviewElement(div, file);
 
       } else {
-        previewCell = filePreview.insertDummyElement( div, file);
+        previewCell = filePreview.insertDummyElement(div, file);
       };
 
       return previewCell;
@@ -741,7 +741,7 @@
 
 
 
-    filePreview.insertImagePreviewElement = function( destElt, file) {
+    filePreview.insertImagePreviewElement = function(destElt, file) {
       var fileReader = new FileReader();
       fileReader.onload = function() {
         var dataUri = this.result;
@@ -755,7 +755,7 @@
       fileReader.readAsDataURL(file);
     };
 
-    filePreview.insertAudioVideoPreviewElement = function( destElt, file) {
+    filePreview.insertAudioVideoPreviewElement = function(destElt, file) {
       var fileReader = new FileReader();
       fileReader.onload = function() {
         var dataUri = this.result;
@@ -770,13 +770,13 @@
       fileReader.readAsDataURL(file);
     };
 
-    filePreview.insertDummyElement = function( destElt, file, msg) {
+    filePreview.insertDummyElement = function(destElt, file, msg) {
       var elt = document.createElement('DIV');
-      var text = document.createTextNode( file.type );
+      var text = document.createTextNode(file.type);
       elt.appendChild(text);
       if (undefined != msg) {
-        elt.appendChild( document.createElement('BR') );
-        elt.appendChild( document.createTextNode(msg) );
+        elt.appendChild(document.createElement('BR'));
+        elt.appendChild(document.createTextNode(msg));
       };
 
       elt.style.maxWidth = filePreview.previewMaxWidth;
@@ -851,13 +851,13 @@
 
     filePreview.quickReplyOnLoad = function(mutationRecords, mutationObserver) {
       for (var mrIdx = 0, mrLen = mutationRecords.length; mrIdx < mrLen ; ++mrIdx) {
-        if (0 >= mutationRecords[ mrIdx ].addedNodes.Length )
+        if (0 >= mutationRecords[mrIdx].addedNodes.Length)
           continue;
-        for (var anIdx = 0, anLen = mutationRecords[ mrIdx ].addedNodes.length ;
+        for (var anIdx = 0, anLen = mutationRecords[mrIdx].addedNodes.length ;
              anIdx < anLen ; ++anIdx) {
 
-          if ("quick-reply" == mutationRecords[ mrIdx ].addedNodes[ anIdx ].id) {
-            var selectedCells = mutationRecords[ mrIdx ].addedNodes[ anIdx ]
+          if ("quick-reply" == mutationRecords[mrIdx].addedNodes[anIdx].id) {
+            var selectedCells = mutationRecords[mrIdx].addedNodes[anIdx]
                   .getElementsByClassName("selectedCell");
 
             filePreview.insertPreviewsArea(document.getElementById("selectedDivQr"));
@@ -878,7 +878,7 @@
     filePreview.insertPreviewsArea = function(refSelectedDiv) {
       var previewsArea = document.createElement("div");
       previewsArea.className = filePreview.PREVIEWS_AREA_CLASSNAME;
-      refSelectedDiv.parentElement.insertBefore( previewsArea, refSelectedDiv );
+      refSelectedDiv.parentElement.insertBefore(previewsArea, refSelectedDiv);
     };
 
     filePreview.stopSelectedDivObserver = function() {
@@ -901,10 +901,10 @@
       if (null === selectedDiv) {
         return;
       };
-      var options = { childList: true};
+      var options = {childList: true};
       filePreview.sdMutationObserver = new MutationObserver(filePreview.selectedDivOnChange);
       filePreview.insertPreviewsArea(selectedDiv);
-      filePreview.sdMutationObserver.observe( selectedDiv, options );
+      filePreview.sdMutationObserver.observe(selectedDiv, options);
     };
 
     filePreview.stopQuickReplyObserver = function() {
@@ -922,7 +922,7 @@
       if (filePreview.qrMutationObserver !== undefined && ! window.show_quick_reply) {
         return;
       };
-      var qrOptions = { childList: true};
+      var qrOptions = {childList: true};
       filePreview.qrMutationObserver = new MutationObserver(filePreview.quickReplyOnLoad);
       filePreview.qrMutationObserver.observe(document.body, qrOptions);
     };
@@ -954,24 +954,24 @@
 
     catalogSort.boardUri = document.location.pathname.replace(/\/([^\/]*).*/,"$1");
 
-    catalogSort.catalogLastModified = new Date( document.lastModified );
+    catalogSort.catalogLastModified = new Date(document.lastModified);
     catalogSort.nowRefreshing = false;
 
     catalogSort.cmpfBumpOrder = function(x,y) {
-      var a = catalogSort.bumpOrderOfId[ catalogSort.getCatalogCellId(x) ];
-      var b = catalogSort.bumpOrderOfId[ catalogSort.getCatalogCellId(y) ];
+      var a = catalogSort.bumpOrderOfId[catalogSort.getCatalogCellId(x)];
+      var b = catalogSort.bumpOrderOfId[catalogSort.getCatalogCellId(y)];
       return a - b;
     };
 
     catalogSort.cmpfCreationData = function(x,y) {
-      var a = parseInt( catalogSort.getCatalogCellId(y) );
-      var b = parseInt( catalogSort.getCatalogCellId(x) );
+      var a = parseInt(catalogSort.getCatalogCellId(y));
+      var b = parseInt(catalogSort.getCatalogCellId(x));
       return a - b;
     };
 
     catalogSort.cmpfReplyCount = function(x,y) {
       var f = function(elt) {
-        return parseInt( elt.getElementsByClassName("labelReplies")[0].innerHTML );
+        return parseInt(elt.getElementsByClassName("labelReplies")[0].innerHTML);
       };
       var a = f(y);
       var b = f(x);
@@ -980,17 +980,17 @@
 
     catalogSort.cmpfImageCount = function(x,y) {
       var f = function(elt) {
-        return parseInt( elt.getElementsByClassName("labelImages")[0].innerHTML );
+        return parseInt(elt.getElementsByClassName("labelImages")[0].innerHTML);
       };
       var a = f(y);
       var b = f(x);
       return a - b;
     };
 
-    catalogSort.cmpfRevBumpOrder    = function(x,y) { return -catalogSort.cmpfBumpOrder   (x,y);};
-    catalogSort.cmpfRevCreationData = function(x,y) { return -catalogSort.cmpfCreationData(x,y);};
-    catalogSort.cmpfRevReplyCount   = function(x,y) { return -catalogSort.cmpfReplyCount  (x,y);};
-    catalogSort.cmpfRevImageCount   = function(x,y) { return -catalogSort.cmpfImageCount  (x,y);};
+    catalogSort.cmpfRevBumpOrder    = function(x,y) {return -catalogSort.cmpfBumpOrder   (x,y);};
+    catalogSort.cmpfRevCreationData = function(x,y) {return -catalogSort.cmpfCreationData(x,y);};
+    catalogSort.cmpfRevReplyCount   = function(x,y) {return -catalogSort.cmpfReplyCount  (x,y);};
+    catalogSort.cmpfRevImageCount   = function(x,y) {return -catalogSort.cmpfImageCount  (x,y);};
 
     catalogSort.shuffle =
       function(array) {
@@ -1017,15 +1017,15 @@
          */
         catalogSort.tableOrderType =
           [
-            { name: "Bump order"      , compareFunction: catalogSort.cmpfBumpOrder }
-            , { name: "Creation date" , compareFunction: catalogSort.cmpfCreationData }
-            , { name: "Reply count"   , compareFunction: catalogSort.cmpfReplyCount }
-            , { name: "Image count"   , compareFunction: catalogSort.cmpfImageCount }
-            , { name: "Random", funcType: 1, sortFunction: catalogSort.shuffle }
-            , { name: "Bump order(reverse)",    compareFunction: catalogSort.cmpfRevBumpOrder }
-            , { name: "Creation date(reverse)", compareFunction: catalogSort.cmpfRevCreationData }
-            , { name: "Reply count(reverse)",   compareFunction: catalogSort.cmpfRevReplyCount }
-            , { name: "Image count(reverse)",   compareFunction: catalogSort.cmpfRevImageCount }
+            {name: "Bump order"      , compareFunction: catalogSort.cmpfBumpOrder}
+            , {name: "Creation date" , compareFunction: catalogSort.cmpfCreationData}
+            , {name: "Reply count"   , compareFunction: catalogSort.cmpfReplyCount}
+            , {name: "Image count"   , compareFunction: catalogSort.cmpfImageCount}
+            , {name: "Random", funcType: 1, sortFunction: catalogSort.shuffle}
+            , {name: "Bump order(reverse)",    compareFunction: catalogSort.cmpfRevBumpOrder}
+            , {name: "Creation date(reverse)", compareFunction: catalogSort.cmpfRevCreationData}
+            , {name: "Reply count(reverse)",   compareFunction: catalogSort.cmpfRevReplyCount}
+            , {name: "Image count(reverse)",   compareFunction: catalogSort.cmpfRevImageCount}
           ];
       };
 
@@ -1033,7 +1033,7 @@
 
     catalogSort.loadSettingsSageHidedThreads = function() {
       if (undefined === settings.sageHidedThreads) {
-        if ("1" == localStorage.getItem( 'toshakiii.settings.sageHidedThreads' )) {
+        if ("1" == localStorage.getItem('toshakiii.settings.sageHidedThreads')) {
           settings.sageHidedThreads = true;
         } else {
           settings.sageHidedThreads = false;
@@ -1045,36 +1045,36 @@
     catalogSort.saveSettingsSageHidedThreads = function(value) {
       if (value) {
         settings.sageHidedThreads = true;
-        localStorage.setItem( 'toshakiii.settings.sageHidedThreads', "1");
+        localStorage.setItem('toshakiii.settings.sageHidedThreads', "1");
       } else {
         settings.sageHidedThreads = false;
-        localStorage.setItem( 'toshakiii.settings.sageHidedThreads', "0");
+        localStorage.setItem('toshakiii.settings.sageHidedThreads', "0");
       };
     };
 
     /* 元 HTML の catalogCell に id は設定されていない */
     catalogSort.getCatalogCellId = function(catalogCell) {
-      if (0 != catalogCell.id.length )
+      if (0 != catalogCell.id.length)
         return catalogCell.id;
-      var s = catalogCell.getElementsByClassName( "linkThumb" )[0].href;
+      var s = catalogCell.getElementsByClassName("linkThumb")[0].href;
       var i = s.lastIndexOf("/");
       s = s.substring(1+i);
       i = s.indexOf(".");
-      if (0 <= i )
+      if (0 <= i)
         return catalogCell.id = s.substring(0,i);
       return undefined;
     };
 
     catalogSort.recordBumpOrder = function() {
-      var divThreads = document.getElementById( "divThreads" );
+      var divThreads = document.getElementById("divThreads");
       if (null == divThreads) {
         return false;
       };
 
       for (var idx = 0, len = divThreads.children.length; idx < len ; ++idx) {
-        var id = catalogSort.getCatalogCellId( divThreads.children[idx] );
+        var id = catalogSort.getCatalogCellId(divThreads.children[idx]);
         if (id.length != 0) {
-          catalogSort.bumpOrderOfId[ id ] = idx;
+          catalogSort.bumpOrderOfId[id] = idx;
         };
       };
       return true;
@@ -1084,14 +1084,14 @@
       /* json : catalog.json をパースしたもの */
       var bumpOrderOfId = {};
       for (var idx = 0, len = catalogJson.length; idx < len ; ++idx) {
-        var id = catalogJson[ idx ].threadId;
-        bumpOrderOfId[ id ] = idx;
+        var id = catalogJson[idx].threadId;
+        bumpOrderOfId[id] = idx;
       };
       catalogSort.bumpOrderOfId = bumpOrderOfId;
     };
 
     catalogSort.circulateOrderType = function() {
-      var selectElt = document.getElementById( catalogSort.SELECT_ID );
+      var selectElt = document.getElementById(catalogSort.SELECT_ID);
       var n = 1 + parseInt(selectElt.value);
       if (n >= selectElt.length) {
         n = 0;
@@ -1106,9 +1106,9 @@
        そもそも全体 Firefox の方が遅いから、DocumentFragment は不採用。
 
        Google Chrome version 52.0.2743.116 (64-bit)
-       direct[1025] fragment[ 995] diff[30] / count[816]
-       direct[ 960] fragment[1038] diff[78] / count[699]
-       direct[ 972] fragment[1028] diff[56] / count[651]
+       direct[1025] fragment[995] diff[30] / count[816]
+       direct[960] fragment[1038] diff[78] / count[699]
+       direct[972] fragment[1028] diff[56] / count[651]
 
        Firefox 48.0
        direct[883] fragment[1121] diff[238] / count[106]
@@ -1119,7 +1119,7 @@
       var tottimed = 0;
       var tottimef = 0;
       var count = 0;
-      while( end > (+new Date())) {
+      while (end > (+new Date())) {
         var time = (+new Date());
         catalogSort.sortCatalogCells(false);
         tottimed += (+new Date()) - time;
@@ -1129,14 +1129,14 @@
         tottimef += (+new Date()) - time;
         ++count;
       };
-      document.body.insertBefore( document.createTextNode( "direct["+tottimed+"]  fragment["+tottimef+"] diff[" + Math.abs( tottimed - tottimef ) + "] / count["+count+"]" ),
-          document.body.firstChild );
+      document.body.insertBefore(document.createTextNode("direct["+tottimed+"]  fragment["+tottimef+"] diff[" + Math.abs(tottimed - tottimef) + "] / count["+count+"]"),
+          document.body.firstChild);
     };
 
     catalogSort.shuffleCatalogCells = function() {
       for (var idx = 0, len = catalogSort.tableOrderType.length; idx < len ; ++idx) {
-        if (catalogSort.tableOrderType[ idx ].sortFunction == catalogSort.shuffle) {
-          var selectElt = document.getElementById( catalogSort.SELECT_ID );
+        if (catalogSort.tableOrderType[idx].sortFunction == catalogSort.shuffle) {
+          var selectElt = document.getElementById(catalogSort.SELECT_ID);
           selectElt.value = idx;
           catalogSort.sortCatalogCells();
           break;
@@ -1147,13 +1147,13 @@
     catalogSort.CatalogCell =
       (function() {
         var ccthis = this;
-        var ref = function( array, index, defval) {
+        var ref = function(array, index, defval) {
           if (array.length > index) {
-            return array[ index ];
+            return array[index];
           };
           return defval;
         };
-        var refInnerHTML = function( element, defval) {
+        var refInnerHTML = function(element, defval) {
           if (undefined == element) {
             return defval;
           };
@@ -1163,59 +1163,59 @@
           return defval;
         };
         ccthis.prepareId = function(catalogCell) {
-          if (0 != catalogCell.id.length )
+          if (0 != catalogCell.id.length)
             return catalogCell.id;
-          var s = catalogCell.getElementsByClassName( "linkThumb" )[0].href;
+          var s = catalogCell.getElementsByClassName("linkThumb")[0].href;
           var i = s.lastIndexOf("/");
           s = s.substring(1+i);
           i = s.indexOf(".");
-          if (0 <= i )
+          if (0 <= i)
             return catalogCell.id = s.substring(0,i);
           return undefined;
         };
 
         ccthis.getLinkThumbElement = function(catalogCell) {
-          return ref( catalogCell.getElementsByClassName("linkThumb"), 0, null );
+          return ref(catalogCell.getElementsByClassName("linkThumb"), 0, null);
         };
         ccthis.getLabelSubjectElement = function(catalogCell) {
-          return ref( catalogCell.getElementsByClassName("labelSubject"), 0, null );
+          return ref(catalogCell.getElementsByClassName("labelSubject"), 0, null);
         };
         ccthis.getDivMessageElement = function(catalogCell) {
-          return ref( catalogCell.getElementsByClassName("divMessage"), 0, null );
+          return ref(catalogCell.getElementsByClassName("divMessage"), 0, null);
         };
         ccthis.getLabelRepliesElement = function(catalogCell) {
-          return ref( catalogCell.getElementsByClassName("labelReplies"), 0, null );
+          return ref(catalogCell.getElementsByClassName("labelReplies"), 0, null);
         };
         ccthis.getLabelImagesElement = function(catalogCell) {
-          return ref( catalogCell.getElementsByClassName("labelImages"), 0, null );
+          return ref(catalogCell.getElementsByClassName("labelImages"), 0, null);
         };
         ccthis.getLabelPageElement = function(catalogCell) {
-          return ref( catalogCell.getElementsByClassName("labelPage"), 0, null );
+          return ref(catalogCell.getElementsByClassName("labelPage"), 0, null);
         };
         ccthis.getLockIndicatorElement = function(catalogCell) {
-          return ref( catalogCell.getElementsByClassName("lockIndicator"), 0, null );
+          return ref(catalogCell.getElementsByClassName("lockIndicator"), 0, null);
         };
         ccthis.getPinIndicatorElement = function(catalogCell) {
-          return ref( catalogCell.getElementsByClassName("pinIndicator"), 0, null );
+          return ref(catalogCell.getElementsByClassName("pinIndicator"), 0, null);
         };
         ccthis.getCyclicIndicatorElement = function(catalogCell) {
-          return ref( catalogCell.getElementsByClassName("cyclicIndicator"), 0, null );
+          return ref(catalogCell.getElementsByClassName("cyclicIndicator"), 0, null);
         };
         ccthis.getBumpLockIndicatorElement = function(catalogCell) {
-          return ref( catalogCell.getElementsByClassName("bumpLockIndicator"), 0, null );
+          return ref(catalogCell.getElementsByClassName("bumpLockIndicator"), 0, null);
         };
         ccthis.getThreadStatsElement = function(catalogCell) {
-          return ref( catalogCell.getElementsByClassName("threadStats"), 0, null);
+          return ref(catalogCell.getElementsByClassName("threadStats"), 0, null);
         };
 
         ccthis.getRepliesStr = function(catalogCell) {
-          return refInnerHTML( ccthis.getLabelRepliesElement(catalogCell), null );
+          return refInnerHTML(ccthis.getLabelRepliesElement(catalogCell), null);
         };
         ccthis.getImagesStr = function(catalogCell) {
-          return refInnerHTML( ccthis.getLabelImagesElement(catalogCell), null );
+          return refInnerHTML(ccthis.getLabelImagesElement(catalogCell), null);
         };
         ccthis.getPageStr = function(catalogCell) {
-          return refInnerHTML( ccthis.getLabelPageElement(catalogCell), null );
+          return refInnerHTML(ccthis.getLabelPageElement(catalogCell), null);
         };
         ccthis.isLocked = function(catalogCell) {
           return ccthis.getLockIndicatorElement(catalogCell);
@@ -1230,10 +1230,10 @@
           return ccthis.getBumpLockIndicatorElement(catalogCell);
         };
 
-        ccthis.changeURL = function( catalogCell, value) {
+        ccthis.changeURL = function(catalogCell, value) {
           ccthis.getLinkThumbElement(catalogCell).href = value;
         };
-        ccthis.changeThumb = function( catalogCell, value) {
+        ccthis.changeThumb = function(catalogCell, value) {
           var linkThumb = ccthis.getLinkThumbElement(catalogCell);
           var firstChild = linkThumb.firstChild;
           if (value) {
@@ -1243,38 +1243,38 @@
             } else {
               var img = document.createElement('IMG');
               img.src = value;
-              linkThumb.replaceChild( img, firstChild );
+              linkThumb.replaceChild(img, firstChild);
               return;
             };
             return;
           };
           if ('IMG' == firstChild.tagName) {
             var text = document.createTextNode("Open");
-            linkThumb.replaceChild( text, firstChild );
+            linkThumb.replaceChild(text, firstChild);
           };
         };
-        ccthis.changeSubject = function( catalogCell, value) {
+        ccthis.changeSubject = function(catalogCell, value) {
           ccthis.getLabelSubjectElement(catalogCell).innerHTML = value;
         };
-        ccthis.changeMessage = function( catalogCell, value) {
+        ccthis.changeMessage = function(catalogCell, value) {
           ccthis.getDivMessageElement(catalogCell).innerHTML
             = value.replace(/\r/g,"").replace(/\n/g,"<br>");
         };
 
-        ccthis.changeRepliesNum = function( catalogCell, value) {
-          if (undefined == value ) value = "0";
+        ccthis.changeRepliesNum = function(catalogCell, value) {
+          if (undefined == value) value = "0";
           ccthis.getLabelRepliesElement(catalogCell).innerHTML = value;
         };
-        ccthis.changeImagesNum = function( catalogCell, value) {
-          if (undefined == value ) value = "0";
+        ccthis.changeImagesNum = function(catalogCell, value) {
+          if (undefined == value) value = "0";
           ccthis.getLabelImagesElement(catalogCell).innerHTML = value;
         };
-        ccthis.changePageNum = function( catalogCell, value) {
-          if (undefined == value ) value = "0";
+        ccthis.changePageNum = function(catalogCell, value) {
+          if (undefined == value) value = "0";
           ccthis.getLabelPageElement(catalogCell).innerHTML = value;
         };
 
-        ccthis.changeIndicator = function( catalogCell, value,
+        ccthis.changeIndicator = function(catalogCell, value,
             getIndicatorFunction, createElementFunction) {
           var elt = getIndicatorFunction(catalogCell);
           if (elt) {
@@ -1287,35 +1287,35 @@
           } else {
             if (value) {
               ccthis.getThreadStatsElement(catalogCell)
-                .appendChild( createElementFunction() );
+                .appendChild(createElementFunction());
               return;
             } else {
               return;
             };
           };
         };
-        ccthis.changeLock = function( catalogCell, value) {
-          return ccthis.changeIndicator( catalogCell, value,
+        ccthis.changeLock = function(catalogCell, value) {
+          return ccthis.changeIndicator(catalogCell, value,
               ccthis.getLockIndicatorElement,
-              ccthis.makeLockIndicatorElement );
+              ccthis.makeLockIndicatorElement);
         };
-        ccthis.changePin = function( catalogCell, value) {
-          return ccthis.changeIndicator( catalogCell, value,
+        ccthis.changePin = function(catalogCell, value) {
+          return ccthis.changeIndicator(catalogCell, value,
               ccthis.getPinIndicatorElement,
-              ccthis.makePinIndicatorElement );
+              ccthis.makePinIndicatorElement);
         };
-        ccthis.changeCyclic = function( catalogCell, value) {
-          return ccthis.changeIndicator( catalogCell, value,
+        ccthis.changeCyclic = function(catalogCell, value) {
+          return ccthis.changeIndicator(catalogCell, value,
               ccthis.getCyclicIndicatorElement,
-              ccthis.makeCyclicIndicatorElement );
+              ccthis.makeCyclicIndicatorElement);
         };
-        ccthis.changeBumpLock = function( catalogCell, value) {
-          return ccthis.changeIndicator( catalogCell, value,
+        ccthis.changeBumpLock = function(catalogCell, value) {
+          return ccthis.changeIndicator(catalogCell, value,
               ccthis.getBumpLockIndicatorElement,
-              ccthis.makeBumpLockIndicatorElement );
+              ccthis.makeBumpLockIndicatorElement);
         };
 
-        ccthis.makeIndicatorElement = function( classnames, title) {
+        ccthis.makeIndicatorElement = function(classnames, title) {
           var elt = document.createElement("span");
           elt.class = classnames;
           elt.title = title;
@@ -1356,22 +1356,22 @@
             'A' === child.firstChild.tagName &&
             0 === child.firstChild.innerHTML.lastIndexOf("[Show hidden thread ",0)) {
 
-          n = child.id.replace( /[^0-9]/g, "");
-          showButtonElts[ n ] = child;
+          n = child.id.replace(/[^0-9]/g, "");
+          showButtonElts[n] = child;
 
         } else {
-          catalogCells.push( children[idx] );
+          catalogCells.push(children[idx]);
         };
       };
       children = undefined;
 
-      var selectElt = document.getElementById( catalogSort.SELECT_ID );
+      var selectElt = document.getElementById(catalogSort.SELECT_ID);
       var oIdx = parseInt(selectElt.value);
-      localStorage.setItem( "toshakiii.settings.catalogOrderType", oIdx );
+      localStorage.setItem("toshakiii.settings.catalogOrderType", oIdx);
 
       var funcType = catalogSort.tableOrderType[oIdx].funcType;
       if (0 ==  funcType || undefined == funcType) {
-        catalogCells.sort( catalogSort.tableOrderType[oIdx].compareFunction );
+        catalogCells.sort(catalogSort.tableOrderType[oIdx].compareFunction);
       }
       else if (1 == funcType) {
         catalogCells = catalogSort.tableOrderType[oIdx].sortFunction(catalogCells);
@@ -1380,15 +1380,15 @@
       /* var cookie = '; ' + document.cookie + "; "; */
       var sageElts = [];
       for (var ccIdx = 0, ccLen = catalogCells.length; ccIdx < ccLen ; ++ccIdx) {
-        var catalogCell = catalogCells[ ccIdx ];
+        var catalogCell = catalogCells[ccIdx];
         if (catalogCell.id in showButtonElts) {
-          var spanElt = showButtonElts[ catalogCell.id ];
+          var spanElt = showButtonElts[catalogCell.id];
           if (settings.sageHidedThreads && spanElt.style.display != 'none') {
             sageElts.push(spanElt);
             sageElts.push(catalogCell);
             continue;
           };
-          parentElt.appendChild( showButtonElts[ catalogCell.id ] );
+          parentElt.appendChild(showButtonElts[catalogCell.id]);
         } else if (settings.sageHidedThreads &&
                    utils.getSetting('hide' + catalogSort.boardUri + 'Thread' + catalogCell.id)) {
           sageElts.push(catalogCell);
@@ -1398,7 +1398,7 @@
         parentElt.appendChild(catalogCell);
       };
       for (var seIdx = 0, seLen = sageElts.length; seIdx < seLen ; ++seIdx) {
-        parentElt.appendChild( sageElts[ seIdx ] );
+        parentElt.appendChild(sageElts[seIdx]);
       };
     };
 
@@ -1410,10 +1410,10 @@
     };
 
     catalogSort.showRefreshStatus = function(msg) {
-      var refreshStatus = document.getElementById( catalogSort.REFRESH_STATUS_ID );
+      var refreshStatus = document.getElementById(catalogSort.REFRESH_STATUS_ID);
       var text = document.createTextNode(msg);
       if (refreshStatus.firstChild) {
-        refreshStatus.replaceChild( text, refreshStatus.firstChild );
+        refreshStatus.replaceChild(text, refreshStatus.firstChild);
       } else {
         refreshStatus.appendChild(text);
       };
@@ -1431,7 +1431,7 @@
       var xhr = new XMLHttpRequest();
       xhr.onreadystatechange =
         function() {
-          switch( this.readyState) {
+          switch(this.readyState) {
           case 0:
           case 1:
             catalogSort.showRefreshStatus("requesting");
@@ -1446,7 +1446,7 @@
             };
             break;
           case 4:
-            switch( this.status) {
+            switch(this.status) {
             case 304:
               catalogSort.showRefreshStatus("not modified");
               catalogSort.nowRefreshing = false;
@@ -1454,9 +1454,9 @@
               return;
             case 200:
               catalogSort.showRefreshStatus("applying");
-              catalogSort.catalogLastModified = new Date( this.getResponseHeader("Last-Modified") );
-              catalogSort.applyJsonToCatalog( this.responseText, catalogSort.showRefreshStatus,
-                  function() { if (callback) callback(true); } );
+              catalogSort.catalogLastModified = new Date(this.getResponseHeader("Last-Modified"));
+              catalogSort.applyJsonToCatalog(this.responseText, catalogSort.showRefreshStatus,
+                  function() {if (callback) callback(true);});
               return;
             default:
               catalogSort.showRefreshStatus("error(HTTP "+this.status+")");
@@ -1481,13 +1481,13 @@
       if (0 < catalogCells.length &&
           "" == catalogCells[0].id) {
         for (var idx = 0, len = catalogCells.length ; idx < len ; ++idx) {
-          catalogSort.CatalogCell.prepareId( catalogCells[ idx ] );
+          catalogSort.CatalogCell.prepareId(catalogCells[idx]);
         };
       };
       xhr.send(null);
     };
 
-    catalogSort.applyJsonToCatalog = function( jsontext, msgfunc, callback) {
+    catalogSort.applyJsonToCatalog = function(jsontext, msgfunc, callback) {
       var json = undefined;
       try {
         json = JSON.parse(jsontext);
@@ -1505,25 +1505,25 @@
       var threadProcedCount = 0;
       iloops.push
       (function() {
-        var threadsToDelete = utils.differenceSet( catalogSort.bumpOrderOfId, json );
+        var threadsToDelete = utils.differenceSet(catalogSort.bumpOrderOfId, json);
         for (var threadId in threadsToDelete) {
           var catalogCell = document.getElementById(threadId);
           catalogCell.parentElement.removeChild(catalogCell);
         };
-      } ).push
+      }).push
       (function() {
         catalogSort.recordBumpOrderFromJson(json);
-      } );
+      });
       var catalogCellInfoOfId = {};
-      iloops.push( function() {
+      iloops.push(function() {
         for (var cellInfo in json) {
           ++threadCount;
-          catalogCellInfoOfId[ json[ cellInfo ].threadId ] = json[ cellInfo ];
+          catalogCellInfoOfId[json[cellInfo].threadId] = json[cellInfo];
         };
         if (0 == threadCount) {
           threadCount = 1;
         };
-      } );
+      });
 
       var newThreadIds = [];
       var beforeProgress = 0;
@@ -1531,21 +1531,21 @@
       iloops.push
       (function() {
         ++threadProcedCount;
-        var p = Math.floor( ( 10 * threadProcedCount ) / threadCount ).toString();
+        var p = Math.floor((10 * threadProcedCount) / threadCount).toString();
         if (p != beforeProgress) {
-          msgfunc( p + "0%" );
+          msgfunc(p + "0%");
           beforeProgress = p;
         };
-        return catalogSort.applyInfoToCatalogCellLoop( catalogCellInfoOfId, newThreadIds, msgfunc );
-      } ).push
-      ( function() {
+        return catalogSort.applyInfoToCatalogCellLoop(catalogCellInfoOfId, newThreadIds, msgfunc);
+      }).push
+      (function() {
         msgfunc("succeeded");
         catalogSort.sortCatalogCells();
         catalogSort.nowRefreshing = false;
-      } );
+      });
 
       if (undefined != window.enableHideThreadLink) {
-        iloops.push( function() {
+        iloops.push(function() {
           if (0 >= newThreadIds.length) {
             return false;
           };
@@ -1556,7 +1556,7 @@
           };
           window.enableHideThreadLink(catalogCell);
           return true;
-        } );
+        });
       };
 
       if (callback) {
@@ -1572,7 +1572,7 @@
      他のスクリプトが catalogCell に何か仕込んでいるかも知れないから。
      */
     catalogSort.applyInfoToCatalogCellLoop =
-      function( catalogCellInfoOfId, out_newThreadIds, msgfunc) {
+      function(catalogCellInfoOfId, out_newThreadIds, msgfunc) {
         var break_ = false;
         var continue_ = true;
 
@@ -1582,30 +1582,30 @@
         if (undefined == id) {
           return break_;
         };
-        /*msgfunc( "applying["+id+"]" );*/
-        var info = catalogCellInfoOfId[ id ];
+        /*msgfunc("applying["+id+"]");*/
+        var info = catalogCellInfoOfId[id];
         var catalogCell = document.getElementById(id);
         if (null == catalogCell) {
-          out_newThreadIds.push( info.threadId );
+          out_newThreadIds.push(info.threadId);
           var newCatalogCell = catalogSort.makeCatalogCell(info);
           document.getElementById("divThreads").appendChild(newCatalogCell);
         } else {
-          catalogSort.applyInfoToCatalogCell( info, catalogCell );
+          catalogSort.applyInfoToCatalogCell(info, catalogCell);
         };
-        delete catalogCellInfoOfId[ id ];
+        delete catalogCellInfoOfId[id];
         return continue_;
       };
 
     catalogSort.applyInfoToCatalogCell =
-      function( catalogCellInfo, catalogCell) {
+      function(catalogCellInfo, catalogCell) {
         var info = catalogCellInfo;
-        catalogSort.CatalogCell.changeRepliesNum( catalogCell, info.postCount );
-        catalogSort.CatalogCell.changeImagesNum ( catalogCell, info.fileCount );
-        catalogSort.CatalogCell.changePageNum   ( catalogCell, info.page );
-        catalogSort.CatalogCell.changeLock      ( catalogCell, info.locked );
-        catalogSort.CatalogCell.changePin       ( catalogCell, info.pinned );
-        catalogSort.CatalogCell.changeCyclic    ( catalogCell, info.cyclic );
-        catalogSort.CatalogCell.changeBumpLock  ( catalogCell, info.autoSage );
+        catalogSort.CatalogCell.changeRepliesNum(catalogCell, info.postCount);
+        catalogSort.CatalogCell.changeImagesNum (catalogCell, info.fileCount);
+        catalogSort.CatalogCell.changePageNum   (catalogCell, info.page);
+        catalogSort.CatalogCell.changeLock      (catalogCell, info.locked);
+        catalogSort.CatalogCell.changePin       (catalogCell, info.pinned);
+        catalogSort.CatalogCell.changeCyclic    (catalogCell, info.cyclic);
+        catalogSort.CatalogCell.changeBumpLock  (catalogCell, info.autoSage);
       };
 
 
@@ -1615,7 +1615,7 @@
       if (catalogSort.catalogCellTemplateElement == undefined) {
         var span = document.createElement('SPAN');
         span.innerHTML = catalogSort.catalogCellTemplateHTML;
-        catalogSort.catalogCellTemplateElement = span.removeChild ( span.firstChild );
+        catalogSort.catalogCellTemplateElement = span.removeChild (span.firstChild);
         span = undefined;
       };
       var info = catalogCellInfo;
@@ -1623,21 +1623,21 @@
 
       catalogCell.id = catalogCellInfo.threadId;
 
-      catalogSort.CatalogCell.changeURL( catalogCell,
-          "/" + catalogSort.boardUri + "/res/" + catalogCellInfo.threadId + ".html" );
-      catalogSort.CatalogCell.changeThumb( catalogCell,
-          catalogCellInfo.thumb );
+      catalogSort.CatalogCell.changeURL(catalogCell,
+          "/" + catalogSort.boardUri + "/res/" + catalogCellInfo.threadId + ".html");
+      catalogSort.CatalogCell.changeThumb(catalogCell,
+          catalogCellInfo.thumb);
 
-      catalogSort.CatalogCell.changeRepliesNum( catalogCell, info.postCount );
-      catalogSort.CatalogCell.changeImagesNum ( catalogCell, info.fileCount );
-      catalogSort.CatalogCell.changePageNum   ( catalogCell, info.page );
-      catalogSort.CatalogCell.changeLock      ( catalogCell, info.locked );
-      catalogSort.CatalogCell.changePin       ( catalogCell, info.pinned );
-      catalogSort.CatalogCell.changeCyclic    ( catalogCell, info.cyclic );
-      catalogSort.CatalogCell.changeBumpLock  ( catalogCell, info.autoSage );
+      catalogSort.CatalogCell.changeRepliesNum(catalogCell, info.postCount);
+      catalogSort.CatalogCell.changeImagesNum (catalogCell, info.fileCount);
+      catalogSort.CatalogCell.changePageNum   (catalogCell, info.page);
+      catalogSort.CatalogCell.changeLock      (catalogCell, info.locked);
+      catalogSort.CatalogCell.changePin       (catalogCell, info.pinned);
+      catalogSort.CatalogCell.changeCyclic    (catalogCell, info.cyclic);
+      catalogSort.CatalogCell.changeBumpLock  (catalogCell, info.autoSage);
 
-      catalogSort.CatalogCell.changeSubject   ( catalogCell, info.subject );
-      catalogSort.CatalogCell.changeMessage   ( catalogCell, info.message );
+      catalogSort.CatalogCell.changeSubject   (catalogCell, info.subject);
+      catalogSort.CatalogCell.changeMessage   (catalogCell, info.message);
       /*catalogCell.getElementsByClassName("hideButton")[0].id =
        'hide' + catalogSort.boardUri + 'Thread' + info.threadID;*/
 
@@ -1650,26 +1650,26 @@
 
       /* [So] [r] [t by:] */
       var eltASo = document.createElement('A');
-      eltASo.appendChild( document.createTextNode("So") );
+      eltASo.appendChild(document.createTextNode("So"));
       var eltAr = document.createElement('A');
-      eltAr.appendChild( document.createTextNode("r") );
+      eltAr.appendChild(document.createTextNode("r"));
       var eltAtby = document.createElement('A');
-      eltAtby.appendChild( document.createTextNode("t by:") );
+      eltAtby.appendChild(document.createTextNode("t by:"));
 
-      eltASo.addEventListener( 'click', catalogSort.circulateOrderType );
-      eltAr.addEventListener( 'click', catalogSort.shuffleCatalogCells );
-      eltAtby.addEventListener( 'click', catalogSort.circulateOrderType );
+      eltASo.addEventListener('click', catalogSort.circulateOrderType);
+      eltAr.addEventListener('click', catalogSort.shuffleCatalogCells);
+      eltAtby.addEventListener('click', catalogSort.circulateOrderType);
 
       var eltSelect = document.createElement('SELECT');
       eltSelect.id = catalogSort.SELECT_ID;
-      eltSelect.addEventListener( "change", catalogSort.sortCatalogCells );
+      eltSelect.addEventListener("change", catalogSort.sortCatalogCells);
 
       var option;
       var optionText;
       for (var idx = 0, len = catalogSort.tableOrderType.length; idx < len ; ++idx) {
         option = document.createElement('OPTION');
-        option.setAttribute("value", idx );
-        optionText = document.createTextNode( catalogSort.tableOrderType[idx].name );
+        option.setAttribute("value", idx);
+        optionText = document.createTextNode(catalogSort.tableOrderType[idx].name);
         option.appendChild(optionText);
         eltSelect.appendChild(option);
       }
@@ -1677,14 +1677,14 @@
       /*
        var eltLSB = document.createTextNode("[");
        var eltARefresh = document.createElement('A');
-       eltARefresh.appendChild( document.createTextNode('Refresh') );
+       eltARefresh.appendChild(document.createTextNode('Refresh'));
        eltARefresh.addEventListener('click', catalogSort.refreshCatalogCells);
        var eltRSB = document.createTextNode("]");
        */
 
       var eltConfig = document.createElement('A');
-      eltConfig.appendChild( document.createTextNode("⚙") );
-      eltConfig.addEventListener('click', catalogSort.showCloseDivSettings );
+      eltConfig.appendChild(document.createTextNode("⚙"));
+      eltConfig.addEventListener('click', catalogSort.showCloseDivSettings);
 
       var eltStatus = document.createElement('SPAN');
       eltStatus.id = catalogSort.REFRESH_STATUS_ID;
@@ -1705,7 +1705,7 @@
     };
 
     catalogSort.closeDivSettings = function() {
-      var divSettings = document.getElementById( catalogSort.SETTINGS_ID );
+      var divSettings = document.getElementById(catalogSort.SETTINGS_ID);
       if (null == divSettings) {
         return;
       };
@@ -1713,7 +1713,7 @@
     };
 
     catalogSort.showCloseDivSettings = function() {
-      if (null != document.getElementById( catalogSort.SETTINGS_ID )) {
+      if (null != document.getElementById(catalogSort.SETTINGS_ID)) {
         catalogSort.closeDivSettings();
         return;
       };
@@ -1724,7 +1724,7 @@
       var checkboxSageHidedThreads = document.createElement('INPUT');
       checkboxSageHidedThreads.addEventListener('change',
           function() {
-            catalogSort.saveSettingsSageHidedThreads( this.checked );
+            catalogSort.saveSettingsSageHidedThreads(this.checked);
           });
       checkboxSageHidedThreads.type = 'checkbox';
       checkboxSageHidedThreads.value = 'sageHidedThreads';
@@ -1732,15 +1732,15 @@
 
       var closeButton = document.createElement('INPUT');
       closeButton.type = 'button';
-      closeButton.addEventListener('click', catalogSort.closeDivSettings );
+      closeButton.addEventListener('click', catalogSort.closeDivSettings);
       closeButton.value = "Close";
 
       divSettings.appendChild(checkboxSageHidedThreads);
-      divSettings.appendChild( document.createTextNode("Hideしたスレは下げる(ソート変更後に適用)") );
-      divSettings.appendChild( document.createElement('BR') );
+      divSettings.appendChild(document.createTextNode("Hideしたスレは下げる(ソート変更後に適用)"));
+      divSettings.appendChild(document.createElement('BR'));
       divSettings.appendChild(closeButton);
 
-      document.getElementById( catalogSort.SPAN_ID ).appendChild(divSettings);
+      document.getElementById(catalogSort.SPAN_ID).appendChild(divSettings);
     };
 
     catalogSort.loadSettings =
@@ -1767,7 +1767,7 @@
         if ('complete' === document.readyState) {
           return;
         };
-        setTimeout( override, 0 );
+        setTimeout(override, 0);
       };
 
       catalogSort.overrideRefreshCatalog();
@@ -1775,16 +1775,16 @@
     };
 
     catalogSort.overrideRefreshCatalog = function overrideRefreshCatalog() {
-      if ('function' !== typeof( window.refreshCatalog )) {
+      if ('function' !== typeof(window.refreshCatalog)) {
         return;
       };
       window.refreshCatalog = function ymncRefreshCatalog(manual) {
 
         if (window.autoRefresh) {
-          clearInterval( window.refreshTimer );
+          clearInterval(window.refreshTimer);
         };
 
-        catalogSort.refreshCatalogCells( function done(changed) {
+        catalogSort.refreshCatalogCells(function done(changed) {
           if (window.autoRefresh) {
             window.startTimer(manual || changed ? 5 : window.lastRefresh * 2);
           };
@@ -1798,29 +1798,29 @@
           for (var idx = 0, len = window.catalogThreads.length;
                idx < len ; ++idx) {
 
-            assoc[ window.catalogThreads[idx].threadId ] = window.catalogThreads[idx];
+            assoc[window.catalogThreads[idx].threadId] = window.catalogThreads[idx];
           };
-          var divThreads = document.getElementById( "divThreads" );
+          var divThreads = document.getElementById("divThreads");
 
           for (var dtIdx = 0, dtLen = divThreads.children.length ;
                dtIdx < dtLen ; ++dtIdx) {
 
-            if ("" !== divThreads.children[ dtIdx ].id &&
-                undefined !== assoc[ divThreads.children[ dtIdx ].id ]) {
+            if ("" !== divThreads.children[dtIdx].id &&
+                undefined !== assoc[divThreads.children[dtIdx].id]) {
 
-              dest.push( assoc[ divThreads.children[ dtIdx ].id ] );
-              delete assoc[ divThreads.children[ dtIdx ].id ];
+              dest.push(assoc[divThreads.children[dtIdx].id]);
+              delete assoc[divThreads.children[dtIdx].id];
             };
           };
           window.catalogThreads = dest;
           window.search();
-        } );
+        });
       };
     };
 
     catalogSort.overrideSetCell = function overrideSetCell() {
-      if ('function' !== typeof( window.setCell ) ||
-          'function' !== typeof( window.enableHideThreadLink )) {
+      if ('function' !== typeof(window.setCell) ||
+          'function' !== typeof(window.enableHideThreadLink)) {
         return;
       };
 
@@ -1835,7 +1835,7 @@
         if (utils.getSetting('hide' + catalogSort.boardUri + 'Thread' + element.id)) {
           element.style.display = "none";
           var fragment = document.createDocumentFragment();
-          fragment.appendChild( createShowThreadLink(element) );
+          fragment.appendChild(createShowThreadLink(element));
           fragment.appendChild(element);
           return fragment;
         };
@@ -1874,9 +1874,9 @@
     };
 
     catalogSort.disable = function() {
-      var elt = document.getElementById( catalogSort.SPAN_ID );
+      var elt = document.getElementById(catalogSort.SPAN_ID);
       if (null != elt) {
-        var selectElt = document.getElementById( catalogSort.SELECT_ID );
+        var selectElt = document.getElementById(catalogSort.SELECT_ID);
         selectElt.value = 0;
         catalogSort.sortCatalogCells();
         elt.parentElement.removeChild(elt);
@@ -1884,7 +1884,7 @@
     };
 
     catalogSort.isHereCatalogPage = function() {
-      var divThreads = document.getElementById( "divThreads" );
+      var divThreads = document.getElementById("divThreads");
       return null != divThreads &&
         0 < document.getElementsByClassName("catalogCell").length;
     };
@@ -1915,10 +1915,10 @@
       };
       var elt = catalogSort.makeSortElement();
 
-      divThreads.parentElement.insertBefore( elt, divThreads );
+      divThreads.parentElement.insertBefore(elt, divThreads);
 
       if (undefined !== window.toshakiii.settings.catalogOrderType) {
-        var selectElt = document.getElementById( catalogSort.SELECT_ID );
+        var selectElt = document.getElementById(catalogSort.SELECT_ID);
         if (selectElt.length <= window.toshakiii.settings.catalogOrderType) {
           window.toshakiii.settings.catalogOrderType = 0;
         };
@@ -1977,45 +1977,45 @@
         return;
       };
       var s = "";
-      s += '.ymncMarkdownToolButton { cursor: pointer; border: 1px solid }';
-      s += '.ymncMarkdownToolButton:hover { border: 1px solid white }';
+      s += '.ymncMarkdownToolButton {cursor: pointer; border: 1px solid}';
+      s += '.ymncMarkdownToolButton:hover {border: 1px solid white}';
 
       /* ポップアップ関係 */
-      s += '.tskQuoteblock img { float: none; margin: auto; max-width: 127px; max-height: 127px }';
-      s += '.tskQuoteblock .imgLink { display: block; text-align: center; vertical-align: middle }';
+      s += '.tskQuoteblock img {float: none; margin: auto; max-width: 127px; max-height: 127px}';
+      s += '.tskQuoteblock .imgLink {display: block; text-align: center; vertical-align: middle}';
 
-      s += '.tskQuoteblock .uploadCell { display: inline-block; max-width: 127px;' +
-        'word-wrap: break-word }';
-      s += '.tskQuoteblock .uploadDetails { max-width: 127px }';
+      s += '.tskQuoteblock .uploadCell {display: inline-block; max-width: 127px;' +
+        'word-wrap: break-word}';
+      s += '.tskQuoteblock .uploadDetails {max-width: 127px}';
 
       s += '.tskQuoteblock .multipleUploads .opUploadPanel, ' +
         '.tskQuoteblock .multipleUploads .panelUploads {' +
-        '  float: none; display: block }';
+        '  float: none; display: block}';
 
-      s += '.tskQuoteblock .panelUploads { display: inline-block;';
-      s += '  vertical-align: top }';
+      s += '.tskQuoteblock .panelUploads {display: inline-block;';
+      s += '  vertical-align: top}';
 
       s += '.tskQuoteblock .divMessage {' +
         '  margin-left: 1em;' +
         '  margin-top: 1em;' +
         '  margin-right: 0.5em;' +
-        '  margin-bottom: 0.5em }';
+        '  margin-bottom: 0.5em}';
 
       s += '.tskQuoteblock .innerPost > div:not(.divMessage)' +
         ':not(.tskQuoteblock .multipleUploads .opUploadPanel)' +
-        ':not(.tskQuoteblock .multipleUploads .panelUploads){ display: inline-block; }';
+        ':not(.tskQuoteblock .multipleUploads .panelUploads){display: inline-block;}';
 
       s += '.tskQuoteblock .panelBacklinks + div:not(.panelUploads) {' +
-        '  display: block }';
+        '  display: block}';
 
       s += '#toshakiiiCatalogSortRefreshStatus {' +
         '  display: inline-block;' +
         '  width: 7em;' +
-        '  height: 3ex }';
+        '  height: 3ex}';
 
 
       /* サイトJSのポップアップ用の要素 */
-      s += 'body div.quoteblock { display: none !important }';
+      s += 'body div.quoteblock {display: none !important}';
       var style = document.createElement('STYLE');
       style.type = "text/css";
       style.id = "ymanuchangStyles";
@@ -2048,25 +2048,25 @@
 
     etCetera.markdowns = [
       { name: "Spo",  title: "spoiler",   beg: "[spoiler]", end: "[/spoiler]",
-        className: "spoiler", style: { fontWeight: "normal" } },
+        className: "spoiler", style: { fontWeight: "normal"}},
       { name: "Red",  title: "red",       beg: "==",        end: "==",
-        className: "redText", style: { position: "static" } },
+        className: "redText", style: { position: "static"}},
       { name: "Ita",  title: "italic",    beg: "''",        end: "''",
-        style: { fontStyle: "italic",  fontWeight: "normal" } },
+        style: {fontStyle: "italic",  fontWeight: "normal"}},
       { name: "Bol",  title: "bold",      beg: "'''",       end: "'''",
-        style: { fontStyle: "bold",    fontWeight: "bold" } },
+        style: {fontStyle: "bold",    fontWeight: "bold"}},
       { name: "Und",  title: "underline", beg: "__",        end: "__",
-        style: { textDecoration: "underline", fontWeight: "normal" } },
+        style: {textDecoration: "underline", fontWeight: "normal"}},
       { name: "Str",  title: "strike",    beg: "~~",        end: "~~",
-        style: { textDecoration: "line-through", fontWeight: "normal" } },
+        style: {textDecoration: "line-through", fontWeight: "normal"}},
       { name: "mem",  title: "meme",      beg: "[meme]",    end: "[/meme]",
-        className: "memeText", style: { fontWeight: "normal" } },
+        className: "memeText", style: { fontWeight: "normal"}},
       { name: "Aut",  title: "autism",    beg: "[autism]",  end: "[/autism]",
-        className: "autismText", style: { fontWeight: "normal" } },
+        className: "autismText", style: { fontWeight: "normal"}},
       { name: "AA",   title: "Ascii Art", beg: "[aa]",      end: "[/aa]",
-        style: { fontWeight: "normal" } },
+        style: { fontWeight: "normal"}},
       { name: "code", title: "code",      beg: "[code]",    end: "[/code]",
-        style: { fontWeight: "normal" } }
+        style: { fontWeight: "normal"}}
     ];
 
     etCetera.markdownTool = function() {
@@ -2083,7 +2083,7 @@
       if (fieldMessage) {
         etCetera.setMarkdownToolOnTextAreaContextMenu(fieldMessage, fieldMessage.id);
 
-        feWrapper.quickReplyOnLoadHandlers.push( etCetera.setMarkdownToolOnQrBodyContextMenu );
+        feWrapper.quickReplyOnLoadHandlers.push(etCetera.setMarkdownToolOnQrBodyContextMenu);
       };
     };
 
@@ -2106,18 +2106,18 @@
       };
 
       commentTh.style.width = "5em";
-      etCetera.setMarkdownToolButton( commentTh, fieldMessage );
+      etCetera.setMarkdownToolButton(commentTh, fieldMessage);
 
       return true;
     };
 
-    etCetera.setMarkdownToolButton = function( container, textarea) {
+    etCetera.setMarkdownToolButton = function(container, textarea) {
 
       for (var markdownIndex = 0, markdownLen = etCetera.markdowns.length;
            markdownIndex < markdownLen ; ++markdownIndex) {
 
         var Anchor = document.createElement("A");
-        var markdown = etCetera.markdowns[ markdownIndex ];
+        var markdown = etCetera.markdowns[markdownIndex];
         if (markdown.className)
           Anchor.className = markdown.className;
         Anchor.className = Anchor.className + " ymncMarkdownToolButton";
@@ -2129,16 +2129,16 @@
         if (markdown.title)
           Anchor.title = markdown.title;
 
-        Anchor.appendChild( document.createTextNode( markdown.name ) );
+        Anchor.appendChild(document.createTextNode(markdown.name));
 
         (function() {
           var index = markdownIndex;
           Anchor.addEventListener("click", (function closure() {
-            etCetera.applyMarkdown( textarea, etCetera.markdowns[index]);
-          } ) );
+            etCetera.applyMarkdown(textarea, etCetera.markdowns[index]);
+          }));
         })();
 
-        container.appendChild( document.createTextNode(" ") );
+        container.appendChild(document.createTextNode(" "));
         container.appendChild(Anchor);
       };
     };
@@ -2184,7 +2184,7 @@
       for (var markdownIndex = 0, markdownLength = etCetera.markdowns.length;
            markdownIndex < markdownLength; ++markdownIndex) {
 
-        var markdown = etCetera.markdowns[ markdownIndex ];
+        var markdown = etCetera.markdowns[markdownIndex];
         var menuitem = document.createElement('MENUITEM');
 
         if (markdown.className)
@@ -2235,7 +2235,7 @@
       if (fieldMessage) {
         fieldMessage.contentEditable = true;
         fieldMessage.title = "Ctrl-V to upload";
-        fieldMessage.addEventListener('paste', fieldMessageOnPaste );
+        fieldMessage.addEventListener('paste', fieldMessageOnPaste);
       };
 
       if (window.show_quick_reply) {
@@ -2244,7 +2244,7 @@
           var r = original_show_quick_reply();
           var qrbody = document.getElementById("qrbody");
           if (qrbody && "1" !== qrbody.getAttribute("data-ymnc-initialized")) {
-            qrbody.addEventListener('paste', fieldMessageOnPaste );
+            qrbody.addEventListener('paste', fieldMessageOnPaste);
             qrbody.title = "Ctrl-V to upload";
             qrbody.setAttribute("data-ymnc-initialized","1");
           };
@@ -2276,7 +2276,7 @@
       if (0 < navList.length) {
         var anchor = document.createElement("A");
         anchor.style.cursor = "pointer";
-        anchor.appendChild( document.createTextNode(" [(山仮)UserJS]") );
+        anchor.appendChild(document.createTextNode(" [(山仮)UserJS]"));
         anchor.onclick = etCetera.showHideEditBoxForUserJs;
 
         navList[0].appendChild(anchor);
@@ -2331,7 +2331,7 @@
       editboxUserJsDiv.id = "editboxUserJsDiv";
       editboxUserJsDiv.style.background = "#f0e0d6";
       editboxUserJsDiv.style.borderColor = "#d9bfb7";
-      etCetera.setInnerPostStyle( editboxUserJsDiv.style );
+      etCetera.setInnerPostStyle(editboxUserJsDiv.style);
       editboxUserJsDiv.style.opacity = "1";
       editboxUserJsDiv.style.resize = "both";
       editboxUserJsDiv.style.overflow = "auto";
@@ -2342,22 +2342,22 @@
       editboxUserJsDiv.style.maxHeight = "97%";
 
       var editboxUserJsTitle = document.createElement("DIV");
-      editboxUserJsTitle.appendChild( document.createTextNode("UserJS") );
-      editboxUserJsTitle.appendChild( document.createElement("BR") );
-      editboxUserJsTitle.appendChild( document.createTextNode("warning: javascript can send spam and any attack") );
+      editboxUserJsTitle.appendChild(document.createTextNode("UserJS"));
+      editboxUserJsTitle.appendChild(document.createElement("BR"));
+      editboxUserJsTitle.appendChild(document.createTextNode("warning: javascript can send spam and any attack"));
 
       var editboxUserJsCloseButton = document.createElement("DIV");
       editboxUserJsCloseButton.style.float = "right";
       editboxUserJsCloseButton.style.margin = "0.5em";
       editboxUserJsCloseButton.style.cursor = "pointer";
       editboxUserJsCloseButton.onclick = etCetera.showHideEditBoxForUserJs;
-      editboxUserJsCloseButton.appendChild( document.createTextNode("×") );
+      editboxUserJsCloseButton.appendChild(document.createTextNode("×"));
 
       var editboxUserJs = document.createElement("TEXTAREA");
       editboxUserJs.id = "editboxUserJs";
       editboxUserJs.style.maxWidth = "98%";
       editboxUserJs.style.width = "100%";
-      editboxUserJs.style.height = "calc( 100% - 7em )";
+      editboxUserJs.style.height = "calc(100% - 7em)";
       editboxUserJs.style.fontFamily = "monospace";
       editboxUserJs.style.disable = "block";
       editboxUserJs.style.resize = "none";
@@ -2366,7 +2366,7 @@
       };
 
       var editboxUserJsSaveButton = document.createElement("BUTTON");
-      editboxUserJsSaveButton.appendChild( document.createTextNode("save custom Javascript" ) );
+      editboxUserJsSaveButton.appendChild(document.createTextNode("save custom Javascript"));
       editboxUserJsSaveButton.onclick = etCetera.saveAndRunUserJs;
 
       editboxUserJsContainer.appendChild(blackoutCurtain);
@@ -2392,8 +2392,8 @@
 
     etCetera.excuteUserJs = function() {
       if (localStorage.user_js) {
-        try { eval( localStorage.user_js ); }
-        catch(e) { alert(e); };
+        try {eval(localStorage.user_js);}
+        catch(e) {alert(e);};
       };
     };
 
@@ -2438,7 +2438,7 @@
       var innerPostList = document.getElementsByClassName("innerPost");
       var srcStyle;
       if (0 < innerPostList.length) {
-        srcStyle = window.getComputedStyle( innerPostList[0], null );
+        srcStyle = window.getComputedStyle(innerPostList[0], null);
       };
       if (srcStyle) {
         destStyle.background = srcStyle.backgroundColor;
@@ -2477,7 +2477,7 @@
       var label = document.createElement('LABEL');
       label.style.display = 'inline';
       label.appendChild(input);
-      label.appendChild( document.createTextNode( "右下マスコット非表示" ) );
+      label.appendChild(document.createTextNode("右下マスコット非表示"));
 
       var origin = document.querySelector('select[name=switchcolorcontrol]');
 
@@ -2494,10 +2494,10 @@
 
       if (ev) {
         etCetera.hideLibrejpBottomLeftMascot = ev.target.checked;
-        utils.setSetting('ymncLibrejpBottomLeftMascot', etCetera.hideLibrejpBottomLeftMascot );
+        utils.setSetting('ymncLibrejpBottomLeftMascot', etCetera.hideLibrejpBottomLeftMascot);
       };
 
-      var style = document.getElementById( style_id );
+      var style = document.getElementById(style_id);
 
       if (etCetera.hideLibrejpBottomLeftMascot) {
 
@@ -2506,8 +2506,8 @@
           style.type = "text/css";
           style.id = style_id;
           style.innerHTML =
-            "body:after, body:before { content: none !important; }"
-            + "body:before { content: none !important; }";
+            "body:after, body:before {content: none !important;}"
+            + "body:before {content: none !important;}";
           document.head.appendChild(style);
         };
 
@@ -2536,11 +2536,11 @@
       var label = document.createElement('LABEL');
       label.style.display = 'block';
       label.appendChild(input);
-      label.appendChild( document.createTextNode('常に投稿ファイル名をマスクする') );
+      label.appendChild(document.createTextNode('常に投稿ファイル名をマスクする'));
 
       var origin = document.getElementById('postBox');
       if (origin) {
-        origin.insertBefore( label, origin.firstChild );
+        origin.insertBefore(label, origin.firstChild);
       };
     };
 
@@ -2548,17 +2548,17 @@
 
       if (ev) {
         etCetera.maskFilename = ev.target.checked;
-        utils.setSetting('ymncMaskFilename', etCetera.maskFilename );
+        utils.setSetting('ymncMaskFilename', etCetera.maskFilename);
       };
 
-      etCetera.maskAllFilename( etCetera.maskFilename );
+      etCetera.maskAllFilename(etCetera.maskFilename);
     };
 
     /* filename から拡張子を得る。
      * 拡張子の長さが"."を含めずにmaxExtLen以上の長さの場合は、拡張子とみなさず空白を返す。
      * maxExtLen: 省略時は4
      */
-    etCetera.getFilenameExtension = function( filename, maxExtLen) {
+    etCetera.getFilenameExtension = function(filename, maxExtLen) {
 
       if (! maxExtLen) {
         maxExtLen = 4;
@@ -2579,13 +2579,13 @@
       return lastPart;
     };
 
-    etCetera.defineProperty = function( obj, propertyName, propertyValue) {
+    etCetera.defineProperty = function(obj, propertyName, propertyValue) {
 
-      Object.defineProperty( obj, propertyName,
+      Object.defineProperty(obj, propertyName,
           { enumerable: false,
             configurable: false,
             writable: true,
-            value: propertyValue } );
+            value: propertyValue});
     };
 
     /* 設定によりFile名を自動的に設定する時の関数 */
@@ -2612,8 +2612,8 @@
         if (doMaskIfTrue && file.ymncFilenameMaskMode === undefined) {
           /* マスク要求、現在マスクしていないからマスクする */
           file.ymncOriginalName = file.name.toString(); /* cloneがわりのtoString */
-          etCetera.defineProperty( file, 'name',
-              randomNum.toString() + etCetera.getFilenameExtension( file.name ) );
+          etCetera.defineProperty(file, 'name',
+              randomNum.toString() + etCetera.getFilenameExtension(file.name));
           file.ymncFilenameMaskMode = "random";
 
         } else if (doMaskIfTrue && file.ymncFilenameMaskMode !== undefined) {
@@ -2625,11 +2625,11 @@
 
         } else if (! doMaskIfTrue && file.ymncFilenameMaskMode === "random") {
           /* マスク外し要求、その通り外す */
-          etCetera.defineProperty( file, 'name', file.ymncOriginalName );
+          etCetera.defineProperty(file, 'name', file.ymncOriginalName);
           file.ymncFilenameMaskMode = undefined;
         } else {
-          document.body.appendChild( document.createTextNode(
-            "yamanu-changにバグ(etCetera.maskAllFilename)" ) );
+          document.body.appendChild(document.createTextNode(
+            "yamanu-changにバグ(etCetera.maskAllFilename)"));
         };
 
         ++randomNum;
@@ -2658,8 +2658,8 @@
              ++sfIdx, ++nlIdx) {
 
           var nameLabel = nameLabelList[nlIdx];
-          while ( nameLabel.firstChild) {
-            nameLabel.removeChild( nameLabel.firstChild );
+          while (nameLabel.firstChild) {
+            nameLabel.removeChild(nameLabel.firstChild);
           };
 
           var nameInput = document.createElement("INPUT");
@@ -2669,68 +2669,68 @@
           var setFilenameFunc = (function() {
             var index = sfIdx;
             return function (ev) {
-              if (window.selectedFiles[ index ].name === ev.target.value) {
+              if (window.selectedFiles[index].name === ev.target.value) {
                 return true;
               };
-              if (undefined === window.selectedFiles[ index ].ymncFilenameMaskMode) {
+              if (undefined === window.selectedFiles[index].ymncFilenameMaskMode) {
                 /* cloneがわりのtoString */
-                window.selectedFiles[ index ].ymncOriginalName =
-                  window.selectedFiles[ index ].name.toString();
+                window.selectedFiles[index].ymncOriginalName =
+                  window.selectedFiles[index].name.toString();
               };
-              window.selectedFiles[ index ].ymncFilenameMaskMode = "user";
-              etCetera.defineProperty( window.selectedFiles[ index ],
-                  "name", ev.target.value );
+              window.selectedFiles[index].ymncFilenameMaskMode = "user";
+              etCetera.defineProperty(window.selectedFiles[index],
+                  "name", ev.target.value);
               return true;
             };
-          } )();
-          nameInput.addEventListener("blur", setFilenameFunc );
-          /* nameInput.addEventListener("keyup", setFilenameFunc ); */
+          })();
+          nameInput.addEventListener("blur", setFilenameFunc);
+          /* nameInput.addEventListener("keyup", setFilenameFunc); */
 
           var modosuButton = document.createElement("SPAN");
-          modosuButton.appendChild( document.createTextNode("元") );
-          modosuButton.title = "元のファイル名に戻します(" + window.selectedFiles[ sfIdx ].ymncOriginalName + ")";
+          modosuButton.appendChild(document.createTextNode("元"));
+          modosuButton.title = "元のファイル名に戻します(" + window.selectedFiles[sfIdx].ymncOriginalName + ")";
           var setOriginalFilenameFunc = (function() {
             var index = sfIdx;
             return function (ev) {
-              if (undefined !== window.selectedFiles[ index ].ymncOriginalName) {
-                etCetera.defineProperty( window.selectedFiles[ index ],
-                    "name", window.selectedFiles[ index ].ymncOriginalName );
-                window.selectedFiles[ index ].ymncFilenameMaskMode = undefined;
+              if (undefined !== window.selectedFiles[index].ymncOriginalName) {
+                etCetera.defineProperty(window.selectedFiles[index],
+                    "name", window.selectedFiles[index].ymncOriginalName);
+                window.selectedFiles[index].ymncFilenameMaskMode = undefined;
               };
               updateSelectedFilenameLabels();
               return true;
             };
-          } )();
-          modosuButton.addEventListener("click", setOriginalFilenameFunc );
+          })();
+          modosuButton.addEventListener("click", setOriginalFilenameFunc);
 
           var randomizeButton = document.createElement("SPAN");
-          randomizeButton.appendChild( document.createTextNode("乱") );
+          randomizeButton.appendChild(document.createTextNode("乱"));
           randomizeButton.title = "ファイル名をランダムにします";
           var setRandomFilenameFunc = (function() {
             var index = sfIdx;
             return function (ev) {
-              if (undefined === window.selectedFiles[ index ].ymncOriginalName) {
-                window.selectedFiles[ index ].ymncOriginalName =
-                  window.selectedFiles[ index ].name.toString();
+              if (undefined === window.selectedFiles[index].ymncOriginalName) {
+                window.selectedFiles[index].ymncOriginalName =
+                  window.selectedFiles[index].name.toString();
               };
-              etCetera.defineProperty( window.selectedFiles[ index ],
+              etCetera.defineProperty(window.selectedFiles[index],
                   "name", ((+new Date()) + Math.floor(Math.random() * 99)).toString()
                   + etCetera.getFilenameExtension(
-                    window.selectedFiles[ index ].ymncOriginalName ) );
-              window.selectedFiles[ index ].ymncFilenameMaskMode = "random";
+                    window.selectedFiles[index].ymncOriginalName));
+              window.selectedFiles[index].ymncFilenameMaskMode = "random";
 
               updateSelectedFilenameLabels();
               return true;
             };
-          } )();
-          randomizeButton.addEventListener("click", setRandomFilenameFunc );
+          })();
+          randomizeButton.addEventListener("click", setRandomFilenameFunc);
 
           modosuButton.style.cursor = 'pointer';
           randomizeButton.style.cursor = 'pointer';
 
           nameLabel.appendChild(nameInput);
           nameLabel.appendChild(modosuButton);
-          nameLabel.appendChild( document.createTextNode(" ") );
+          nameLabel.appendChild(document.createTextNode(" "));
           nameLabel.appendChild(randomizeButton);
 
         };
@@ -2766,7 +2766,7 @@
       return 1;
     };
 
-    etCetera.overrideEmbedNiconicoButton = function( niconico_wrapper) {
+    etCetera.overrideEmbedNiconicoButton = function(niconico_wrapper) {
       if ("1" === niconico_wrapper.getAttribute("data-tsk-overrode")) {
         return 0;
       };
@@ -2776,8 +2776,8 @@
       };
       var embedButton = embedButtons[0];
       embedButton.onclick = null;
-      embedButton.addEventListener("click", etCetera.onNiconicoEmbedButtonClick );
-      embedButton.replaceChild( document.createTextNode("embeD") , embedButton.firstChild );
+      embedButton.addEventListener("click", etCetera.onNiconicoEmbedButtonClick);
+      embedButton.replaceChild(document.createTextNode("embeD") , embedButton.firstChild);
       niconico_wrapper.setAttribute("data-tsk-overrode","1");
       return 1;
     };
@@ -2787,12 +2787,12 @@
       if (0 < iframes.length) {
         var brs = this.parentElement.getElementsByTagName('BR');
         for (var ifIdx = 0, ifLen = iframes.length; ifIdx < ifLen ; ++ifIdx) {
-          iframes[ifIdx].parentElement.removeChild( iframes[ifIdx] );
+          iframes[ifIdx].parentElement.removeChild(iframes[ifIdx]);
         };
         for (var brIdx = 0, brLen = brs.length; brIdx < brLen ; ++brIdx) {
-          brs[brIdx].parentElement.removeChild( brs[brIdx] );
+          brs[brIdx].parentElement.removeChild(brs[brIdx]);
         };
-        this.replaceChild( document.createTextNode("embeD"), this.firstChild );
+        this.replaceChild(document.createTextNode("embeD"), this.firstChild);
         ev.preventDefault();
         return false;
       };
@@ -2807,9 +2807,9 @@
       iframe.frameborder = 0;
       iframe.allowfullscreen = true;
       iframe.src = youtubeUri;
-      this.parentElement.appendChild( document.createElement('BR') );
+      this.parentElement.appendChild(document.createElement('BR'));
       this.parentElement.appendChild(iframe);
-      this.replaceChild( document.createTextNode("closE"), this.firstChild );
+      this.replaceChild(document.createTextNode("closE"), this.firstChild);
       ev.preventDefault();
       return false;
     };
@@ -2832,17 +2832,17 @@
       var divs = this.parentElement.getElementsByTagName('DIV');
       if (0 < iframes.length || 0 < divs.length) {
         for (var ifIdx = 0, ifLen = iframes.length; ifIdx < ifLen ; ++ifIdx) {
-          iframes[ifIdx].parentElement.removeChild( iframes[ifIdx] );
+          iframes[ifIdx].parentElement.removeChild(iframes[ifIdx]);
         };
         for (var dvIdx = 0, dvLen = divs.length; dvIdx < dvLen ; ++dvIdx) {
-          divs[dvIdx].parentElement.removeChild( divs[dvIdx] );
+          divs[dvIdx].parentElement.removeChild(divs[dvIdx]);
         };
         var brs = this.parentElement.getElementsByTagName('BR');
         for (var brIdx = 0, brLen = brs.length; brIdx < brLen ; ++brIdx) {
-          brs[brIdx].parentElement.removeChild( brs[brIdx] );
+          brs[brIdx].parentElement.removeChild(brs[brIdx]);
         };
 
-        this.replaceChild( document.createTextNode("embeD"), this.firstChild );
+        this.replaceChild(document.createTextNode("embeD"), this.firstChild);
         ev.preventDefault();
         return false;
       };
@@ -2853,15 +2853,15 @@
         var br = document.createElement('BR');
         var anchor = document.createElement("A");
         anchor.href = this.href;
-        anchor.appendChild( document.createTextNode(this.href) );
+        anchor.appendChild(document.createTextNode(this.href));
 
-        div.appendChild( document.createTextNode("埋め込み不可: https —×→ http" ) );
+        div.appendChild(document.createTextNode("埋め込み不可: https —×→ http"));
         div.appendChild(br);
         div.appendChild(anchor);
 
         this.parentElement.appendChild(div);
 
-        this.replaceChild( document.createTextNode("closE"), this.firstChild );
+        this.replaceChild(document.createTextNode("closE"), this.firstChild);
         /*ev.preventDefault();
          return false;*/
       };
@@ -2874,9 +2874,9 @@
       iframe.frameborder = 0;
       iframe.allowfullscreen = true;
       iframe.src = videoUri;
-      this.parentElement.appendChild( document.createElement('BR') );
+      this.parentElement.appendChild(document.createElement('BR'));
       this.parentElement.appendChild(iframe);
-      this.replaceChild( document.createTextNode("closE"), this.firstChild );
+      this.replaceChild(document.createTextNode("closE"), this.firstChild);
       ev.preventDefault();
       return false;
     };
@@ -2890,30 +2890,30 @@
       var break_ = false;
       var continue_ = true;
 
-      iloops.push( function() {
+      iloops.push(function() {
         youtubeWrappers = document.getElementsByClassName('youtube_wrapper');
         idx = youtubeWrappers.length - 1;
-      } ).push( function() {
+      }).push(function() {
         if (-1 >= idx) {
           return break_;
         };
-        etCetera.overrideEmbedYoutubeButton( youtubeWrappers[ idx ] );
+        etCetera.overrideEmbedYoutubeButton(youtubeWrappers[idx]);
         --idx;
         return continue_;
-      } ).push( function() {
+      }).push(function() {
         niconicoWrappers = document.getElementsByClassName('niconico_wrapper');
         idx = niconicoWrappers.length - 1;
-      } ).push( function() {
+      }).push(function() {
         if (-1 >= idx) {
           return break_;
         };
-        etCetera.overrideEmbedNiconicoButton( niconicoWrappers[ idx ] );
+        etCetera.overrideEmbedNiconicoButton(niconicoWrappers[idx]);
         --idx;
         return continue_;
-      } ).beginAsync();
+      }).beginAsync();
     };
 
-    etCetera.defaultEmbedOpen = function( embedButton, playerWrapper, options) {
+    etCetera.defaultEmbedOpen = function(embedButton, playerWrapper, options) {
       var iframe = document.createElement('IFRAME');
       iframe.width = options.width || 560;
       iframe.height = options.height || 315;
@@ -2932,9 +2932,9 @@
       button.href = anchor.href;
       playerWrapper.style.display = 'none';
       button.textContent = "embeD";
-      wrapper.appendChild( document.createTextNode(" [") );
+      wrapper.appendChild(document.createTextNode(" ["));
       wrapper.appendChild(button);
-      wrapper.appendChild( document.createTextNode("]") );
+      wrapper.appendChild(document.createTextNode("]"));
       wrapper.appendChild(playerWrapper);
 
       button.setAttribute('data-embeded', "false");
@@ -2944,29 +2944,29 @@
         if ("false" === button.getAttribute('data-embeded')) {
           button.setAttribute('data-embeded', "true");
           button.textContent = "closE";
-          etCetera.defaultEmbedOpen( button, playerWrapper, options );
+          etCetera.defaultEmbedOpen(button, playerWrapper, options);
           playerWrapper.style.display = 'inline';
           return;
         };
         button.textContent = "embeD";
         button.setAttribute('data-embeded', "false");
         if ('remove' === options.closeStyle) {
-          while(playerWrapper.firstChild) {
-            playerWrapper.removeChild( playerWrapper.firstChild );
+          while (playerWrapper.firstChild) {
+            playerWrapper.removeChild(playerWrapper.firstChild);
           };
         };
         playerWrapper.style.display = 'none';
         return;
-      } );
+      });
 
-      anchor.parentNode.insertBefore( wrapper, anchor.nextSibling );
+      anchor.parentNode.insertBefore(wrapper, anchor.nextSibling);
     };
 
     etCetera.enableSoundcloudEmbed = function(anchor) {
-      if (( 0 !== anchor.href.lastIndexOf( "https://soundcloud.com/", 0 ) &&
-            0 !== anchor.href.lastIndexOf( "http://soundcloud.com/", 0 ) ) ||
+      if ((0 !== anchor.href.lastIndexOf("https://soundcloud.com/", 0) &&
+           0 !== anchor.href.lastIndexOf("http://soundcloud.com/", 0)) ||
           anchor.href == "https://soundcloud.com/" ||
-          utils.endsWith( anchor.pathname, "/tracks" ) ||
+          utils.endsWith(anchor.pathname, "/tracks") ||
           3 >= anchor.href.toString().split("/").length) {
         return false;
       };
@@ -2980,14 +2980,14 @@
         + "&auto_play=true";
       o.closeStyle = 'remove';
 
-      etCetera.appendEmbedControl(anchor, o );
+      etCetera.appendEmbedControl(anchor, o);
       return true;
     };
 
     etCetera.enableYoutubeEmbed = function(anchor) {
       if (0 !== anchor.href.lastIndexOf("https://youtu.be/", 0) &&
           0 !== anchor.href.lastIndexOf("https://www.youtube.com/watch?") &&
-          0 !== anchor.href.lastIndexOf("http://youtu.be/", 0 ) &&
+          0 !== anchor.href.lastIndexOf("http://youtu.be/", 0) &&
           0 !== anchor.href.lastIndexOf("http://www.youtube.com/watch?")) {
         return false;
       };
@@ -3013,7 +3013,7 @@
       o.closeStyle = 'remove';
       o.allowfullscreen = "true";
 
-      etCetera.appendEmbedControl(anchor, o );
+      etCetera.appendEmbedControl(anchor, o);
       return true;
     };
 
@@ -3026,7 +3026,7 @@
       fakeRefresh.addEventListener("click",function() {
         window.lastReplyId = 0;
         window.refreshPosts(true);
-      } );
+      });
     };
 
     etCetera.presetImageGeometry = function() {
@@ -3034,12 +3034,12 @@
       var imgLinks;
       var idx = 0;
       var len = 0;
-      iloops.push( function() {
+      iloops.push(function() {
         imgLinks = document.getElementsByClassName('imgLink');
-      } ).push( function() {
+      }).push(function() {
         idx = 0;
         len = imgLinks.length;
-      } ).push( function() {
+      }).push(function() {
         if (idx >= len) {
           return false;
         };
@@ -3052,7 +3052,7 @@
         imgLink.style.minHeight = 255;
 
         return true;
-      } ).beginAsync();
+      }).beginAsync();
 
     };
 
@@ -3061,17 +3061,17 @@
       var leftpad = utils.leftpad;
       var year, month, date, hours, minutes, seconds, day;
 
-      [ year, month, date, day, hours, minutes, seconds ] =
+      [year, month, date, day, hours, minutes, seconds] =
         utils.getYearMonthDateDayHoursMinutesSeconds(d);
 
       var text =
             year + "/"
-            + leftpad( month + 1, 2, "0") + "/"
-            + leftpad( date , 2, "0") +
+            + leftpad(month + 1, 2, "0") + "/"
+            + leftpad(date , 2, "0") +
             "(" + d.toLocaleString('ja', {weekday:'short'}) + ")"
-            + leftpad( hours, 2, "0") + ":" +
-            leftpad( minutes, 2, "0") + ":" +
-            leftpad( seconds, 2, "0");
+            + leftpad(hours, 2, "0") + ":" +
+            leftpad(minutes, 2, "0") + ":" +
+            leftpad(seconds, 2, "0");
       return text;
     };
 
@@ -3099,7 +3099,7 @@
           return etCetera.jaDateFormat(d);
         };
         return d.toLocaleString(firstLanguage)
-          + ' ('+d.toLocaleString(firstLanguage, {weekday:"short"} )+')';
+          + ' ('+d.toLocaleString(firstLanguage, {weekday:"short"})+')';
       };
       return undefined;
     };
@@ -3110,16 +3110,16 @@
         if ('complete' === document.readyState) {
           return;
         };
-        setTimeout( overrideDateFromString, 0 );
+        setTimeout(overrideDateFromString, 0);
         return;
       };
 
-      if ('function' !== typeof( window.dateFromString )) {
+      if ('function' !== typeof(window.dateFromString)) {
         return;
       };
 
       window.dateFromString = etCetera.dateFromStringForOverride;
-      if ('function' === typeof( window.updateTimes )) {
+      if ('function' === typeof(window.updateTimes)) {
         window.updateTimes();
       };
     };
@@ -3129,11 +3129,11 @@
         if ('complete' === document.readyState) {
           return;
         };
-        setTimeout( fixGoogleChromeMp3Mime, 0 );
+        setTimeout(fixGoogleChromeMp3Mime, 0);
         return;
       };
-      if ('function' !== typeof( window.sendReplyData ) ||
-          'function' !== typeof( window.checkExistance )) {
+      if ('function' !== typeof(window.sendReplyData) ||
+          'function' !== typeof(window.checkExistance)) {
         return;
       };
 
@@ -3141,13 +3141,13 @@
       window.checkExistance = function ymnccheckExistance() {
         if ('audio/mp3' === arguments[0].type) {
           arguments[0].type = 'audio/mpeg';
-          Object.defineProperty( arguments[0], "type",
+          Object.defineProperty(arguments[0], "type",
               { enumerable: false,
                 configurable: false,
                 writable: true,
-                value: 'audio/mpeg' } );
+                value: 'audio/mpeg'});
         };
-        return originalCheckExistance.apply( window, Array.prototype.slice.call(arguments) );
+        return originalCheckExistance.apply(window, Array.prototype.slice.call(arguments));
       };
 
       var fixMp3BlobMime = function(files) {
@@ -3157,11 +3157,11 @@
           var IANA_mp3_mime = 'audio/mpeg';
           var Chrome_mp3_mime = 'audio/mp3';
           for (var i in files) {
-            var file = files[ i ];
-            if (0 == file.content.indexOf( data_audio_mp3 )) {
+            var file = files[i];
+            if (0 == file.content.indexOf(data_audio_mp3)) {
               file.mime = IANA_mp3_mime;
               file.content = data_audio_mpeg
-                + file.content.substring( data_audio_mp3.length );
+                + file.content.substring(data_audio_mp3.length);
             };
           };
           i = undefined;
@@ -3175,13 +3175,13 @@
       var originalSendReplyData = window.sendReplyData;
       window.sendReplyData = function ymncSendReplyData(files) {
         fixMp3BlobMime(files);
-        return originalSendReplyData.apply( window, Array.prototype.slice.call(arguments) );
+        return originalSendReplyData.apply(window, Array.prototype.slice.call(arguments));
       };
 
       var originalQRsendReplyData = window.QRsendReplyData;
       window.QRsendReplyData = function ymncQRsendReplyData(files) {
         fixMp3BlobMime(files);
-        return originalQRsendReplyData.apply( window, Array.prototype.slice.call(arguments) );
+        return originalQRsendReplyData.apply(window, Array.prototype.slice.call(arguments));
       };
     };
 
@@ -3217,26 +3217,26 @@
       var showText = document.createTextNode('[Show hidden posting form]');
       showHideAnchor.appendChild(showText);
 
-      showHideAnchor.setAttribute( etCetera.isHiddenCDAName, '1' );
+      showHideAnchor.setAttribute(etCetera.isHiddenCDAName, '1');
       showHideAnchor.addEventListener('click', etCetera.showHidePostingForm);
       postingForm.style.display = 'none';
 
-      topAnchorElement.parentElement.insertBefore( showHideAnchor, topAnchorElement.nextSibling );
+      topAnchorElement.parentElement.insertBefore(showHideAnchor, topAnchorElement.nextSibling);
     };
 
     etCetera.showHidePostingForm = function() {
       var showHideAnchor = this;
       var postingForm = document.getElementById('postingForm');
-      if ('0' === showHideAnchor.getAttribute( etCetera.isHiddenCDAName )) {
-        showHideAnchor.setAttribute( etCetera.isHiddenCDAName, '1' );
+      if ('0' === showHideAnchor.getAttribute(etCetera.isHiddenCDAName)) {
+        showHideAnchor.setAttribute(etCetera.isHiddenCDAName, '1');
         postingForm.style.display = 'none';
-        showHideAnchor.replaceChild( document.createTextNode('[Show hidden posting form]'),
-            showHideAnchor.firstChild );
+        showHideAnchor.replaceChild(document.createTextNode('[Show hidden posting form]'),
+            showHideAnchor.firstChild);
       } else {
-        showHideAnchor.setAttribute( etCetera.isHiddenCDAName, '0' );
+        showHideAnchor.setAttribute(etCetera.isHiddenCDAName, '0');
         postingForm.style.display = '';
-        showHideAnchor.replaceChild( document.createTextNode('[Hide a posting form]'),
-            showHideAnchor.firstChild );
+        showHideAnchor.replaceChild(document.createTextNode('[Hide a posting form]'),
+            showHideAnchor.firstChild);
       };
     };
 
@@ -3262,11 +3262,11 @@
         return;
       };
       var showHideAnchor = document.createElement('A');
-      showHideAnchor.appendChild( document.createTextNode('[+report/del form]') );
-      showHideAnchor.setAttribute( etCetera.isHiddenCDAName, '1' );
+      showHideAnchor.appendChild(document.createTextNode('[+report/del form]'));
+      showHideAnchor.setAttribute(etCetera.isHiddenCDAName, '1');
       showHideAnchor.addEventListener('click', etCetera.showHideContentAction);
 
-      contentAction.parentElement.insertBefore( showHideAnchor, contentAction );
+      contentAction.parentElement.insertBefore(showHideAnchor, contentAction);
       contentAction.style.visibility = 'hidden';
     };
 
@@ -3279,16 +3279,16 @@
       if (null == target) {
         return;
       };
-      if ('0' === showHideAnchor.getAttribute( etCetera.isHiddenCDAName )) {
-        showHideAnchor.setAttribute( etCetera.isHiddenCDAName, '1' );
+      if ('0' === showHideAnchor.getAttribute(etCetera.isHiddenCDAName)) {
+        showHideAnchor.setAttribute(etCetera.isHiddenCDAName, '1');
         target.style.visibility = 'hidden';
-        showHideAnchor.replaceChild( document.createTextNode(toShowText),
-            showHideAnchor.firstChild );
+        showHideAnchor.replaceChild(document.createTextNode(toShowText),
+            showHideAnchor.firstChild);
       } else {
-        showHideAnchor.setAttribute( etCetera.isHiddenCDAName, '0' );
+        showHideAnchor.setAttribute(etCetera.isHiddenCDAName, '0');
         target.style.visibility = 'visible';
-        showHideAnchor.replaceChild( document.createTextNode(toHideText),
-            showHideAnchor.firstChild );
+        showHideAnchor.replaceChild(document.createTextNode(toHideText),
+            showHideAnchor.firstChild);
       };
     };
 
@@ -3310,11 +3310,11 @@
         };
         return continue_;
       };
-      utils.foreEachElementDescendants( labelRefresh.parentElement              , f );
+      utils.foreEachElementDescendants(labelRefresh.parentElement              , f);
       if (null !== target) {
         return target;
       };
-      utils.foreEachElementDescendants( labelRefresh.parentElement.parentElement, f );
+      utils.foreEachElementDescendants(labelRefresh.parentElement.parentElement, f);
 
       return target;
     };
@@ -3342,12 +3342,12 @@
       };
 
       if (autoRefreshCheckbox.checked !==
-          ( 0 !== settings.getMiniData('ThreadAutoRefresh') )) {
+          (0 !== settings.getMiniData('ThreadAutoRefresh'))) {
         autoRefreshCheckbox.checked = !autoRefreshCheckbox.checked;
 
         window.changeRefresh();
       };
-      autoRefreshCheckbox.addEventListener('change', etCetera.autoRefreshCheckboxOnChange );
+      autoRefreshCheckbox.addEventListener('change', etCetera.autoRefreshCheckboxOnChange);
     };
 
     etCetera.autoRefreshCheckboxOnChange = function() {
@@ -3363,16 +3363,16 @@
     etCetera.procTitle = function procTitle() {
       var boardUri = feWrapper.getBoardUri();
       var title = document.title;
-      var newReplys = title.match( etCetera.titleNewReplysCountReg );
+      var newReplys = title.match(etCetera.titleNewReplysCountReg);
       if (null === newReplys) {
         newReplys = "";
       } else {
         newReplys = newReplys[1];
       };
-      title = title.substring( newReplys.length );
+      title = title.substring(newReplys.length);
       var prefix = '/' + boardUri + '/ - ';
-      if (0 === title.lastIndexOf( prefix, 0 )) {
-        document.title = newReplys + title.substring( prefix.length ) + ' - /' + boardUri + '/';
+      if (0 === title.lastIndexOf(prefix, 0)) {
+        document.title = newReplys + title.substring(prefix.length) + ' - /' + boardUri + '/';
       };
     };
 
@@ -3393,7 +3393,7 @@
       };
 
       var img = imgList[0];
-      img.addEventListener('click', function() { this.style.display = 'inline'; } );
+      img.addEventListener('click', function() {this.style.display = 'inline';});
     };
 
     etCetera.addQuote = function addQuote() {
@@ -3419,7 +3419,7 @@
         ButtonDeleteCookies.onclick = function deleteAllCookies() {
           var cookies = document.cookie.split("; ");
           for (var idx = 0, len = cookies.length; idx < len ; ++idx) {
-            var eqpos = cookies[ idx ].indexOf( "=" );
+            var eqpos = cookies[idx].indexOf("=");
             if (0 > eqpos) {
               continue;
             };
@@ -3452,7 +3452,7 @@
       /* event.target だけを使う */
 
       /* 連続アクセスが原因で503が起きているらしい。時間をあけてから処理する */
-      setTimeout( function() {
+      setTimeout(function() {
 
         var target = event.target;
         var count = parseInt(target.getAttribute("data-yamanu-retries-count"));
@@ -3466,7 +3466,7 @@
           /* count が NaN の場合もここ */
           target.removeEventListener("error", etCetera.retryLoading);
         };
-      }, 1500 );
+      }, 1500);
     };
 
     etCetera.retryFailedImgTags = function() {
@@ -3483,12 +3483,12 @@
 
         if (! img.complete) {
           img.setAttribute("data-yamanu-retries-count", "0");
-          img.addEventListener("error", etCetera.retryLoading );
+          img.addEventListener("error", etCetera.retryLoading);
 
         } else if (0 === img.naturalWidth && 0 === img.naturalHeight) {
           img.setAttribute("data-yamanu-retries-count", "0");
-          img.addEventListener("error", etCetera.retryLoading );
-          etCetera.retryLoading( { "target": img} );
+          img.addEventListener("error", etCetera.retryLoading);
+          etCetera.retryLoading({"target": img});
         };
       };
     };
@@ -3507,7 +3507,7 @@
 
       document.head.appendChild(script);
 
-      setTimeout( etCetera.reloadQrJs, 1500 );
+      setTimeout(etCetera.reloadQrJs, 1500);
     };
 
     etCetera.retryFailedScriptSources = function() {
@@ -3522,14 +3522,14 @@
       for (var scriptIndex = 0, scriptLength = scriptTags.length;
            scriptIndex < scriptLength ; ++scriptIndex) {
 
-        if (0 <= scriptTags[ scriptIndex ].src.indexOf("/.static/qr.js") &&
+        if (0 <= scriptTags[scriptIndex].src.indexOf("/.static/qr.js") &&
             undefined === window.show_quick_reply) {
 
           needToReloadQrJs = true;
         };
       };
       if (needToReloadQrJs) {
-        setTimeout( etCetera.reloadQrJs, 1500 );
+        setTimeout(etCetera.reloadQrJs, 1500);
       };
     };
 
@@ -3609,7 +3609,7 @@
 
       var origin = document.getElementById('postBox');
       if (origin) {
-        origin.insertBefore(label, origin.firstChild );
+        origin.insertBefore(label, origin.firstChild);
       };
     };
 
@@ -3689,8 +3689,8 @@
 
     etCetera.createInterDomainLinks = function() {
       /* .onion.to には案内しない */
-      var hosts = [ "https://endchan.xyz", "https://endchan.net", "https://endchan.org",
-                    "http://endchan5doxvprs5.onion", "http://s6424n4x4bsmqs27.onion"];
+      var hosts = ["https://endchan.xyz", "https://endchan.net", "https://endchan.org",
+                   "http://endchan5doxvprs5.onion", "http://s6424n4x4bsmqs27.onion"];
 
       var createDomainsLinks = function(url) {
         var span = document.createElement("SPAN");
@@ -3743,7 +3743,7 @@
 
       feWrapper.titleCP.appendAfterCP(etCetera.procTitle);
 
-      /* setTimeout( etCetera.insertButtonShowHidePostingForm, 0 ); */
+      /* setTimeout(etCetera.insertButtonShowHidePostingForm, 0); */
       setTimeout(etCetera.insertButtonShowHideContentAction, 0);
 
       setTimeout(etCetera.fixGoogleChromeMp3Mime, 0);
@@ -3832,10 +3832,10 @@
       };
       arg2 = undefined;
 
-      if (undefined != popups[ uid ]) {
-        return popups[ uid ];
+      if (undefined != popups[uid]) {
+        return popups[uid];
       };
-      popups[ uid ] = {
+      popups[uid] = {
         'brothers'      : [],
         'children'      : [],
         'closeTimer'    : undefined,
@@ -3847,13 +3847,13 @@
         'targetPosition': undefined,
         'uid'           : uid
       };
-      return popups[ uid ];
+      return popups[uid];
     };
 
-    multiPopup.setUidOfPopupParent = function( element, parentUid) {
+    multiPopup.setUidOfPopupParent = function(element, parentUid) {
       /* no parent‐child relation of DOM. parent-child relation of popups. */
       var cdaName = 'data-tsk-parent-popup-uid';
-      element.setAttribute( cdaName, parentUid );
+      element.setAttribute(cdaName, parentUid);
       return true;
     };
 
@@ -3867,10 +3867,10 @@
     };
 
     multiPopup.getSettings = function(name) {
-      if (undefined === settings[ name ]) {
-        return multiPopup.defaultSettings[ name ];
+      if (undefined === settings[name]) {
+        return multiPopup.defaultSettings[name];
       };
-      return settings[ name ];
+      return settings[name];
     };
 
     multiPopup.startCountdownForClosePopup = function(popupInfo) {
@@ -3880,8 +3880,8 @@
       var timeToClosePopup = multiPopup.getSettings('timeToClosePopup');
       popupInfo['phase'] = multiPopup.POPUP_PHASE.COUNTDOWN_FOR_CLOSE_POPUP;
       popupInfo['closeTimer'] =
-        setTimeout( function() { multiPopup.popupHasExpired( popupInfo, true ); },
-            timeToClosePopup );
+        setTimeout(function() {multiPopup.popupHasExpired(popupInfo, true);},
+            timeToClosePopup);
       return true;
     };
 
@@ -3897,12 +3897,12 @@
       };
 
       popupInfo['phase'] = multiPopup.POPUP_PHASE.COUNTDOWN_FOR_SHOW_POPUP;
-      var timeToPopup = multiPopup.getSettings( 'timeToPopup' );
+      var timeToPopup = multiPopup.getSettings('timeToPopup');
 
-      popupInfo['showTimer'] = setTimeout( function() {
+      popupInfo['showTimer'] = setTimeout(function() {
         popupInfo['showTimer'] = undefined;
         multiPopup.showPopup(popupInfo);
-      }, timeToPopup );
+      }, timeToPopup);
 
       return true;
     };
@@ -3915,7 +3915,7 @@
       };
       var timer = popupInfo['closeTimer'];
       if (undefined != timer) {
-        clearTimeout( popupInfo['closeTimer'] );
+        clearTimeout(popupInfo['closeTimer']);
       };
       popupInfo['closeTimer'] = undefined;
       popupInfo['phase'] = multiPopup.POPUP_PHASE.NOW_SHOWING;
@@ -3924,7 +3924,7 @@
         return true;
       };
 
-      var parentPopupInfo = multiPopup.popups[ popupInfo['parent'] ];
+      var parentPopupInfo = multiPopup.popups[popupInfo['parent']];
       if (undefined == parentPopupInfo) {
         popupInfo['parent'] = undefined;
       } else {
@@ -3935,7 +3935,7 @@
 
     multiPopup.touchElement = function(event) {
       var quoteLink = event.target;
-      var popupInfo = multiPopup.preparePopupInfo( multiPopup.popups, quoteLink );
+      var popupInfo = multiPopup.preparePopupInfo(multiPopup.popups, quoteLink);
 
       multiPopup.removeOriginalPopupFeature(quoteLink);
 
@@ -3944,11 +3944,11 @@
       switch(popupInfo['phase']) {
       default:
       case PP.DO_NOTHING:
-        popupInfo['targetPosition'] = {'x': event.pageX, 'y':event.pageY };
+        popupInfo['targetPosition'] = {'x': event.pageX, 'y':event.pageY};
         multiPopup.startCountdownForShowPopup(popupInfo);
         return true;
       case PP.COUNTDOWN_FOR_SHOW_POPUP:
-        popupInfo['targetPosition'] = {'x': event.pageX, 'y':event.pageY };
+        popupInfo['targetPosition'] = {'x': event.pageX, 'y':event.pageY};
         return true;
       case PP.NOW_SHOWING:
         return true;
@@ -3961,7 +3961,7 @@
 
     multiPopup.untouchElement = function(event) {
       var quoteLink = event.target;
-      var popupInfo = multiPopup.preparePopupInfo( multiPopup.popups, quoteLink );
+      var popupInfo = multiPopup.preparePopupInfo(multiPopup.popups, quoteLink);
 
       var PP = multiPopup.POPUP_PHASE;
       if (PP.COUNTDOWN_FOR_SHOW_POPUP == popupInfo['phase']) {
@@ -3990,7 +3990,7 @@
       if (0 <= element.className.indexOf("postCell")) {
         return element;
       };
-      return getAncientPostCell( element.parentElement );
+      return getAncientPostCell(element.parentElement);
     };
 
     multiPopup.getRelatedDivMessage = function(element) {
@@ -4010,12 +4010,12 @@
       var quoteAnchor = popupInfo['quoteAnchor'];
       var msg;
       if (quoteAnchor.host != location.host) {
-        callback( popupInfo, null, msg );
+        callback(popupInfo, null, msg);
         return;
       };
 
       if (0 > quoteAnchor.pathname.indexOf("/res/")) {
-        callback( popupInfo, null, "unexpected uri:" + quoteAnchor );
+        callback(popupInfo, null, "unexpected uri:" + quoteAnchor);
         return;
       };
 
@@ -4032,21 +4032,21 @@
       uri = "//" + quoteAnchor.host + uri;
       /* ex. "//yamanu.org/chan/preview/123.html" */
 
-      if (undefined != multiPopup.cache[ uri ]) {
-        var postCell = multiPopup.cache[ uri ]['element'];
+      if (undefined != multiPopup.cache[uri]) {
+        var postCell = multiPopup.cache[uri]['element'];
         if (null != postCell) {
           postCell = postCell.cloneNode(true);
         };
-        callback( popupInfo, postCell, multiPopup.cache[ uri ]['message'] );
+        callback(popupInfo, postCell, multiPopup.cache[uri]['message']);
         return;
       };
 
-      callback( popupInfo, null, "now loading" );
+      callback(popupInfo, null, "now loading");
 
       var xhr = new XMLHttpRequest();
       var fullUri = location.protocol + uri; /* for message */
       xhr.onreadystatechange = function() {
-        switch( this.readyState) {
+        switch(this.readyState) {
         case 0:
         case 1:
         case 3:
@@ -4056,8 +4056,8 @@
               300 >  this.status) {
             if ('document' != this.responseType) {
               msg = "unknown response contents(1): + " + this.responseType;
-              multiPopup.cache[ uri ] = { 'message': msg };
-              callback( popupInfo, null, msg );
+              multiPopup.cache[uri] = {'message': msg};
+              callback(popupInfo, null, msg);
               return;
             };
 
@@ -4066,21 +4066,21 @@
             var postCellList = this.response.getElementsByClassName('postCell');
             if (0 >= postCellList.length) {
               msg = "unknown response contents: postCell not found: " + fullUri;
-              multiPopup.cache[ uri ] = { 'message': msg };
+              multiPopup.cache[uri] = {'message': msg};
               window.lastPanelContent = this.response;
-              callback( popupInfo, null, msg );
-              /*callback( popupInfo, null, msg );*/
+              callback(popupInfo, null, msg);
+              /*callback(popupInfo, null, msg);*/
               return;
             };
             var postCell = postCellList[0];
-            postCell = utils.removeIdAll( document.importNode( postCell, true ) );
-            multiPopup.cache[ uri ] = { 'element': postCell };
-            callback( popupInfo, postCell );
+            postCell = utils.removeIdAll(document.importNode(postCell, true));
+            multiPopup.cache[uri] = {'element': postCell};
+            callback(popupInfo, postCell);
             return;
           };
           msg = 'not found(HTTP ' + this.status + '): ' + fullUri;
-          multiPopup.cache[ uri ] = { 'message': msg };
-          callback( popupInfo, null, msg );
+          multiPopup.cache[uri] = {'message': msg};
+          callback(popupInfo, null, msg);
           return;
         };
       };
@@ -4120,7 +4120,7 @@
 
       var divPostsList = clone.getElementsByClassName("divPosts");
       for (var dpIdx = divPostsList.length - 1; -1 < dpIdx ; --dpIdx) {
-        divPostsList[dpIdx].parentElement.removeChild( divPostsList[ dpIdx ] );
+        divPostsList[dpIdx].parentElement.removeChild(divPostsList[dpIdx]);
       };
 
       var postCellId = postCell.id;
@@ -4136,7 +4136,7 @@
         /* "/boardname/res/789.html" -> "789" */
         var matches = quoteAnchor.pathname.match(/.*\/([0-9]*).html/);
         if (null == matches) {
-          return callback( popupInfo, null, "unexpected location");
+          return callback(popupInfo, null, "unexpected location");
         };
         postId = matches[1];
       } else if (0 == postId.indexOf("#q")) {
@@ -4160,7 +4160,7 @@
       if (here.host == quoteAnchor.host &&
           here.port == quoteAnchor.port) {
 
-        return multiPopup.lookForPostCellFromDocument(popupInfo, function( popupInfo, postCell,
+        return multiPopup.lookForPostCellFromDocument(popupInfo, function(popupInfo, postCell,
             errorMessage) {
 
           if (null === postCell) {
@@ -4178,7 +4178,7 @@
       };
     };
 
-    multiPopup.showPopup = function( popupInfo, postCell, errorMessage) {
+    multiPopup.showPopup = function(popupInfo, postCell, errorMessage) {
 
       var quoteAnchor = popupInfo['quoteAnchor'];
       if (undefined == postCell && undefined == errorMessage) {
@@ -4187,7 +4187,7 @@
       };
       if (undefined != errorMessage) {
         postCell = document.createElement('DIV');
-        postCell.appendChild( document.createTextNode(errorMessage) );
+        postCell.appendChild(document.createTextNode(errorMessage));
       };
 
       /* ポップアップの基準位置 */
@@ -4202,7 +4202,7 @@
           popupInfo['element'].appendChild(postCell);
 
         } else {
-          popupInfo['element'].replaceChild( postCell, popupInfo['element'].firstChild );
+          popupInfo['element'].replaceChild(postCell, popupInfo['element'].firstChild);
         };
         quoteblock = popupInfo['element'];
       } else {
@@ -4222,15 +4222,15 @@
       multiPopup.enableGreenTextPopup(postCell, setParentUid);
 
       quoteblock.addEventListener("mouseout", function() {
-        multiPopup.startCountdownForClosePopup(popupInfo); } );
+        multiPopup.startCountdownForClosePopup(popupInfo);});
 
       quoteblock.addEventListener("mousemove", function() {
         multiPopup.extendExpirationDate(popupInfo);
-        return true; } );
+        return true;});
 
       quoteblock.addEventListener("click", function() {
         multiPopup.extendExpirationDate(popupInfo);
-        return true; } );
+        return true;});
 
       quoteblock.style.position = "absolute";
       quoteblock.style.paddingTop = "2px";
@@ -4285,15 +4285,15 @@
         };
       };
 
-      quoteblock.style.top  = ( top + 5 ) + "px";
-      quoteblock.style.left = ( left + 5 ) + "px";
+      quoteblock.style.top  = (top + 5) + "px";
+      quoteblock.style.left = (left + 5) + "px";
 
       var parentUid = multiPopup.getUidOfPopupParent(quoteAnchor);
       if (undefined != parentUid) {
         popupInfo['parent']  = parentUid;
-        var parentPopupInfo = multiPopup.popups[ parentUid ];
+        var parentPopupInfo = multiPopup.popups[parentUid];
         if (undefined != parentPopupInfo) {
-          parentPopupInfo['children'].push( popupInfo['uid'] );
+          parentPopupInfo['children'].push(popupInfo['uid']);
         };
       };
       popupInfo['phase']   = multiPopup.POPUP_PHASE.NOW_SHOWING;
@@ -4318,13 +4318,13 @@
         popupInfo['phase'] = multiPopup.POPUP_PHASE.NOW_SHOWING;
         return;
       };
-      multiPopup.closePopup( popupInfo, deleteP);
+      multiPopup.closePopup(popupInfo, deleteP);
     };
 
     multiPopup.closePopup = function(popupInfo, deleteP) {
       for (var childIdx in popupInfo['children']) {
-        var childUid = popupInfo['children'][ childIdx ];
-        var child = multiPopup.popups[ childUid ];
+        var childUid = popupInfo['children'][childIdx];
+        var child = multiPopup.popups[childUid];
         if (undefined != child) {
           multiPopup.closePopup(child);
         };
@@ -4375,11 +4375,11 @@
         if ((rect.left   <= mcx &&
              rect.right  >  mcx &&
              rect.top    <= mcy &&
-             rect.bottom >  mcy ) ||
+             rect.bottom >  mcy) ||
             (rect2.left   <= mcx &&
              rect2.right  >  mcx &&
              rect2.top    <= mcy &&
-             rect2.bottom >  mcy )) {
+             rect2.bottom >  mcy)) {
           continue;
         };
         uidsToClosePopup.push(key);
@@ -4425,10 +4425,10 @@
     multiPopup.processPostCell = function(postCell) {
       var linkQuoteList = postCell.getElementsByClassName('linkQuote');
       for (var lqIdx = linkQuoteList.length - 1; -1 < lqIdx ; --lqIdx) {
-        var linkQuote = linkQuoteList[ lqIdx ];
-        linkQuote.removeEventListener( "click", multiPopup.add_reply_quote );
+        var linkQuote = linkQuoteList[lqIdx];
+        linkQuote.removeEventListener("click", multiPopup.add_reply_quote);
         linkQuote.onclick = null;
-        linkQuote.addEventListener( "click", multiPopup.add_reply_quote );
+        linkQuote.addEventListener("click", multiPopup.add_reply_quote);
       };
 
       var imgList = postCell.getElementsByTagName("IMG");
@@ -4442,7 +4442,7 @@
     multiPopup.add_reply_quote = function() {
       var linkQuote = this;
 
-      if (! multiPopup.sharpQRegexp.test( linkQuote.hash )) {
+      if (! multiPopup.sharpQRegexp.test(linkQuote.hash)) {
         return true;
       };
       var toQuote = linkQuote.hash.substring(2);
@@ -4473,7 +4473,7 @@
     multiPopup.overridePostCellQuotePopups = function(postCell, afterOverrideHook) {
       var quoteLinks = postCell.getElementsByClassName('quoteLink');
       for (var qlIdx = 0, qlLen = quoteLinks.length; qlIdx < qlLen ; ++qlIdx) {
-        multiPopup.overrideQuotePopup( quoteLinks[ qlIdx ] );
+        multiPopup.overrideQuotePopup(quoteLinks[qlIdx]);
         if (afterOverrideHook != undefined) {
           afterOverrideHook(quoteLinks[qlIdx]);
         };
@@ -4518,12 +4518,12 @@
 
     multiPopup.addBodyEvents = function() {
       multiPopup.removeBodyEvents();
-      document.body.addEventListener("click"    , multiPopup.checkMouseIsIn );
-      document.body.addEventListener("mousemove", multiPopup.onBodyMouseMove );
+      document.body.addEventListener("click"    , multiPopup.checkMouseIsIn);
+      document.body.addEventListener("mousemove", multiPopup.onBodyMouseMove);
     };
     multiPopup.removeBodyEvents = function() {
-      document.body.removeEventListener("click"    , multiPopup.checkMouseIsIn );
-      document.body.removeEventListener("mousemove", multiPopup.onBodyMouseMove );
+      document.body.removeEventListener("click"    , multiPopup.checkMouseIsIn);
+      document.body.removeEventListener("mousemove", multiPopup.onBodyMouseMove);
     };
 
     multiPopup.overrideQuotePopup = function(quoteLink) {
@@ -4534,27 +4534,27 @@
     multiPopup.startObservePanelBacklinks = function(panelBacklinks) {
       var cdaName = "data-tsk-observing";
       var nid = utils.getElementUniqueId(panelBacklinks);
-      var mo = multiPopup.panelBacklinksObservers[ nid ];
-      var opts = { childList: true };
+      var mo = multiPopup.panelBacklinksObservers[nid];
+      var opts = {childList: true};
       if (undefined == mo) {
-        mo = new MutationObserver( multiPopup.overrideChildrenQuotePopup );
-        multiPopup.panelBacklinksObservers[ nid ] = mo;
-        mo.observe( panelBacklinks, { childList: true } );
+        mo = new MutationObserver(multiPopup.overrideChildrenQuotePopup);
+        multiPopup.panelBacklinksObservers[nid] = mo;
+        mo.observe(panelBacklinks, {childList: true});
       };
-      mo.observe( panelBacklinks, opts );
-      panelBacklinks.setAttribute( cdaName, "1" );
+      mo.observe(panelBacklinks, opts);
+      panelBacklinks.setAttribute(cdaName, "1");
       return;
     };
 
     multiPopup.stopObservePanelBacklinks = function(panelBacklinks) {
       var cdaName = "data-tsk-observing";
       var nid = utils.getElementUniqueId(panelBacklinks);
-      var mo = multiPopup.panelBacklinksObservers[ nid ];
+      var mo = multiPopup.panelBacklinksObservers[nid];
       if (undefined != mo) {
         mo.disconnect();
-        delete multiPopup.panelBacklinksObservers[ nid ];
+        delete multiPopup.panelBacklinksObservers[nid];
       };
-      panelBacklinks.setAttribute( cdaName, "0" );
+      panelBacklinks.setAttribute(cdaName, "0");
       return;
     };
 
@@ -4563,7 +4563,7 @@
         if ('complete' === document.readyState) {
           return;
         };
-        setTimeout( multiPopup.disableLoadQuote, 0 );
+        setTimeout(multiPopup.disableLoadQuote, 0);
       };
     };
 
@@ -4580,8 +4580,8 @@
       /* etCetera の監視対象は .divPosts。Popup の挿入場所は .divPosts の親の親の中。
        * だから Popup 挿入時に冗長呼び出しにはならない */
 
-      feWrapper.postCellCP.appendCP( multiPopup.overridePostCellQuotePopups );
-      feWrapper.postCellCP.appendCP( multiPopup.enableGreenTextPopup );
+      feWrapper.postCellCP.appendCP(multiPopup.overridePostCellQuotePopups);
+      feWrapper.postCellCP.appendCP(multiPopup.enableGreenTextPopup);
       multiPopup.disableLoadQuote();
 
       var iloops = utils.IntermittentLoops();
@@ -4591,25 +4591,25 @@
       var continue_ = true;
       var quoteblockList;
 
-      iloops.push( function() {
+      iloops.push(function() {
         links = document.getElementsByClassName('quoteLink');
         idx = links.length - 1;
-      } ).push( function() {
-        if (-1 >= idx) { return break_; };
-        multiPopup.overrideQuotePopup( links[ idx ] );
+      }).push(function() {
+        if (-1 >= idx) {return break_;};
+        multiPopup.overrideQuotePopup(links[idx]);
         --idx;
         return continue_;
-      } ).push( function() {
+      }).push(function() {
         links = document.getElementsByClassName('panelBacklinks');
         idx = links.length - 1;
-      } ).push( function() {
-        if (-1 >= idx) { return break_; };
-        var panelBacklinks = links[ idx ];
+      }).push(function() {
+        if (-1 >= idx) {return break_;};
+        var panelBacklinks = links[idx];
         multiPopup.overrideChildrenQuotePopup(panelBacklinks);
         multiPopup.startObservePanelBacklinks(panelBacklinks);
         --idx;
         return continue_;
-      } ).beginAsync();
+      }).beginAsync();
     };
 
     multiPopup.disable = function() {
@@ -4638,12 +4638,12 @@
         return;
       };
 
-      postCellCP.setObservingElement( divPostsList[0] );
-      postCellCP.setObservingOptions( { childList: true } );
-      postCellCP.setFuncEnumExistingTargets( function() {
+      postCellCP.setObservingElement(divPostsList[0]);
+      postCellCP.setObservingOptions({childList: true});
+      postCellCP.setFuncEnumExistingTargets(function() {
         return document.getElementsByClassName('postCell');
-      } );
-      postCellCP.setPreProc( utils.CompulsoryProcessing.prototype.preProc_enumAddedNodes );
+      });
+      postCellCP.setPreProc(utils.CompulsoryProcessing.prototype.preProc_enumAddedNodes);
     };
 
     feWrapper.callMessageUriHandlers = function(anchor) {
@@ -4665,7 +4665,7 @@
         var divMessage = divMessageList[idx];
         var anchorList = divMessage.getElementsByTagName('A');
         for (var ancIdx = anchorList.length - 1; -1 < ancIdx ; --ancIdx) {
-          var anchor = anchorList[ ancIdx ];
+          var anchor = anchorList[ancIdx];
           /* レスアンカーとか他で処理されたリンクを除外する
            * いい加減すぎるような、十分であるような。*/
           if (anchor.textContent === anchor.href) {
@@ -4676,15 +4676,15 @@
     };
 
     feWrapper.titleCPInit = function(titleCP) {
-      titleCP.setObservingElement( document.head.getElementsByTagName('TITLE')[0] );
-      titleCP.setObservingOptions( { childList: true} );
-      titleCP.setFuncEnumExistingTargets( function() { return [titleCP.observingElement]; } );
+      titleCP.setObservingElement(document.head.getElementsByTagName('TITLE')[0]);
+      titleCP.setObservingOptions({childList: true});
+      titleCP.setFuncEnumExistingTargets(function() {return [titleCP.observingElement];});
     };
 
     feWrapper.enable = function() {
-      feWrapper.titleCP = new utils.CompulsoryProcessing( feWrapper.titleCPInit );
-      feWrapper.postCellCP = new utils.CompulsoryProcessing( feWrapper.postCellCPInit );
-      feWrapper.postCellCP.appendCP( feWrapper.callMessageUriHandlersWithMessageUri );
+      feWrapper.titleCP = new utils.CompulsoryProcessing(feWrapper.titleCPInit);
+      feWrapper.postCellCP = new utils.CompulsoryProcessing(feWrapper.postCellCPInit);
+      feWrapper.postCellCP.appendCP(feWrapper.callMessageUriHandlersWithMessageUri);
     };
 
     feWrapper.getBoardUri = function() {
@@ -4696,7 +4696,7 @@
     };
 
     feWrapper.disable = function() {};
-    feWrapper.trigger = function() { feWrapper.enable(); };
+    feWrapper.trigger = function() {feWrapper.enable();};
 
     utils.trigger();
     settings.trigger();
@@ -4723,7 +4723,7 @@
         + "try{"
         + "("+modYamanuchang.toString() +")();"
         + "}catch(e) {toshakiii_errors.push(e);};"
-        + "if (0 != toshakiii_errors.length) { alert( toshakiii_errors ); };"
+        + "if (0 != toshakiii_errors.length) {alert(toshakiii_errors);};"
         + "";
       document.head.appendChild(script);
     };
