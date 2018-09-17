@@ -20,7 +20,7 @@
 //
 // @run-at      document-start
 //
-// @version     2.58
+// @version     2.59
 // @description endchan用の再帰的レスポップアップ、Catalogソート、添付ファイルプレビュー、色々
 // @grant       none
 // ==/UserScript==
@@ -2603,18 +2603,19 @@
         var file = window.selectedFiles[idx];
 
         /* file.ymncFilenameMaskMode は
-         *  undefined: 元のファイル名のまま
-         *   "random": プログラムが指定したランダムな名前
-         *     "user": ユーザーが指定した名前
+         *       undefined: 元のファイル名のまま
+         *   "user-random": ユーザー操作により指定したランダムな名前
+         *   "auto-random": 自動マスク化設定により指定したランダムな名前
+         *          "user": ユーザーが指定した名前
          * この関数では doMaskIfTrue が false の場合でも、"user" のマスクは外さない
          */
 
         if (doMaskIfTrue && file.ymncFilenameMaskMode === undefined) {
           /* マスク要求、現在マスクしていないからマスクする */
           file.ymncOriginalName = file.name.toString(); /* cloneがわりのtoString */
-          etCetera.defineProperty(file, 'name',
+          etCetera.defineProperty(file, "name",
               randomNum.toString() + etCetera.getFilenameExtension(file.name));
-          file.ymncFilenameMaskMode = "random";
+          file.ymncFilenameMaskMode = "auto-random";
 
         } else if (doMaskIfTrue && file.ymncFilenameMaskMode !== undefined) {
           /* マスク要求だが、現在マスク済だからなにもしない */
@@ -2623,7 +2624,7 @@
         } else if (! doMaskIfTrue && file.ymncFilenameMaskMode === "user") {
           /* マスク外し要求だが、現在ユーザー指定だから外さない */
 
-        } else if (! doMaskIfTrue && file.ymncFilenameMaskMode === "random") {
+        } else if (! doMaskIfTrue && file.ymncFilenameMaskMode === "auto-random") {
           /* マスク外し要求、その通り外す */
           etCetera.defineProperty(file, 'name', file.ymncOriginalName);
           file.ymncFilenameMaskMode = undefined;
@@ -2717,7 +2718,8 @@
                   "name", ((+new Date()) + Math.floor(Math.random() * 99)).toString()
                   + etCetera.getFilenameExtension(
                     window.selectedFiles[index].ymncOriginalName));
-              window.selectedFiles[index].ymncFilenameMaskMode = "random";
+              /* ユーザー操作でランダム化した、というモード*/
+              window.selectedFiles[index].ymncFilenameMaskMode = "user-random";
 
               updateSelectedFilenameLabels();
               return true;
