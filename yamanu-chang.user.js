@@ -20,7 +20,7 @@
 //
 // @run-at      document-start
 //
-// @version     2.59
+// @version     2.60
 // @description endchan用の再帰的レスポップアップ、Catalogソート、添付ファイルプレビュー、色々
 // @grant       none
 // ==/UserScript==
@@ -2621,7 +2621,8 @@
           /* マスク要求だが、現在マスク済だからなにもしない */
         } else if (! doMaskIfTrue && file.ymncFilenameMaskMode === undefined) {
           /* マスク外し要求だが、現在マスクしていないのでなにもしない */
-        } else if (! doMaskIfTrue && file.ymncFilenameMaskMode === "user") {
+        } else if (! doMaskIfTrue && ( file.ymncFilenameMaskMode === "user" ||
+                                       file.ymncFilenameMaskMode === "user-random")) {
           /* マスク外し要求だが、現在ユーザー指定だから外さない */
 
         } else if (! doMaskIfTrue && file.ymncFilenameMaskMode === "auto-random") {
@@ -2630,7 +2631,7 @@
           file.ymncFilenameMaskMode = undefined;
         } else {
           document.body.appendChild(document.createTextNode(
-            "yamanu-changにバグ(etCetera.maskAllFilename)"));
+            "[yamanu-chang: バグ: etCetera.maskAllFilename: " + doMaskIfTrue + ": " + file.ymncFilenameMaskMode + "]"));
         };
 
         ++randomNum;
