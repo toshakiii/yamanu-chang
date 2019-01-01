@@ -20,7 +20,7 @@
 //
 // @run-at      document-start
 //
-// @version     2.60
+// @version     2.61
 // @description endchan用の再帰的レスポップアップ、Catalogソート、添付ファイルプレビュー、色々
 // @grant       none
 // ==/UserScript==
@@ -49,6 +49,7 @@
 
 /*
  * TODO:
+ * ・設定周り整理
  * ・sendReplyData の hack をオフにできるオプションを追加すること。
  * ・Youtubeのリンクを有効にする補助機能を盛ること
  * ・再生開始機能を盛ること
@@ -1038,6 +1039,12 @@
         } else {
           settings.sageHidedThreads = false;
         };
+
+        if ("1" == localStorage.getItem('toshakiii.settings.hideShowThreadLink')) {
+          settings.hideShowThreadLink = true;
+        } else {
+          settings.hideShowThreadLink = false;
+        };
       };
       return settings.sageHidedThreads;
     };
@@ -1049,6 +1056,33 @@
       } else {
         settings.sageHidedThreads = false;
         localStorage.setItem('toshakiii.settings.sageHidedThreads', "0");
+      };
+    };
+
+    catalogSort.loadSettingsHideShowThreadLink = function() {
+      if (undefined === settings.hideShowThreadLink) {
+        if ("1" == localStorage.getItem('toshakiii.settings.hideShowThreadLink')) {
+          settings.hideShowThreadLink = true;
+        } else {
+          settings.hideShowThreadLink = false;
+        };
+
+        if ("1" == localStorage.getItem('toshakiii.settings.hideShowThreadLink')) {
+          settings.hideShowThreadLink = true;
+        } else {
+          settings.hideShowThreadLink = false;
+        };
+      };
+      return settings.hideShowThreadLink;
+    };
+
+    catalogSort.saveSettingsHideShowThreadLink = function(value) {
+      if (value) {
+        settings.hideShowThreadLink = true;
+        localStorage.setItem('toshakiii.settings.hideShowThreadLink', "1");
+      } else {
+        settings.hideShowThreadLink = false;
+        localStorage.setItem('toshakiii.settings.hideShowThreadLink', "0");
       };
     };
 
@@ -1341,6 +1375,7 @@
     /* end: catalogSort.CatalogCell = (function() {...}()) */
 
     catalogSort.sortCatalogCells = function() {
+
       var time = (+new Date());
       var parentElt = document.getElementById("divThreads");
       var children = parentElt.children;
@@ -1356,6 +1391,7 @@
             'A' === child.firstChild.tagName &&
             0 === child.firstChild.innerHTML.lastIndexOf("[Show hidden thread ",0)) {
 
+          /* ボードURIが数字の時、うまく処理できない */
           n = child.id.replace(/[^0-9]/g, "");
           showButtonElts[n] = child;
 
@@ -1377,20 +1413,27 @@
         catalogCells = catalogSort.tableOrderType[oIdx].sortFunction(catalogCells);
       };
 
-      /* var cookie = '; ' + document.cookie + "; "; */
       var sageElts = [];
+
       for (var ccIdx = 0, ccLen = catalogCells.length; ccIdx < ccLen ; ++ccIdx) {
+
         var catalogCell = catalogCells[ccIdx];
+
         if (catalogCell.id in showButtonElts) {
+
           var spanElt = showButtonElts[catalogCell.id];
+
           if (settings.sageHidedThreads && spanElt.style.display != 'none') {
+
             sageElts.push(spanElt);
             sageElts.push(catalogCell);
             continue;
           };
           parentElt.appendChild(showButtonElts[catalogCell.id]);
+
         } else if (settings.sageHidedThreads &&
                    utils.getSetting('hide' + catalogSort.boardUri + 'Thread' + catalogCell.id)) {
+
           sageElts.push(catalogCell);
           continue;
         };
@@ -1398,6 +1441,7 @@
         parentElt.appendChild(catalogCell);
       };
       for (var seIdx = 0, seLen = sageElts.length; seIdx < seLen ; ++seIdx) {
+
         parentElt.appendChild(sageElts[seIdx]);
       };
     };
@@ -1644,7 +1688,7 @@
       return catalogCell;
     };
 
-    catalogSort.makeSortElement = function() {
+    catalogSort.createSortConfigElement = function() {
       var eltSpan = document.createElement('SPAN');
       eltSpan.id = catalogSort.SPAN_ID;
 
@@ -1674,37 +1718,26 @@
         eltSelect.appendChild(option);
       }
 
-      /*
-       var eltLSB = document.createTextNode("[");
-       var eltARefresh = document.createElement('A');
-       eltARefresh.appendChild(document.createTextNode('Refresh'));
-       eltARefresh.addEventListener('click', catalogSort.refreshCatalogCells);
-       var eltRSB = document.createTextNode("]");
-       */
-
-      var eltConfig = document.createElement('A');
-      eltConfig.appendChild(document.createTextNode("⚙"));
-      eltConfig.addEventListener('click', catalogSort.showCloseDivSettings);
-
       var eltStatus = document.createElement('SPAN');
       eltStatus.id = catalogSort.REFRESH_STATUS_ID;
+
+      var eltConfig = document.createElement('A');
+      eltConfig.style["vertical-align"] = "top";
+      eltConfig.appendChild(document.createTextNode("[+設定]"));
+      eltConfig.addEventListener('click', catalogSort.showHideSettingsDiv);
 
       eltSpan.appendChild(eltASo);
       eltSpan.appendChild(eltAr);
       eltSpan.appendChild(eltAtby);
       eltSpan.appendChild(eltSelect);
 
-      /* eltSpan.appendChild(eltLSB);
-       eltSpan.appendChild(eltARefresh);
-       eltSpan.appendChild(eltRSB); */
+      eltSpan.appendChild(eltStatus);
 
       eltSpan.appendChild(eltConfig);
-
-      eltSpan.appendChild(eltStatus);
       return eltSpan;
     };
 
-    catalogSort.closeDivSettings = function() {
+    catalogSort.hideSettingsDiv = function(ev) {
       var divSettings = document.getElementById(catalogSort.SETTINGS_ID);
       if (null == divSettings) {
         return;
@@ -1712,40 +1745,88 @@
       divSettings.parentElement.removeChild(divSettings);
     };
 
-    catalogSort.showCloseDivSettings = function() {
+    catalogSort.showHideSettingsDiv = function(ev) {
       if (null != document.getElementById(catalogSort.SETTINGS_ID)) {
-        catalogSort.closeDivSettings();
+        catalogSort.hideSettingsDiv(ev);
+        ev.target.textContent = "[+設定]";
         return;
       };
       var divSettings = document.createElement('DIV');
       divSettings.id = catalogSort.SETTINGS_ID;
       divSettings.style.border = '1px solid black';
+      divSettings.style.padding = '4px';
       divSettings.style.display = 'inline-block';
+
       var checkboxSageHidedThreads = document.createElement('INPUT');
       checkboxSageHidedThreads.addEventListener('change',
           function() {
             catalogSort.saveSettingsSageHidedThreads(this.checked);
+            catalogSort.sortCatalogCells();
           });
       checkboxSageHidedThreads.type = 'checkbox';
       checkboxSageHidedThreads.value = 'sageHidedThreads';
       checkboxSageHidedThreads.checked = settings.sageHidedThreads;
 
-      var closeButton = document.createElement('INPUT');
-      closeButton.type = 'button';
-      closeButton.addEventListener('click', catalogSort.closeDivSettings);
-      closeButton.value = "Close";
+      var checkboxHideShowThreadLink = document.createElement('INPUT');
+      checkboxHideShowThreadLink.addEventListener('change',
+          function() {
+            catalogSort.saveSettingsHideShowThreadLink(this.checked);
+            catalogSort.hideShowThreadCSS();
+          });
+      checkboxHideShowThreadLink.type = 'checkbox';
+      checkboxHideShowThreadLink.value = 'sageHidedThreads';
+      checkboxHideShowThreadLink.checked = settings.hideShowThreadLink;
+
+      var closeButton = document.createElement('A');
+      closeButton.style['text-align'] = 'right';
+      closeButton.style['display'] = 'block';
+      closeButton.addEventListener('click', catalogSort.hideSettingsDiv);
+      closeButton.textContent = "[閉じる]";
 
       divSettings.appendChild(checkboxSageHidedThreads);
-      divSettings.appendChild(document.createTextNode("Hideしたスレは下げる(ソート変更後に適用)"));
+      divSettings.appendChild(document.createTextNode("Hideしたスレは下げる"));
       divSettings.appendChild(document.createElement('BR'));
+
+      divSettings.appendChild(checkboxHideShowThreadLink);
+      divSettings.appendChild(document.createTextNode("[Show hidden thread xxx]ボタンを非表示にする"));
+      divSettings.appendChild(document.createElement('BR'));
+
       divSettings.appendChild(closeButton);
 
       document.getElementById(catalogSort.SPAN_ID).appendChild(divSettings);
+
+      ev.target.textContent = "[-設定]";
+    };
+
+    catalogSort.hideShowThreadCSS = function() {
+
+      // [show hidden thread xxx]を隠すスタイル
+      var hideStyle = document.getElementById("hideShowThreadLinkStyle");
+
+      if (settings.hideShowThreadLink) {
+
+        if (!hideStyle) {
+          hideStyle = document.createElement('STYLE');
+          hideStyle.type = "text/css";
+          hideStyle.id = "hideShowThreadLinkStyle";
+          hideStyle.innerHTML =
+            ".showHiddenThreadLink { display: none !important;}";
+          document.head.appendChild(hideStyle);
+        };
+
+      } else {
+
+        if (hideStyle) {
+          hideStyle.parentElement.removeChild(hideStyle);
+        };
+      };
     };
 
     catalogSort.loadSettings =
       function() {
         catalogSort.loadSettingsSageHidedThreads();
+        catalogSort.loadSettingsHideShowThreadLink();
+
         if (undefined == window.toshakiii.settings.catalogOrderType) {
           var n = "toshakiii.settings.catalogOrderType";
           var v = localStorage.getItem(n);
@@ -1771,7 +1852,7 @@
       };
 
       catalogSort.overrideRefreshCatalog();
-      /* catalogSort.overrideSetCell(); */
+      catalogSort.overrideEnableShowThreadLink();
     };
 
     catalogSort.overrideRefreshCatalog = function overrideRefreshCatalog() {
@@ -1818,30 +1899,25 @@
       };
     };
 
-    catalogSort.overrideSetCell = function overrideSetCell() {
-      if ('function' !== typeof(window.setCell) ||
-          'function' !== typeof(window.enableHideThreadLink)) {
+
+    catalogSort.overrideEnableShowThreadLink = function overrideEnableShowThreadLink() {
+
+      if ('function' !== typeof(window.enableShowThreadLink)) {
         return;
       };
 
-      var originalSetCell = window.setCell;
-      window.setCell = function ymncSetCell(thread) {
-        var element = originalSetCell(thread);
-        element.id = thread.threadId;
-        element.catalog = true;
-        window.enableHideThreadLink(element);
+      var originalEnableShowThreadLink = window.enableShowThreadLink;
+      window.enableShowThreadLink = function ymncEnableShowThreadLink(threadElem) {
+        var r = originalEnableShowThreadLink(threadElem);
 
-        /* var cookie = '; ' + document.cookie + "; "; */
-        if (utils.getSetting('hide' + catalogSort.boardUri + 'Thread' + element.id)) {
-          element.style.display = "none";
-          var fragment = document.createDocumentFragment();
-          fragment.appendChild(createShowThreadLink(element));
-          fragment.appendChild(element);
-          return fragment;
+        var showElem = document.getElementById('Show'+threadElem.boardUri+'Thread'+threadElem.id);
+
+        if (0 > showElem.className.indexOf("showHiddenThreadLink")) {
+          showElem.className += " " + "showHiddenThreadLink";
         };
-        return element;
-      };
 
+        return r;
+      };
     };
 
     function getShowThreadLink(threadElem) {
@@ -1857,6 +1933,7 @@
       var div = document.createElement(threadElem.catalog?'span':'div');
       div.id = 'Show'+catalogSort.boardUri+'Thread'+threadID;
       var link = document.createElement('a');
+      link.className = "showHiddenThreadLink";
       link.textContent = '[Show hidden thread '+threadID+'] ';
       link.href = '#';
       link.onclick = function() {
@@ -1899,7 +1976,16 @@
       };
       catalogSort.initTableOrderType();
       catalogSort.loadSettings();
-      catalogSort.enable();
+
+      if (null === document.body) {
+        document.addEventListener("DOMContentLoaded",
+            function() {
+              catalogSort.enable();
+            });
+      } else {
+        catalogSort.enable();
+      };
+
     };
 
     catalogSort.enable = function() {
@@ -1908,24 +1994,30 @@
       };
 
       catalogSort.override();
+      catalogSort.hideShowThreadCSS();
 
-      var divThreads = document.getElementById("divThreads");
-      if (null == divThreads) {
+      var divTools = document.getElementById("divTools");
+      if (null == divTools) {
         return;
       };
-      var elt = catalogSort.makeSortElement();
+      var elt = catalogSort.createSortConfigElement();
 
-      divThreads.parentElement.insertBefore(elt, divThreads);
+      divTools.appendChild(elt);
 
       if (undefined !== window.toshakiii.settings.catalogOrderType) {
-        var selectElt = document.getElementById(catalogSort.SELECT_ID);
-        if (selectElt.length <= window.toshakiii.settings.catalogOrderType) {
-          window.toshakiii.settings.catalogOrderType = 0;
-        };
-        selectElt.value = window.toshakiii.settings.catalogOrderType;
 
-        catalogSort.sortCatalogCells();
+        var selectElt = document.getElementById(catalogSort.SELECT_ID);
+
+        if (selectElt.length <= window.toshakiii.settings.catalogOrderType) {
+
+          window.toshakiii.settings.catalogOrderType = 0;
+
+        };
+
+        selectElt.value = window.toshakiii.settings.catalogOrderType;
       };
+
+      catalogSort.sortCatalogCells();
     };
 
     /**********************************
