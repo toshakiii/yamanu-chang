@@ -20,7 +20,7 @@
 //
 // @run-at      document-start
 //
-// @version     2.61
+// @version     2.62
 // @description endchan用の再帰的レスポップアップ、Catalogソート、添付ファイルプレビュー、色々
 // @grant       none
 // ==/UserScript==
@@ -1780,7 +1780,10 @@
       var closeButton = document.createElement('A');
       closeButton.style['text-align'] = 'right';
       closeButton.style['display'] = 'block';
-      closeButton.addEventListener('click', catalogSort.hideSettingsDiv);
+      closeButton.addEventListener('click', function() {
+        catalogSort.hideSettingsDiv();
+        ev.target.textContent = "[+設定]";
+      });
       closeButton.textContent = "[閉じる]";
 
       divSettings.appendChild(checkboxSageHidedThreads);
