@@ -3,24 +3,20 @@
 // @author      to_sha_ki_ii
 // @namespace   to_sha_ki_ii
 //
-// @include     http://endchan.xyz*
-// @include     https://endchan.xyz*
-// @include     http://endchan.org*
-// @include     https://endchan.org*
-// @include     http://endchan.net*
-// @include     https://endchan.net*
-// @include     http://infinow.net*
-// @include     https://infinow.net*
-// @exclude     */.media/*
-//
+// @include     /https?://endchan\.xyz/.*$/
+// @include     /https?://endchan\.org/.*$/
+// @include     /https?://endchan\.net/.*$/
 // @include     /https?://endchan5doxvprs5\.onion/.*$/
 // @include     /https?://s6424n4x4bsmqs27\.onion/.*$/
-// @include     /https?://endchan5doxvprs5\.onion.to/.*$/
-// @include     /https?://s6424n4x4bsmqs27\.onion.to/.*$/
+// @include     /https?://enxx3byspwsdo446jujc52ucy2pf5urdbhqw3kbsfhlfjwmbpj5smdad.onion/.*$/
+// @include     /https?://uz8ttoomn6b8bqjhhzm7txqdsh7gp5i8ub8j7xfn7sxe56u4ewfo.loki/.*$/
+// @include     /https?://psgnrs5y5aew3foaeijufd3otxmfq3cl6p2b27tekmnqxrc3kgwa.b32.i2p/.*$/
+// @include     /https?://\[200:4d21:507a:b19e:7876:7b2b:774:1b77\]/.*$/
+// @exclude     */.media/*
 //
 // @run-at      document-start
 //
-// @version     2.62
+// @version     2.64
 // @description endchan用の再帰的レスポップアップ、Catalogソート、添付ファイルプレビュー、色々
 // @grant       none
 // ==/UserScript==
@@ -28,7 +24,7 @@
 
 /**************************************************
  *  yamanu-chang
- *  Copyright (c) 2016-2018 "to_sha_ki_ii"
+ *  Copyright (c) 2016-2019 "to_sha_ki_ii"
  *  This software is released under the MIT License.
  *  http://opensource.org/licenses/mit-license.php
  **************************************************
@@ -58,7 +54,14 @@
 (function() {
 
   function modYamanuchang() {
+
     window.toshakiii = window.toshakiii || {};
+    if (window.toshakiii.loaded) {
+      /* 二重動作防止。Tampermonkeyのアップデート時に再動作するため。 */
+      return;
+    };
+
+    window.toshakiii.loaded = true;
     var utils       = window.toshakiii.utils       = window.toshakiii.utils       || {};
     var settings    = window.toshakiii.settings    = window.toshakiii.settings    || {};
     var filePreview = window.toshakiii.filePreview = window.toshakiii.filePreview || {};
@@ -1858,48 +1861,50 @@
       catalogSort.overrideEnableShowThreadLink();
     };
 
+    catalogSort.ymncRefreshCatalog = function ymncRefreshCatalog(manual) {
+
+      if (window.autoRefresh) {
+        clearInterval(window.refreshTimer);
+      };
+
+      catalogSort.refreshCatalogCells(function done(changed) {
+        if (window.autoRefresh) {
+          window.startTimer(manual || changed ? 5 : window.lastRefresh * 2);
+        };
+        if (!changed) {
+          return;
+        };
+
+        var assoc = {};
+        var dest = [];
+
+        for (var idx = 0, len = window.catalogThreads.length;
+             idx < len ; ++idx) {
+
+          assoc[window.catalogThreads[idx].threadId] = window.catalogThreads[idx];
+        };
+        var divThreads = document.getElementById("divThreads");
+
+        for (var dtIdx = 0, dtLen = divThreads.children.length ;
+             dtIdx < dtLen ; ++dtIdx) {
+
+          if ("" !== divThreads.children[dtIdx].id &&
+              undefined !== assoc[divThreads.children[dtIdx].id]) {
+
+            dest.push(assoc[divThreads.children[dtIdx].id]);
+            delete assoc[divThreads.children[dtIdx].id];
+          };
+        };
+        window.catalogThreads = dest;
+        window.search();
+      });
+    };
+
     catalogSort.overrideRefreshCatalog = function overrideRefreshCatalog() {
       if ('function' !== typeof(window.refreshCatalog)) {
         return;
       };
-      window.refreshCatalog = function ymncRefreshCatalog(manual) {
-
-        if (window.autoRefresh) {
-          clearInterval(window.refreshTimer);
-        };
-
-        catalogSort.refreshCatalogCells(function done(changed) {
-          if (window.autoRefresh) {
-            window.startTimer(manual || changed ? 5 : window.lastRefresh * 2);
-          };
-          if (!changed) {
-            return;
-          };
-
-          var assoc = {};
-          var dest = [];
-
-          for (var idx = 0, len = window.catalogThreads.length;
-               idx < len ; ++idx) {
-
-            assoc[window.catalogThreads[idx].threadId] = window.catalogThreads[idx];
-          };
-          var divThreads = document.getElementById("divThreads");
-
-          for (var dtIdx = 0, dtLen = divThreads.children.length ;
-               dtIdx < dtLen ; ++dtIdx) {
-
-            if ("" !== divThreads.children[dtIdx].id &&
-                undefined !== assoc[divThreads.children[dtIdx].id]) {
-
-              dest.push(assoc[divThreads.children[dtIdx].id]);
-              delete assoc[divThreads.children[dtIdx].id];
-            };
-          };
-          window.catalogThreads = dest;
-          window.search();
-        });
-      };
+      window.refreshCatalog = catalogSort.ymncRefreshCatalog;
     };
 
 
@@ -2022,6 +2027,296 @@
 
       catalogSort.sortCatalogCells();
     };
+
+    /**********************************
+     * catalogJS                      *
+     **********************************/
+
+    window.toshakiii.catalogJS = function catalogJS() {
+
+      if (0 > document.location.href.indexOf("/catalog.html")) {
+        return;
+      };
+
+      window.initCatalogVars = function initCatalogVars() {
+        window.autoRefresh = undefined;
+        window.searchDelay = 1000;
+        window.refreshTimer = undefined;
+        window.limitRefreshWait = 10 * 60;
+        window.loadingData = false;
+        window.catalogThreads = undefined;
+        window.lastRefresh = undefined;
+        window.currentRefresh = undefined;
+        window.refreshingButton = document.getElementById('catalogRefreshButton');
+        window.catalogDiv = document.getElementById('divThreads');
+        window.boardUri = undefined;
+
+        window.indicatorsRelation = {
+          pinned : 'pinIndicator',
+          locked : 'lockIndicator',
+          cyclic : 'cyclicIndicator',
+          autoSage : 'bumpLockIndicator'
+        };
+
+        window.refreshCheckBox = document.getElementById('autoCatalogRefreshCheckBox');
+        window.refreshLabel = document.getElementById('catalogRefreshLabel');
+        window.AutoRefreshText = "<a href='./catalog.json'>Auto</a>";
+        window.searchField = document.getElementById('catalogSearchField');
+
+        window.catalogCellTemplate = '<a class="linkThumb"></a>';
+        window.catalogCellTemplate += '<p class="threadStats">R: ';
+        window.catalogCellTemplate += '<span class="labelReplies"></span> / I: ';
+        window.catalogCellTemplate += '<span class="labelImages"></span> / P: ';
+        window.catalogCellTemplate += '<span class="labelPage"></span>';
+        window.catalogCellTemplate += '<span class="lockIndicator" title="Locked"></span>';
+        window.catalogCellTemplate += '<span class="pinIndicator" title="Sticky"></span>';
+        window.catalogCellTemplate += '<span class="cyclicIndicator" title="Cyclical Thread"></span>';
+        window.catalogCellTemplate += '<span class="bumpLockIndicator" title="Bumplocked"></span>';
+        window.catalogCellTemplate += '</p><p><span class="labelSubject"></span></p>';
+        window.catalogCellTemplate += '<div class="divMessage"></div>';
+
+        window.searchTimer = undefined;
+
+        window.storedHidingData = localStorage.hidingData;
+
+        if (window.storedHidingData) {
+          window.storedHidingData = JSON.parse(window.storedHidingData);
+        } else {
+          window.storedHidingData = {};
+        };
+      };
+
+      /* start a count down */
+      window.startTimer = function startTimer(time) {
+
+        if (time > window.limitRefreshWait) {
+          time = window.limitRefreshWait;
+        };
+        window.currentRefresh = time;
+        window.lastRefresh = time;
+        window.refreshLabel.innerHTML = window.AutoRefreshText + ' ' + window.currentRefresh;
+
+        if (undefined !== window.refreshTimer) {
+          /* 乱暴だが、とりあえず多重化を防ぐ */
+          return;
+        };
+
+        window.refreshTimer = setInterval(function checkTimer() {
+          window.currentRefresh--;
+          if (!window.currentRefresh) {
+            clearInterval(window.refreshTimer);
+            window.refreshTimer = undefined;
+
+            window.refreshCatalog();
+            window.refreshLabel.innerHTML = window.AutoRefreshText;
+          } else {
+            window.refreshLabel.innerHTML = window.AutoRefreshText + ' ' + window.currentRefresh;
+          };
+        }, 1000);
+      };
+
+      /* clear and start a count down timer */
+      window.changeCatalogRefresh = function changeCatalogRefresh() {
+        window.autoRefresh = window.refreshCheckBox.checked;
+        if (!window.autoRefresh) {
+          window.refreshLabel.innerHTML = window.AutoRefreshText;
+          clearInterval(window.refreshTimer);
+          window.refreshTimer = undefined;
+        } else {
+          window.startTimer(5);
+        };
+      };
+
+      /* return an array from localStorage */
+      window.getHiddenMedia = function getHiddenMedia() {
+        var hiddenMedia = localStorage.hiddenMedia;
+        if (hiddenMedia) {
+          hiddenMedia = JSON.parse(hiddenMedia);
+        } else {
+          hiddenMedia = [];
+        };
+        return hiddenMedia;
+      };
+
+      /* clears timer, download data, restart timer, do a search to redraw */
+      window.refreshCatalog = function refreshCatalog(manual) {
+        /* catalogJSコードで、yamanu-chang 機能を直接書いたのはここだけ */
+        return window.toshakiii.catalogSort.ymncRefreshCatalog(manual);
+      };
+
+      /* called once on start */
+      window.initCatalog = function initCatalog() {
+
+        window.initCatalogVars();
+        /* this call was moved to controlUpdate.js */
+        /*changeCatalogRefresh(); */
+
+        window.boardUri = window.location.toString().match(/\/(\w+)\/catalog.html/)[1];
+        document.getElementById('divTools').style.display = 'inline-block';
+        window.searchField.addEventListener('input', function() {
+          if (window.searchTimer) {
+            clearTimeout(window.searchTimer);
+          }
+          window.searchTimer = setTimeout(function() {
+            window.searchTimer = null;
+            window.search();
+          }, window.searchDelay);
+        });
+
+        window.refreshLabel.innerHTML = window.AutoRefreshText;
+
+        var postingForm = document.getElementById('newPostFieldset');
+        if (postingForm) {
+          var toggleLink = document.getElementById('togglePosting');
+          toggleLink.style.display = 'inline-block';
+          postingForm.style.display = 'none';
+          toggleLink.onclick = function() {
+            toggleLink.style.display = 'none';
+            postingForm.style.display = 'inline-block';
+          };
+        };
+
+        var links = document.getElementsByClassName('linkThumb');
+        for (var i = 0; i < links.length; i++) {
+          var link = links[i];
+          var child = link.childNodes[0];
+          var matches = link.href.match(/(\w+)\/res\/(\d+)/);
+          var board = matches[1];
+          var thread = matches[2];
+          var boardData = window.storedHidingData[board];
+          if (boardData && boardData.threads.indexOf(thread) > -1) {
+            var cell = link.parentNode;
+            cell.parentNode.removeChild(cell);
+          } else if (child != null && child.tagName === 'IMG') {
+            /* 過去に壊れ画像を削除したことがある。その影響でchildを持たないanchorが存在する */
+            window.checkForFileHiding(child);
+          };
+        };
+
+        window.getCatalogData();
+      };
+
+      /* do we need to hide this file? */
+      window.checkForFileHiding = function checkForFileHiding(child) {
+        var srcParts = child.src.split('/');
+        var hiddenMedia = window.getHiddenMedia();
+        var finalPart = srcParts[srcParts.length - 1].substr(2);
+        for (var j = 0; j < hiddenMedia.length; j++) {
+          if (hiddenMedia[j].indexOf(finalPart) > -1) {
+            child.parentNode.innerHTML = 'Open';
+            break;
+          };
+        };
+      };
+
+      /* set thumbnails for thread */
+      window.setCellThumb = function setCellThumb(thumbLink, thread) {
+        thumbLink.href = '/' + window.boardUri + '/res/' + thread.threadId + '.html';
+        if (thread.thumb) {
+          var thumbImage = document.createElement('img');
+          thumbImage.src = thread.thumb;
+          thumbLink.appendChild(thumbImage);
+          window.checkForFileHiding(thumbImage);
+        } else {
+          thumbLink.innerHTML = 'Open';
+        };
+      };
+
+      /* remove indicator elements from thread */
+      window.setCatalogCellIndicators = function setCatalogCellIndicators(thread, cell) {
+        function removeElement(element) {
+          element.parentNode.removeChild(element);
+        };
+
+        for ( var key in window.indicatorsRelation) {
+          if (!thread[key]) {
+            removeElement(cell.getElementsByClassName(window.indicatorsRelation[key])[0]);
+          };
+        };
+      };
+
+      /* blit row */
+      window.setCell = function setCell(thread) {
+        var cell = document.createElement('div');
+        cell.innerHTML = window.catalogCellTemplate;
+        cell.setAttribute('class', 'catalogCell');
+        window.setCellThumb(cell.getElementsByClassName('linkThumb')[0], thread);
+        var labelReplies = cell.getElementsByClassName('labelReplies')[0];
+        labelReplies.innerHTML = thread.postCount || 0;
+        var labelImages = cell.getElementsByClassName('labelImages')[0];
+        labelImages.innerHTML = thread.fileCount || 0;
+        cell.getElementsByClassName('labelPage')[0].innerHTML = thread.page;
+        if (thread.subject) {
+          cell.getElementsByClassName('labelSubject')[0].innerHTML = thread.subject;
+        };
+        window.setCatalogCellIndicators(thread, cell);
+        cell.getElementsByClassName('divMessage')[0].innerHTML = thread.message;
+        cell.id = thread.threadId;
+        return window.prepareShowHideCatalogCell(cell, thread);
+      };
+
+      /* render page */
+      window.search = function search() {
+        if (!window.catalogThreads) {
+          return;
+        };
+
+        var term = window.searchField.value.toLowerCase();
+        /* remove all elements */
+        while (window.catalogDiv.firstChild) {
+          window.catalogDiv.removeChild(window.catalogDiv.firstChild);
+        };
+        /* recreate elements */
+        var boardData = window.storedHidingData[window.boardUri];
+        for (var i = 0; i < window.catalogThreads.length; i++) {
+          var thread = window.catalogThreads[i];
+          if ((boardData && boardData.threads.indexOf(thread.threadId.toString()) > -1)
+              || (term.length && thread.message.toLowerCase().indexOf(term) < 0 && (thread.subject || '')
+                  .toLowerCase().indexOf(term) < 0)) {
+            continue;
+          };
+          window.catalogDiv.appendChild(window.setCell(thread));
+        };
+      };
+
+      /* download board's catalog.json and json parse it */
+      window.getCatalogData = function getCatalogData(callback) {
+        if (window.loadingData) {
+          return;
+        };
+
+        window.loadingData = true;
+        window.localRequest('/' + window.boardUri + '/catalog.json', function gotBoardData(error,
+            data) {
+          window.loadingData = false;
+          if (error) {
+            if (callback) {
+              callback(error);
+            } else {
+              console.log(error);
+            };
+            return;
+          };
+
+          window.catalogThreads = JSON.parse(data);
+          if (callback) {
+            callback();
+          };
+        });
+      };
+
+      if (null === document.body) {
+        document.addEventListener("DOMContentLoaded", function() {
+          window.initCatalog();
+        });
+
+      } else {
+        window.initCatalog();
+        window.changeCatalogRefresh();
+      };
+    };
+
+
 
     /**********************************
      * etCetera                       *
@@ -4802,6 +5097,7 @@
     etCetera.trigger();
     filePreview.trigger();
     catalogSort.trigger();
+    window.toshakiii.catalogJS();
     multiPopup.trigger();
   };
 
