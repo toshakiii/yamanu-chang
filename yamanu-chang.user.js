@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name        yamanu-chang:endchan用script
+// @name        yamanu-chang:librejp用script
 // @author      to_sha_ki_ii
 // @namespace   to_sha_ki_ii
 //
@@ -13,10 +13,12 @@
 // @include     /https?://psgnrs5y5aew3foaeijufd3otxmfq3cl6p2b27tekmnqxrc3kgwa.b32.i2p/.*$/
 // @include     /https?://\[200:4d21:507a:b19e:7876:7b2b:774:1b77\]/.*$/
 // @exclude     */.media/*
+// @include     /https?://sportsrxhx4acz6j.onion/.*$/
+// @include     /https?://sportschan.org/.*$/
 //
 // @run-at      document-start
 //
-// @version     2.64
+// @version     2.65
 // @description endchan用の再帰的レスポップアップ、Catalogソート、添付ファイルプレビュー、色々
 // @grant       none
 // ==/UserScript==
@@ -5101,21 +5103,106 @@
     multiPopup.trigger();
   };
 
+  function modYamanuchangForSportsChan() {
+
+    /* 上書きしない。外部設定値受け入れのため */
+    window.yamanu = window.yamanu || {};
+
+    /* 二重動作防止。Tampermonkeyのアップデート時に再動作するため */
+    if (window.yamanu.loaded) {
+      //return;
+    };
+    window.yamanu.loaded = true;
+
+    window.yamanu.runOnBodyAvailable = {};
+    window.yamanu.runOnBodyAvailable.list = [];
+
+    window.yamanu.runOnBodyAvailable.append = function append(func) {
+
+      window.yamanu.runOnBodyAvailable.list.push(func);
+    };
+
+    window.yamanu.runOnBodyAvailable.activate = function activate() {
+
+      var funcList = window.yamanu.runOnBodyAvailable.list;
+      window.yamanu.runOnBodyAvailable.list = [];
+      /* 例外発生で次に進まなくなるのは仕様*/
+
+      if (document.body) {
+
+        funcList.forEach( function(func) {
+
+          func();
+        });
+
+      } else {
+
+
+        window.yamanu.runOnBodyAvailable.list = [];
+
+        document.addEventListener("DOMContentLoaded", function() {
+
+          funcList.forEach( function(func) {
+
+            func();
+          });
+        });
+      };
+    };
+
+    window.yamanu.titleMO = undefined;
+    window.yamanu.setTitleMO = function setTitleMO() {
+
+      window.yamanu.titleMO = new MutationObserver(window.yamanu.procTitle);
+      window.yamanu.startTitleMO();
+    };
+    window.yamanu.startTitleMO = function startTitleMO() {
+      if (window.yamanu.titleMO) {
+        window.yamanu.titleMO.observe(document.head.getElementsByTagName('TITLE')[0]
+            , {childList: true});
+      };
+    };
+    window.yamanu.stopTitleMO = function stopTitleMO() {
+      if (window.yamanu.titleMO) {
+        window.yamanu.titleMO.disconnect();
+      };
+    };
+    window.yamanu.procTitle = function procTitle() {
+      window.yamanu.stopTitleMO();
+
+      /* "([新レス数])[スレ名] - [板名]" になるように変更する */
+      document.title = document.title.replace(/((?:\(\w*\) )?)(\/[^\/]*\/) - (.*)/,"$1$3 - $2");
+      window.yamanu.startTitleMO();
+    };
+    window.yamanu.runOnBodyAvailable.append(window.yamanu.setTitleMO);
+    window.yamanu.runOnBodyAvailable.append(window.yamanu.procTitle.procTitle);
+    window.yamanu.runOnBodyAvailable.activate();
+  };
+
   /**********************************
    * main                           *
    **********************************/
   function main() {
+
+    var module = modYamanuchang;
+
+    if ("sportsrxhx4acz6j.onion" === location.host ||
+        "sportschan.org" === location.host) {
+
+      module = modYamanuchangForSportsChan;
+    };
+
     var lowerCaseUA = window.navigator.userAgent.toLowerCase();
     if (0 <= lowerCaseUA.indexOf("gecko") ||
         0 <= lowerCaseUA.indexOf("edge")) {
-      modYamanuchang();
+      module();
     } else {
       var script = document.createElement('SCRIPT');
       script.id = "yamanuchangScript";
       script.innerText = ""
         + "var toshakiii_errors = [];"
         + "try{"
-        + "("+modYamanuchang.toString() +")();"
+        + "("+module.toString() +")();"
         + "}catch(e) {toshakiii_errors.push(e);};"
         + "if (0 != toshakiii_errors.length) {alert(toshakiii_errors);};"
         + "";
