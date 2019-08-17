@@ -18,7 +18,7 @@
 //
 // @run-at      document-start
 //
-// @version     2.65
+// @version     2.66
 // @description endchan用の再帰的レスポップアップ、Catalogソート、添付ファイルプレビュー、色々
 // @grant       none
 // ==/UserScript==
@@ -5175,7 +5175,40 @@
       window.yamanu.startTitleMO();
     };
     window.yamanu.runOnBodyAvailable.append(window.yamanu.setTitleMO);
-    window.yamanu.runOnBodyAvailable.append(window.yamanu.procTitle.procTitle);
+    window.yamanu.runOnBodyAvailable.append(window.yamanu.procTitle);
+
+    window.yamanu.setFavicon = function setFavicon() {
+
+      var imgList = document.getElementsByClassName("post-image");
+
+      if (0 === imgList.length) {
+        return false;
+      };
+
+      var img = imgList[0];
+
+      function appendFaviconTag() {
+        if (0 < img.naturalWidth) {
+          var link = document.createElement("LINK");
+          link.rel = "icon";
+          link.href = imgList[0].src;
+
+          document.head.appendChild(link);
+        };
+      };
+
+      /*
+       * リンク切れ画像をfaviconに設定しないための分岐
+       */
+      if (img.complete) {
+        appendFaviconTag();
+      };
+
+      img.addEventListener("load", appendFaviconTag);
+      return true;
+    };
+    window.yamanu.runOnBodyAvailable.append(window.yamanu.setFavicon);
+
     window.yamanu.runOnBodyAvailable.activate();
   };
 
