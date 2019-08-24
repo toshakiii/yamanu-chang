@@ -18,7 +18,7 @@
 //
 // @run-at      document-start
 //
-// @version     2.66
+// @version     2.67
 // @description endchan用の再帰的レスポップアップ、Catalogソート、添付ファイルプレビュー、色々
 // @grant       none
 // ==/UserScript==
@@ -48,9 +48,6 @@
 /*
  * TODO:
  * ・設定周り整理
- * ・sendReplyData の hack をオフにできるオプションを追加すること。
- * ・Youtubeのリンクを有効にする補助機能を盛ること
- * ・再生開始機能を盛ること
  */
 
 (function() {
@@ -5114,6 +5111,8 @@
     };
     window.yamanu.loaded = true;
 
+
+
     window.yamanu.runOnBodyAvailable = {};
     window.yamanu.runOnBodyAvailable.list = [];
 
@@ -5150,6 +5149,8 @@
       };
     };
 
+
+
     window.yamanu.titleMO = undefined;
     window.yamanu.setTitleMO = function setTitleMO() {
 
@@ -5176,6 +5177,8 @@
     };
     window.yamanu.runOnBodyAvailable.append(window.yamanu.setTitleMO);
     window.yamanu.runOnBodyAvailable.append(window.yamanu.procTitle);
+
+
 
     window.yamanu.setFavicon = function setFavicon() {
 
@@ -5208,6 +5211,168 @@
       return true;
     };
     window.yamanu.runOnBodyAvailable.append(window.yamanu.setFavicon);
+
+
+
+    window.yamanu.catalogUpdateWrapper = undefined;
+    window.yamanu.catalogUpdateStatus = undefined;
+    window.yamanu.catalogUpdateButton = undefined;
+    window.yamanu.catalogUpdateConnection = undefined;
+    /* window.yamanu.catalogLastModified = new Date(document.lastModified); */
+
+    window.yamanu.runOnBodyAvailable.append(window.yamanu.setCatalogUpdateButton
+        = function setCatalogUpdateButton() {
+
+      if (0 > location.pathname.indexOf("/catalog.html")) {
+        return;
+      };
+
+      var threadsList = document.getElementsByClassName("threads");
+      if (0 === threadsList.length) {
+        return;
+      };
+      var threads = threadsList[0];
+
+      var wrapper = window.yamanu.catalogUpdateWrapper = document.createElement("SPAN");
+      var status = window.yamanu.catalogUpdateStatus = document.createElement("SPAN");
+      var button = window.yamanu.catalogUpdateButton = document.createElement("A");
+
+      wrapper.appendChild(button);
+      wrapper.appendChild(status);
+
+      wrapper.className = "catalogUpdateWrapper";
+      status.className = "catalogUpdateStatus";
+      button.className = "catalogUpdateButton";
+
+      button.href="#";
+      button.textContent = "[Update]";
+
+      button.addEventListener("click", function() {
+        window.yamanu.updateCatalog(true);
+        return false;
+      });
+
+      threads.parentElement.insertBefore(wrapper, threads);
+    });
+
+    window.yamanu.updateCatalog = function updateCatalog(manual) {
+
+      if (window.yamanu.catalogUpdateConnection) {
+        return;
+      };
+
+      window.yamanu.catalogUpdateConnection = {};
+      var xhr = window.yamanu.catalogUpdateConnection.xhr = new XMLHttpRequest();
+
+
+      xhr.addEventListener('loadstart', window.yamanu.catalogUpdateProgress);
+      xhr.addEventListener('progress', window.yamanu.catalogUpdateProgress);
+      /* xhr.addEventListener('loadend', window.yamanu.catalogUpdateProgress); */
+      xhr.addEventListener('error', window.yamanu.catalogUpdateProgress);
+      xhr.addEventListener('abort', window.yamanu.catalogUpdateProgress);
+      xhr.addEventListener('load', window.yamanu.catalogDOMUpdate);
+
+      xhr.open("GET", location.toString());
+      /* xhr.setRequestHeader("If-Modified-Since", window.yamanu.catalogLastModified.toUTCString()); */
+      xhr.send(null);
+
+      window.yamanu.showCatalogUpdateMessage("req", "request");
+    };
+
+    window.yamanu.showCatalogUpdateMessage = function showCatalogUpdateMessage(messageText, tooltipText) {
+
+      if (undefined === window.yamanu.catalogUpdateStatus) {
+        return;
+      };
+
+      if (tooltipText) {
+        window.yamanu.catalogUpdateStatus.title = "" + tooltipText;
+      };
+      window.yamanu.catalogUpdateStatus.textContent = "" + messageText;
+    };
+
+    window.yamanu.catalogUpdateProgress = function catalogUpdateProgress(event) {
+
+      if ("loadstart" === event.type) {
+
+        window.yamanu.showCatalogUpdateMessage("body");
+
+      } else if ("progress" === event.type) {
+
+        var progress = "-";
+        var progressN = 0;
+        if (event.lengthComputable) {
+          progressN = event.loaded / event.total;
+          progress = Math.ceil( 9 * (1 - progressN)).toString();
+        };
+
+        var p = Math.floor(Math.progressN * 100);
+        if (progress !== window.yamanu.catalogUpdateConnection.beforeMessage) {
+          window.yamanu.showCatalogUpdateMessage("L" + progress, "download: " + p + "%");
+        };
+
+      }/* else if ("loadend" === event.type) {
+
+        var xhr = window.yamanu.catalogUpdateConnection.xhr;
+        if (304 === xhr.status) {
+
+          window.yamanu.showCatalogUpdateMessage("no modified");
+
+        } else {
+
+          window.yamanu.showCatalogUpdateMessage("error", "error(HTTP " + xhr.status + ")");
+
+        };
+
+      }*/ else if ("error" === event.type) {
+
+        window.yamanu.showCatalogUpdateMessage("error", "error(unknown)");
+
+      } else if ("abort" === event.type) {
+
+        window.yamanu.showCatalogUpdateMessage("abort");
+
+      };
+    };
+
+    window.yamanu.catalogDOMUpdate = function catalogDOMUpdate() {
+
+      var xhr = window.yamanu.catalogUpdateConnection.xhr;
+
+      if (0 === xhr.responseText.length) {
+        return;
+      };
+
+      /* window.yamanu.catalogLastModified = new Date(xhr.getResponseHeader("Last-Modified")); */
+
+      var newCatalog = document.createElement("SPAN");
+      newCatalog.innerHTML = xhr.responseText;
+
+      var newGrid = newCatalog.querySelector("#Grid");
+
+      var grid = document.getElementById("Grid");
+
+      /* 画像サイズを合わせるための処理 */
+      var additionalClass = "";
+      var image_size = document.getElementById("image_size");
+      if (image_size !== null) {
+        additionalClass = "grid-size-" + image_size.value;
+      };
+
+      if (0 < additionalClass.length) {
+
+        var threadList = newGrid.getElementsByClassName("thread");
+        for (var i = threadList.length - 1; -1 < i; --i) {
+          threadList[i].className = threadList[i].className.replace(/\b\s*grid-size-(vsmall|small|large)\b/,"") + " " + additionalClass;
+        };
+      };
+
+      /* TODO: この方法は破壊的すぎて好きじゃない */
+      grid.parentElement.replaceChild(newGrid, grid);
+
+      window.yamanu.catalogUpdateConnection = undefined;
+      window.yamanu.showCatalogUpdateMessage("done");
+    };
 
     window.yamanu.runOnBodyAvailable.activate();
   };
