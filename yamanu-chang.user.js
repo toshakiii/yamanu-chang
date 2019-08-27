@@ -18,7 +18,7 @@
 //
 // @run-at      document-start
 //
-// @version     2.67
+// @version     2.68
 // @description endchan用の再帰的レスポップアップ、Catalogソート、添付ファイルプレビュー、色々
 // @grant       none
 // ==/UserScript==
@@ -5184,7 +5184,7 @@
 
       var imgList = document.getElementsByClassName("post-image");
 
-      if (0 === imgList.length) {
+      if (0 === imgList.length || 0 > location.pathname.indexOf("/res/")) {
         return false;
       };
 
@@ -5373,6 +5373,74 @@
       window.yamanu.catalogUpdateConnection = undefined;
       window.yamanu.showCatalogUpdateMessage("done");
     };
+
+    window.yamanu.runOnBodyAvailable.append(window.yamanu.adjustAllPostTimezone
+        = function adjustAllPostTimezone() {
+
+      var postList = document.getElementsByClassName("post");
+      for (var i = postList.length - 1; 0 <= i; --i) {
+
+        window.yamanu.adjustPostTimezone(null, postList[i]);
+      };
+    });
+
+    window.yamanu.runOnBodyAvailable.append(window.yamanu.setFuncAdjustTimezone
+        = function setFuncAdjustPostTimezone() {
+
+      $(document).on("new_post", window.yamanu.adjustPostTimezone);
+    });
+
+    window.yamanu.adjustPostTimezone = function adjustPostTimezone(event, post) {
+
+      var timeElementList = post.getElementsByTagName("TIME");
+      for (var i = timeElementList.length - 1; 0 <= i; --i) {
+
+        timeElementList[i].textContent
+          = window.yamanu.adjustTimezone(timeElementList[i].getAttribute("datetime"));
+        timeElementList[i].title = "JST";
+      };
+    };
+
+    window.yamanu.adjustTimezone = function adjustTimezone(utcDateTime) {
+      /* 日本時間決めうち。閏秒時にずれる */
+      var utc = +new Date(utcDateTime);
+      var utcAsJst = new Date(utc + (1000 * 60 * 60 * 9));
+
+      var year = utcAsJst.getUTCFullYear().toString();
+      var month = (utcAsJst.getUTCMonth() + 1).toString();
+      var date = utcAsJst.getUTCDate().toString();
+      var hours = utcAsJst.getUTCHours().toString();
+      var minutes = utcAsJst.getUTCMinutes().toString();
+      var seconds = utcAsJst.getUTCSeconds().toString();
+      var days = ["日","月","火","水","木","金","土"];
+      var day = days[utcAsJst.getUTCDay()];
+
+      var leftpad = window.yamanu.leftpad;
+      var text = year + "/"
+		        + leftpad( month, 2, "0") + "/"
+		        + leftpad( date , 2, "0")
+		        + "(" + day + ")"
+		        + leftpad( hours, 2, "0") + ":"
+		        + leftpad( minutes, 2, "0") + ":"
+		        + leftpad( seconds, 2, "0");
+
+      return text;
+    };
+
+
+
+    window.yamanu.leftpad = function leftpad(str, n, char) {
+
+	    if( n <= str.length ) {
+		    return str;
+	    };
+	    if(undefined == char) {
+		    char = " ";
+	    };
+	    return char.repeat( n - str.length ) + str;
+	  };
+
+
 
     window.yamanu.runOnBodyAvailable.activate();
   };
