@@ -19,7 +19,7 @@
 // @run-at      document-start
 //
 // @version     2.69
-// @description endchan用の再帰的レスポップアップ、Catalogソート、添付ファイルプレビュー、色々
+// @description librejp用機能強化スクリプト
 // @grant       none
 // ==/UserScript==
 
