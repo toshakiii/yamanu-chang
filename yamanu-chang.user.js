@@ -18,7 +18,7 @@
 //
 // @run-at      document-start
 //
-// @version     2.69
+// @version     2.70
 // @description librejp用機能強化スクリプト
 // @grant       none
 // ==/UserScript==
@@ -408,31 +408,6 @@
       };
       return r;
     };
-
-    utils.getYearMonthDateDayHoursMinutesSeconds =
-      function(dateObj , useUTC) {
-        /* return type: int array */
-        /* return value: [year, month, date, day, hours, minutes, seconds] */
-        /*   month: 0 origin */
-        if (useUTC) {
-          return [
-            dateObj.getUTCFullYear(),
-            dateObj.getUTCMonth(),
-            dateObj.getUTCDate(),
-            dateObj.getUTCDay(),
-            dateObj.getUTCHours(),
-            dateObj.getUTCMinutes(),
-            dateObj.getUTCSeconds()];
-        };
-        return [
-          dateObj.getFullYear(),
-          dateObj.getMonth(),
-          dateObj.getDate(),
-          dateObj.getDay(),
-          dateObj.getHours(),
-          dateObj.getMinutes(),
-          dateObj.getSeconds()];
-      };
 
     /* IntermittentLoops { */
     utils.IntermittentLoops = function() {
@@ -3449,21 +3424,29 @@
     };
 
     etCetera.jaDateFormat = function jaDateFormat(d) {
-      /* 2016/12/31(Sat)13:59:59 形式 */
-      var leftpad = utils.leftpad;
-      var year, month, date, hours, minutes, seconds, day;
 
-      [year, month, date, day, hours, minutes, seconds] =
-        utils.getYearMonthDateDayHoursMinutesSeconds(d);
+      var leftpad = utils.leftpad;
+
+      console.log(d);
+      var utcAsJst = new Date(+d + (1000 * 60 * 60 * 9));
+      console.log(utcAsJst);
+
+      var year    = utcAsJst.getUTCFullYear();
+      var month   = utcAsJst.getUTCMonth();
+      var date    = utcAsJst.getUTCDate();
+      var hours   = utcAsJst.getUTCHours();
+      var minutes = utcAsJst.getUTCMinutes();
+      var seconds = utcAsJst.getUTCSeconds();
+      var day     = utcAsJst.getUTCDay();
 
       var text =
             year + "/"
             + leftpad(month + 1, 2, "0") + "/"
-            + leftpad(date , 2, "0") +
-            "(" + d.toLocaleString('ja', {weekday:'short'}) + ")"
-            + leftpad(hours, 2, "0") + ":" +
-            leftpad(minutes, 2, "0") + ":" +
-            leftpad(seconds, 2, "0");
+            + leftpad(date , 2, "0")
+            + "(" + utcAsJst.toLocaleString('ja', {weekday:'short'}) + ")"
+            + leftpad(hours, 2, "0") + ":"
+            + leftpad(minutes, 2, "0") + ":"
+            + leftpad(seconds, 2, "0");
       return text;
     };
 
