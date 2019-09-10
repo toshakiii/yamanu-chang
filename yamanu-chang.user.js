@@ -18,7 +18,7 @@
 //
 // @run-at      document-start
 //
-// @version     2.70
+// @version     2.71
 // @description librejp用機能強化スクリプト
 // @grant       none
 // ==/UserScript==
@@ -3469,14 +3469,14 @@
         d.setUTCMinutes(+m[5]);
         d.setUTCSeconds(+m[6]);
 
-        if ('ja' === firstLanguage ||
-            'ja-JP' === firstLanguage) {
-          return etCetera.jaDateFormat(d);
-        };
-        return d.toLocaleString(firstLanguage)
-          + ' ('+d.toLocaleString(firstLanguage, {weekday:"short"})+')';
+        /* if ('ja' === firstLanguage || 'ja-JP' === firstLanguage) { */
+        return etCetera.jaDateFormat(d);
+        /* };
+         return d.toLocaleString(firstLanguage)
+         + ' ('+d.toLocaleString(firstLanguage, {weekday:"short"})+')';
+         */
       };
-      return undefined;
+      return str;
     };
 
     etCetera.overrideDateFromString = function overrideDateFromString() {
