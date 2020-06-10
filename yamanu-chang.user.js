@@ -18,7 +18,7 @@
 //
 // @run-at      document-start
 //
-// @version     2.73
+// @version     2.75
 // @description librejp用機能強化スクリプト
 // @grant       none
 // ==/UserScript==
@@ -26,11 +26,10 @@
 
 /**************************************************
  *  yamanu-chang
- *  Copyright (c) 2016-2019 "to_sha_ki_ii"
+ *  Copyright (c) 2016-2020 "to_sha_ki_ii"
  *  This software is released under the MIT License.
  *  http://opensource.org/licenses/mit-license.php
  **************************************************
- *  CSSを利用しました : http://endchan.xyz/librejp/res/5273.html#8133
  */
 
 /*******************************
@@ -1432,14 +1431,17 @@
 
     catalogSort.showRefreshStatus = function(msg) {
       var refreshStatus = document.getElementById(catalogSort.REFRESH_STATUS_ID);
-      var text = document.createTextNode(msg);
-      if (refreshStatus.firstChild) {
-        refreshStatus.replaceChild(text, refreshStatus.firstChild);
-      } else {
-        refreshStatus.appendChild(text);
+      if (refreshStatus) {
+        var text = document.createTextNode(msg);
+        if (refreshStatus.firstChild) {
+          refreshStatus.replaceChild(text, refreshStatus.firstChild);
+        } else {
+          refreshStatus.appendChild(text);
+        };
       };
     };
 
+    catalogSort.refreshCatalogCells_xhr = undefined;
     catalogSort.refreshCatalogCells = function(callback) {
       if (catalogSort.nowRefreshing) {
         return;
@@ -1449,7 +1451,9 @@
       var uri = catalogSort.getCatalogJsonUri();
 
       var loadingBody = false;
+
       var xhr = new XMLHttpRequest();
+      catalogSort.refreshCatalogCells_xhr = xhr;
       xhr.onreadystatechange =
         function() {
           switch(this.readyState) {
@@ -1944,11 +1948,18 @@
 
     catalogSort.isHereCatalogPage = function() {
       var divThreads = document.getElementById("divThreads");
-      return null != divThreads &&
-        0 < document.getElementsByClassName("catalogCell").length;
+      var catalogCells = document.getElementsByClassName("catalogCell");
+
+      return null != divThreads && 0 < catalogCells.length;
+
     };
 
     catalogSort.trigger = function() {
+      if (null === document.body) {
+        document.addEventListener("DOMContentLoaded", catalogSort.trigger);
+        return;
+      };
+
       if (! catalogSort.isHereCatalogPage()) {
         return;
       };
@@ -1958,7 +1969,6 @@
       };
       catalogSort.initTableOrderType();
       catalogSort.loadSettings();
-
       if (null === document.body) {
         document.addEventListener("DOMContentLoaded",
             function() {
@@ -1967,25 +1977,20 @@
       } else {
         catalogSort.enable();
       };
-
     };
 
     catalogSort.enable = function() {
       if (! catalogSort.isHereCatalogPage()) {
         return;
       };
-
       catalogSort.override();
       catalogSort.hideShowThreadCSS();
-
       var divTools = document.getElementById("divTools");
       if (null == divTools) {
         return;
       };
       var elt = catalogSort.createSortConfigElement();
-
       divTools.appendChild(elt);
-
       if (undefined !== window.toshakiii.settings.catalogOrderType) {
 
         var selectElt = document.getElementById(catalogSort.SELECT_ID);
@@ -1993,7 +1998,6 @@
         if (selectElt.length <= window.toshakiii.settings.catalogOrderType) {
 
           window.toshakiii.settings.catalogOrderType = 0;
-
         };
 
         selectElt.value = window.toshakiii.settings.catalogOrderType;
@@ -3427,9 +3431,9 @@
 
       var leftpad = utils.leftpad;
 
-      console.log(d);
+      /* console.log(d); */
       var utcAsJst = new Date(+d + (1000 * 60 * 60 * 9));
-      console.log(utcAsJst);
+      /* console.log(utcAsJst); */
 
       var year    = utcAsJst.getUTCFullYear();
       var month   = utcAsJst.getUTCMonth();
@@ -5160,40 +5164,6 @@
     };
     window.yamanu.runOnBodyAvailable.append(window.yamanu.setTitleMO);
     window.yamanu.runOnBodyAvailable.append(window.yamanu.procTitle);
-
-
-
-    window.yamanu.setFavicon = function setFavicon() {
-
-      var imgList = document.getElementsByClassName("post-image");
-
-      if (0 === imgList.length || 0 > location.pathname.indexOf("/res/")) {
-        return false;
-      };
-
-      var img = imgList[0];
-
-      function appendFaviconTag() {
-        if (0 < img.naturalWidth) {
-          var link = document.createElement("LINK");
-          link.rel = "icon";
-          link.href = imgList[0].src;
-
-          document.head.appendChild(link);
-        };
-      };
-
-      /*
-       * リンク切れ画像をfaviconに設定しないための分岐
-       */
-      if (img.complete) {
-        appendFaviconTag();
-      };
-
-      img.addEventListener("load", appendFaviconTag);
-      return true;
-    };
-    window.yamanu.runOnBodyAvailable.append(window.yamanu.setFavicon);
 
 
 
