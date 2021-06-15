@@ -6,6 +6,7 @@
 // @include     /https?://endchan\.xyz/.*$/
 // @include     /https?://endchan\.org/.*$/
 // @include     /https?://endchan\.net/.*$/
+// @include     /https?://endchan\.gg/.*$/
 // @include     /https?://endchan5doxvprs5\.onion/.*$/
 // @include     /https?://s6424n4x4bsmqs27\.onion/.*$/
 // @include     /https?://enxx3byspwsdo446jujc52ucy2pf5urdbhqw3kbsfhlfjwmbpj5smdad.onion/.*$/
@@ -18,7 +19,7 @@
 //
 // @run-at      document-start
 //
-// @version     2.75
+// @version     2.76
 // @description librejp用機能強化スクリプト
 // @grant       none
 // ==/UserScript==
@@ -4004,9 +4005,9 @@
       };
       switch(document.location.host) {
       default: return;
-      case "endchan.xyz": case "endchan.net": case "infinow.net": case "endchan.org":
+      case "endchan.xyz": case "endchan.net": case "endchan.org": case "endchan.gg":
       case "endchan5doxvprs5.onion": case "s6424n4x4bsmqs27.onion":
-      case "endchan5doxvprs5.onion.to": case "s6424n4x4bsmqs27.onion.to":
+      case "enxx3byspwsdo446jujc52ucy2pf5urdbhqw3kbsfhlfjwmbpj5smdad.onion":
       };
 
       var topNavList = document.getElementsByClassName("topNav");
@@ -4069,7 +4070,9 @@
     etCetera.createInterDomainLinks = function() {
       /* .onion.to には案内しない */
       var hosts = ["https://endchan.xyz", "https://endchan.net", "https://endchan.org",
-                   "http://endchan5doxvprs5.onion", "http://s6424n4x4bsmqs27.onion"];
+                   "https://endchan.gg",
+                   "http://endchan5doxvprs5.onion", "http://s6424n4x4bsmqs27.onion",
+                   "http://enxx3byspwsdo446jujc52ucy2pf5urdbhqw3kbsfhlfjwmbpj5smdad.onion/"];
 
       var createDomainsLinks = function(url) {
         var span = document.createElement("SPAN");
